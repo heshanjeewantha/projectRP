@@ -9,6 +9,8 @@ import {
   Radar,
   Sparkles,
   Video,
+  Activity,
+  BarChart2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -25,6 +27,8 @@ import useStore from '../../shared-app/utils/useStore';
 
 import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
 import WebcamFeed from '../components/WebcamFeed/WebcamFeed';
+import AttentionStatsPanel from '../components/AttentionStatsPanel/AttentionStatsPanel';
+import AttentionHeatmap from '../components/AttentionHeatmap/AttentionHeatmap';
 import KnowledgeQuestionPopup from '../../component-02-knowledge-graph-question-system/components/Popup/KnowledgeQuestionPopup';
 import DashboardPanel from '../../../components/layout/Dashboard/DashboardPanel';
 import Header from '../../../components/layout/Dashboard/Header';
@@ -410,14 +414,44 @@ const StudentView = () => {
     ];
   }, [videos, currentLearningConcept]);
 
-  const transcriptSegments = useMemo(
-    () =>
-      (transcript?.segments || []).slice(0, 6).map((segment) => ({
-        ...segment,
-        label: segment.label || currentLearningConcept?.conceptName?.toUpperCase() || 'LESSON',
-      })),
-    [transcript, currentLearningConcept]
-  );
+  const transcriptSegments = useMemo(() => {
+    const rawSegments = transcript?.segments || [];
+    const processed = [];
+
+    for (const seg of rawSegments) {
+      // Extract label from [LABEL] or topic prefix before em-dash '—'
+      let segLabel = seg.label;
+      let segText = seg.text || '';
+
+      const bracketMatch = segText.match(/^\[([A-Z\s_]+)\]/);
+      if (bracketMatch) {
+        segLabel = bracketMatch[1].trim();
+        segText = segText.replace(/^\[[A-Z\s_]+\]\s*/, '');
+      } else {
+        const prefixMatch = segText.match(/^([A-Za-z\s]{3,18})\s*[—\-]/);
+        if (prefixMatch) {
+          segLabel = prefixMatch[1].trim().toUpperCase();
+        }
+      }
+
+      if (!segLabel) {
+        segLabel = currentLearningConcept?.conceptName?.toUpperCase() || 'LESSON';
+      }
+
+      // Filter out duplicate consecutive text entries
+      if (processed.length > 0 && processed[processed.length - 1].text === segText) {
+        processed[processed.length - 1].end_time = seg.end_time;
+      } else {
+        processed.push({
+          ...seg,
+          label: segLabel,
+          text: segText,
+        });
+      }
+    }
+
+    return processed;
+  }, [transcript, currentLearningConcept]);
 
   const timelineSegments = useMemo(
     () =>
@@ -527,6 +561,19 @@ const StudentView = () => {
             timelineProgress={timelineProgress}
             segments={timelineSegments}
           />
+
+          {/* Attention Heatmap — maps distraction events to video timeline */}
+          <DashboardPanel>
+            <Header
+              label="Analytics"
+              icon={BarChart2}
+              title="Attention Heatmap"
+              description="Session distraction events mapped to the video timeline. Green = focused, orange = distracted, red = phone, amber = drowsy."
+            />
+            <div className="mt-4">
+              <AttentionHeatmap videoDuration={timelineDuration} />
+            </div>
+          </DashboardPanel>
         </div>
 
         <div className="dashboard-stack">
@@ -546,6 +593,19 @@ const StudentView = () => {
             status={attentionState}
             media={<WebcamFeed videoRef={videoRef} compact />}
           />
+
+          {/* Attention Stats Panel */}
+          <DashboardPanel>
+            <Header
+              label="Attention"
+              icon={Activity}
+              title="Attention Analytics"
+              description="Real-time engagement score, drowsiness (PERCLOS), gaze direction, blink rate, phone detections, and live sign captions."
+            />
+            <div className="mt-4">
+              <AttentionStatsPanel />
+            </div>
+          </DashboardPanel>
 
           <DashboardPanel>
             <Header

@@ -14,6 +14,7 @@ import WristbandPage from './modules/component-05-smart-wristband-iot/pages/Wris
 import HomePage from './modules/shared-app/pages/HomePage';
 import AdminUpload from './modules/shared-app/pages/AdminUpload';
 import AdminDashboardPage from './modules/shared-app/pages/AdminDashboardPage';
+import AdminAttentionReportsPage from './modules/component-01-attention-monitoring/pages/AdminAttentionReportsPage';
 import LoginPage from './modules/shared-app/pages/LoginPage';
 import SignupPage from './modules/shared-app/pages/SignupPage';
 import useStore from './modules/shared-app/utils/useStore';
@@ -67,6 +68,7 @@ const AnimatedRoutes = () => {
         <Route path="/wristband" element={<ProtectedRoute allowedRoles={['student']}><PageWrapper><WristbandPage /></PageWrapper></ProtectedRoute>} />
         <Route path="/history" element={<ProtectedRoute allowedRoles={['student']}><PageWrapper><History /></PageWrapper></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><PageWrapper><AdminDashboardPage /></PageWrapper></ProtectedRoute>} />
+        <Route path="/admin/attention-reports" element={<ProtectedRoute allowedRoles={['admin']}><PageWrapper><AdminAttentionReportsPage /></PageWrapper></ProtectedRoute>} />
         <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><PageWrapper><TeacherAnalyticsDashboard /></PageWrapper></ProtectedRoute>} />
         <Route path="/admin/repeated-alerts" element={<ProtectedRoute allowedRoles={['admin']}><PageWrapper><RepeatedQueryAlertsPage /></PageWrapper></ProtectedRoute>} />
         <Route path="/upload" element={<ProtectedRoute allowedRoles={['admin']}><PageWrapper><AdminUpload /></PageWrapper></ProtectedRoute>} />

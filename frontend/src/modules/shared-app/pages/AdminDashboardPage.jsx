@@ -96,6 +96,20 @@ const AdminDashboardPage = () => {
 
           <DashboardPanel>
             <Header
+              label="Attention Monitoring"
+              icon={ChartColumnBig}
+              title="Student Attention Reports"
+              description="View and generate comprehensive attention, drowsiness, phone usage, and engagement reports for specific students."
+            />
+            <div className="mt-6">
+              <Link to="/admin/attention-reports" className="chatbot-inline-button is-primary">
+                Open Attention Reports
+              </Link>
+            </div>
+          </DashboardPanel>
+
+          <DashboardPanel>
+            <Header
               label="Intervention"
               icon={ShieldAlert}
               title="Repeated query alerts"
