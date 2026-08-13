@@ -1,0 +1,53 @@
+{
+  "version": "1.0.0",
+  "alerts": [
+    {
+      "alertType": "Distraction Alert",
+      "vibrationPattern": "Long Pulse",
+      "oledMessage": "FOCUS BACK",
+      "intensity": 85,
+      "duration": 1000,
+      "description": "Used when the attention module detects distracted behavior."
+    },
+    {
+      "alertType": "Chatbot Reply",
+      "vibrationPattern": "Double Pulse",
+      "oledMessage": "CHAT REPLY",
+      "intensity": 60,
+      "duration": 550,
+      "description": "Used when the chatbot returns a reply for the learner."
+    },
+    {
+      "alertType": "Missed Lesson Segment",
+      "vibrationPattern": "Short + Long",
+      "oledMessage": "MISSED PART",
+      "intensity": 72,
+      "duration": 1100,
+      "description": "Used when the student misses a tracked lesson segment."
+    },
+    {
+      "alertType": "Popup Question",
+      "vibrationPattern": "Short Pulse",
+      "oledMessage": "NEW QUESTION",
+      "intensity": 58,
+      "duration": 200,
+      "description": "Used when a popup knowledge-check question is ready."
+    },
+    {
+      "alertType": "Exam Reminder",
+      "vibrationPattern": "Repeated Pulse",
+      "oledMessage": "EXAM TIP",
+      "intensity": 78,
+      "duration": 1400,
+      "description": "Used for revision prompts and exam-oriented nudges."
+    },
+    {
+      "alertType": "Sign Avatar Replay",
+      "vibrationPattern": "Emergency Pulse",
+      "oledMessage": "REPLAY SIGN",
+      "intensity": 88,
+      "duration": 1800,
+      "description": "Used when sign-avatar playback should be replayed carefully."
+    }
+  ]
+}

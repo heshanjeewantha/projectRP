@@ -1,0 +1,225 @@
+{
+  "description": "Synthetic benchmark cases for the component 01 sign classifier. This is a logic benchmark, not a real-world accuracy dataset.",
+  "cases": [
+    {
+      "label": "COMPUTER",
+      "description": "All fingers extended open-palm sample 1",
+      "thumbExtended": true,
+      "thumbAngle": 55,
+      "indexExtended": true,
+      "middleExtended": true,
+      "ringExtended": true,
+      "pinkyExtended": true
+    },
+    {
+      "label": "COMPUTER",
+      "description": "All fingers extended open-palm sample 2",
+      "thumbExtended": true,
+      "thumbAngle": 42,
+      "indexExtended": true,
+      "middleExtended": true,
+      "ringExtended": true,
+      "pinkyExtended": true
+    },
+    {
+      "label": "SOFTWARE",
+      "description": "Index, middle, ring extended without thumb sample 1",
+      "thumbExtended": false,
+      "thumbAngle": -135,
+      "indexExtended": true,
+      "middleExtended": true,
+      "ringExtended": true,
+      "pinkyExtended": false
+    },
+    {
+      "label": "SOFTWARE",
+      "description": "Index, middle, ring extended without thumb sample 2",
+      "thumbExtended": false,
+      "thumbAngle": -150,
+      "indexExtended": true,
+      "middleExtended": true,
+      "ringExtended": true,
+      "pinkyExtended": false
+    },
+    {
+      "label": "HARDWARE",
+      "description": "Closed fist with thumb angle inside hardware range sample 1",
+      "thumbExtended": false,
+      "thumbAngle": 0,
+      "indexExtended": false,
+      "middleExtended": false,
+      "ringExtended": false,
+      "pinkyExtended": false
+    },
+    {
+      "label": "HARDWARE",
+      "description": "Closed fist with thumb angle inside hardware range sample 2",
+      "thumbExtended": false,
+      "thumbAngle": -45,
+      "indexExtended": false,
+      "middleExtended": false,
+      "ringExtended": false,
+      "pinkyExtended": false
+    },
+    {
+      "label": "SECURITY",
+      "description": "Index and middle extended sample 1",
+      "thumbExtended": false,
+      "thumbAngle": -120,
+      "indexExtended": true,
+      "middleExtended": true,
+      "ringExtended": false,
+      "pinkyExtended": false
+    },
+    {
+      "label": "SECURITY",
+      "description": "Index and middle extended sample 2",
+      "thumbExtended": false,
+      "thumbAngle": -125,
+      "indexExtended": true,
+      "middleExtended": true,
+      "ringExtended": false,
+      "pinkyExtended": false
+    },
+    {
+      "label": "INTERNET",
+      "description": "Middle and ring extended sample 1",
+      "thumbExtended": false,
+      "thumbAngle": -140,
+      "indexExtended": false,
+      "middleExtended": true,
+      "ringExtended": true,
+      "pinkyExtended": false
+    },
+    {
+      "label": "INTERNET",
+      "description": "Middle and ring extended sample 2",
+      "thumbExtended": false,
+      "thumbAngle": -150,
+      "indexExtended": false,
+      "middleExtended": true,
+      "ringExtended": true,
+      "pinkyExtended": false
+    },
+    {
+      "label": "NETWORK",
+      "description": "Three fingers plus thumb extended sample 1",
+      "thumbExtended": true,
+      "thumbAngle": 65,
+      "indexExtended": true,
+      "middleExtended": true,
+      "ringExtended": false,
+      "pinkyExtended": true
+    },
+    {
+      "label": "NETWORK",
+      "description": "Three fingers plus thumb extended sample 2",
+      "thumbExtended": true,
+      "thumbAngle": 80,
+      "indexExtended": false,
+      "middleExtended": true,
+      "ringExtended": true,
+      "pinkyExtended": true
+    },
+    {
+      "label": "CLOUD",
+      "description": "Closed fist with thumb angle outside hardware range sample 1",
+      "thumbExtended": false,
+      "thumbAngle": 135,
+      "indexExtended": false,
+      "middleExtended": false,
+      "ringExtended": false,
+      "pinkyExtended": false
+    },
+    {
+      "label": "CLOUD",
+      "description": "Closed fist with thumb angle outside hardware range sample 2",
+      "thumbExtended": false,
+      "thumbAngle": -170,
+      "indexExtended": false,
+      "middleExtended": false,
+      "ringExtended": false,
+      "pinkyExtended": false
+    },
+    {
+      "label": "SERVER",
+      "description": "Thumb, index, pinky extended sample 1",
+      "thumbExtended": true,
+      "thumbAngle": 25,
+      "indexExtended": true,
+      "middleExtended": false,
+      "ringExtended": false,
+      "pinkyExtended": true
+    },
+    {
+      "label": "SERVER",
+      "description": "Thumb, index, pinky extended sample 2",
+      "thumbExtended": true,
+      "thumbAngle": 10,
+      "indexExtended": true,
+      "middleExtended": false,
+      "ringExtended": false,
+      "pinkyExtended": true
+    },
+    {
+      "label": "PROGRAMMING",
+      "description": "Only index finger extended sample 1",
+      "thumbExtended": false,
+      "thumbAngle": -135,
+      "indexExtended": true,
+      "middleExtended": false,
+      "ringExtended": false,
+      "pinkyExtended": false
+    },
+    {
+      "label": "PROGRAMMING",
+      "description": "Only index finger extended sample 2",
+      "thumbExtended": false,
+      "thumbAngle": -150,
+      "indexExtended": true,
+      "middleExtended": false,
+      "ringExtended": false,
+      "pinkyExtended": false
+    },
+    {
+      "label": "DATABASE",
+      "description": "Only thumb extended sample 1",
+      "thumbExtended": true,
+      "thumbAngle": 45,
+      "indexExtended": false,
+      "middleExtended": false,
+      "ringExtended": false,
+      "pinkyExtended": false
+    },
+    {
+      "label": "DATABASE",
+      "description": "Only thumb extended sample 2",
+      "thumbExtended": true,
+      "thumbAngle": 70,
+      "indexExtended": false,
+      "middleExtended": false,
+      "ringExtended": false,
+      "pinkyExtended": false
+    },
+    {
+      "label": "UNKNOWN",
+      "description": "Only middle finger extended",
+      "thumbExtended": false,
+      "thumbAngle": -135,
+      "indexExtended": false,
+      "middleExtended": true,
+      "ringExtended": false,
+      "pinkyExtended": false
+    },
+    {
+      "label": "UNKNOWN",
+      "description": "Only ring finger extended",
+      "thumbExtended": false,
+      "thumbAngle": -135,
+      "indexExtended": false,
+      "middleExtended": false,
+      "ringExtended": true,
+      "pinkyExtended": false
+    }
+  ]
+}

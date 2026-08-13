@@ -1,0 +1,50 @@
+{
+  "stage": "train_sign_mnist_model",
+  "status": "completed",
+  "updatedAt": "2026-05-11T00:51:18.074131+00:00",
+  "details": {
+    "trainAccuracy": 0.993188854489164,
+    "testAccuracy": 0.7706358059118795,
+    "trainSampleCount": 27455,
+    "testSampleCount": 7172,
+    "classCount": 24,
+    "supportedLetters": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "P",
+      "Q",
+      "R",
+      "S",
+      "T",
+      "U",
+      "V",
+      "W",
+      "X",
+      "Y"
+    ],
+    "unsupportedLetters": [
+      "J",
+      "Z"
+    ],
+    "epochs": 15,
+    "batchSize": 128,
+    "hiddenLayerSizes": [
+      256,
+      128
+    ],
+    "learningRate": 0.001,
+    "lastTrainedAt": "2026-05-11T00:51:18.072193+00:00"
+  }
+}

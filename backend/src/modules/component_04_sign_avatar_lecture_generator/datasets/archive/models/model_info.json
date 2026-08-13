@@ -1,0 +1,40 @@
+{
+  "modelPath": "C:\\Users\\dilha\\OneDrive\\Documents\\Desktop\\projectRP\\backend\\src\\modules\\component_04_sign_avatar_lecture_generator\\datasets\\archive\\models\\sign_mnist_mlp.joblib",
+  "labelMapPath": "C:\\Users\\dilha\\OneDrive\\Documents\\Desktop\\projectRP\\backend\\src\\modules\\component_04_sign_avatar_lecture_generator\\datasets\\archive\\models\\label_map.json",
+  "metricsPath": "C:\\Users\\dilha\\OneDrive\\Documents\\Desktop\\projectRP\\backend\\src\\modules\\component_04_sign_avatar_lecture_generator\\datasets\\archive\\models\\metrics.json",
+  "confusionMatrixPath": "C:\\Users\\dilha\\OneDrive\\Documents\\Desktop\\projectRP\\backend\\src\\modules\\component_04_sign_avatar_lecture_generator\\datasets\\archive\\models\\confusion_matrix.csv",
+  "classCount": 24,
+  "inputSize": 784,
+  "supportedLetters": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y"
+  ],
+  "unsupportedLetters": [
+    "J",
+    "Z"
+  ],
+  "lastTrainedAt": "2026-05-11T00:51:18.072193+00:00",
+  "trainingStatus": "completed"
+}

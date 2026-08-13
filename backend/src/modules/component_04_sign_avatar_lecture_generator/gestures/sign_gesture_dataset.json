@@ -1,0 +1,499 @@
+{
+  "subject": "O/L ICT",
+  "version": "2.0.0",
+  "gestures": [
+    {
+      "glossWord": "COMPUTER",
+      "animationFile": "placeholder/computer.glb",
+      "description": "Both hands form a controlled typing pose near the chest.",
+      "fallbackType": "direct",
+      "animationDuration": 1600,
+      "leftHandPose": {
+        "position": { "x": 342, "y": 314, "z": 0 },
+        "scale": 1,
+        "wristAngle": -18,
+        "palmAngle": 0,
+        "fingerSpread": 1,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.3, "index": 0.56, "middle": 0.62, "ring": 0.66, "pinky": 0.68 }
+      },
+      "rightHandPose": {
+        "position": { "x": 558, "y": 314, "z": 0 },
+        "scale": 1,
+        "wristAngle": 18,
+        "palmAngle": 0,
+        "fingerSpread": 1,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.3, "index": 0.56, "middle": 0.62, "ring": 0.66, "pinky": 0.68 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -18, "thumb": 0.3, "index": 0.56, "middle": 0.62, "ring": 0.66, "pinky": 0.68 },
+        "right": { "wrist": 18, "thumb": 0.3, "index": 0.56, "middle": 0.62, "ring": 0.66, "pinky": 0.68 }
+      }
+    },
+    {
+      "glossWord": "DEVICE",
+      "animationFile": "placeholder/device.glb",
+      "description": "Both hands frame a compact object to represent a digital device.",
+      "fallbackType": "direct",
+      "animationDuration": 1500,
+      "leftHandPose": {
+        "position": { "x": 350, "y": 306, "z": 0 },
+        "scale": 1,
+        "wristAngle": -10,
+        "palmAngle": 10,
+        "fingerSpread": 0.94,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.34, "index": 0.44, "middle": 0.5, "ring": 0.58, "pinky": 0.64 }
+      },
+      "rightHandPose": {
+        "position": { "x": 550, "y": 306, "z": 0 },
+        "scale": 1,
+        "wristAngle": 10,
+        "palmAngle": -10,
+        "fingerSpread": 0.94,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.34, "index": 0.44, "middle": 0.5, "ring": 0.58, "pinky": 0.64 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -10, "thumb": 0.34, "index": 0.44, "middle": 0.5, "ring": 0.58, "pinky": 0.64 },
+        "right": { "wrist": 10, "thumb": 0.34, "index": 0.44, "middle": 0.5, "ring": 0.58, "pinky": 0.64 }
+      }
+    },
+    {
+      "glossWord": "ELECTRONIC",
+      "animationFile": "placeholder/electronic.glb",
+      "description": "One hand presents the device while the other forms a precise technical shape.",
+      "fallbackType": "direct",
+      "animationDuration": 1450,
+      "leftHandPose": {
+        "position": { "x": 342, "y": 308, "z": 0 },
+        "scale": 1,
+        "wristAngle": -12,
+        "palmAngle": 8,
+        "fingerSpread": 1,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.3, "index": 0.36, "middle": 0.44, "ring": 0.54, "pinky": 0.6 }
+      },
+      "rightHandPose": {
+        "position": { "x": 566, "y": 292, "z": 0 },
+        "scale": 1,
+        "wristAngle": 14,
+        "palmAngle": -12,
+        "fingerSpread": 1.02,
+        "thumbSpread": 22,
+        "fingerCurls": { "thumb": 0.12, "index": 0.1, "middle": 0.84, "ring": 0.9, "pinky": 0.92 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -12, "thumb": 0.3, "index": 0.36, "middle": 0.44, "ring": 0.54, "pinky": 0.6 },
+        "right": { "wrist": 14, "thumb": 0.12, "index": 0.1, "middle": 0.84, "ring": 0.9, "pinky": 0.92 }
+      }
+    },
+    {
+      "glossWord": "DATA",
+      "animationFile": "placeholder/data.glb",
+      "description": "Hands cup inward as if collecting grouped information.",
+      "fallbackType": "direct",
+      "animationDuration": 1500,
+      "leftHandPose": {
+        "position": { "x": 346, "y": 300, "z": 0 },
+        "scale": 1,
+        "wristAngle": -10,
+        "palmAngle": 12,
+        "fingerSpread": 1,
+        "thumbSpread": 26,
+        "fingerCurls": { "thumb": 0.42, "index": 0.52, "middle": 0.52, "ring": 0.58, "pinky": 0.64 }
+      },
+      "rightHandPose": {
+        "position": { "x": 554, "y": 300, "z": 0 },
+        "scale": 1,
+        "wristAngle": 10,
+        "palmAngle": -12,
+        "fingerSpread": 1,
+        "thumbSpread": 26,
+        "fingerCurls": { "thumb": 0.42, "index": 0.52, "middle": 0.52, "ring": 0.58, "pinky": 0.64 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -10, "thumb": 0.42, "index": 0.52, "middle": 0.52, "ring": 0.58, "pinky": 0.64 },
+        "right": { "wrist": 10, "thumb": 0.42, "index": 0.52, "middle": 0.52, "ring": 0.58, "pinky": 0.64 }
+      }
+    },
+    {
+      "glossWord": "INFORMATION",
+      "animationFile": "placeholder/information.glb",
+      "description": "Open hands present information clearly in front of the body.",
+      "fallbackType": "direct",
+      "animationDuration": 1500,
+      "leftHandPose": {
+        "position": { "x": 336, "y": 286, "z": 0 },
+        "scale": 1,
+        "wristAngle": -4,
+        "palmAngle": -10,
+        "fingerSpread": 1.02,
+        "thumbSpread": 28,
+        "fingerCurls": { "thumb": 0.16, "index": 0.1, "middle": 0.1, "ring": 0.16, "pinky": 0.18 }
+      },
+      "rightHandPose": {
+        "position": { "x": 564, "y": 286, "z": 0 },
+        "scale": 1,
+        "wristAngle": 4,
+        "palmAngle": 10,
+        "fingerSpread": 1.02,
+        "thumbSpread": 28,
+        "fingerCurls": { "thumb": 0.16, "index": 0.1, "middle": 0.1, "ring": 0.16, "pinky": 0.18 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -4, "thumb": 0.16, "index": 0.1, "middle": 0.1, "ring": 0.16, "pinky": 0.18 },
+        "right": { "wrist": 4, "thumb": 0.16, "index": 0.1, "middle": 0.1, "ring": 0.16, "pinky": 0.18 }
+      }
+    },
+    {
+      "glossWord": "INTERNET",
+      "animationFile": "placeholder/internet.glb",
+      "description": "Hands open outward to show connected digital links.",
+      "fallbackType": "direct",
+      "animationDuration": 1550,
+      "leftHandPose": {
+        "position": { "x": 326, "y": 292, "z": 0 },
+        "scale": 1,
+        "wristAngle": -12,
+        "palmAngle": -16,
+        "fingerSpread": 1.08,
+        "thumbSpread": 28,
+        "fingerCurls": { "thumb": 0.2, "index": 0.12, "middle": 0.12, "ring": 0.18, "pinky": 0.22 }
+      },
+      "rightHandPose": {
+        "position": { "x": 574, "y": 292, "z": 0 },
+        "scale": 1,
+        "wristAngle": 12,
+        "palmAngle": 16,
+        "fingerSpread": 1.08,
+        "thumbSpread": 28,
+        "fingerCurls": { "thumb": 0.2, "index": 0.12, "middle": 0.12, "ring": 0.18, "pinky": 0.22 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -12, "thumb": 0.2, "index": 0.12, "middle": 0.12, "ring": 0.18, "pinky": 0.22 },
+        "right": { "wrist": 12, "thumb": 0.2, "index": 0.12, "middle": 0.12, "ring": 0.18, "pinky": 0.22 }
+      }
+    },
+    {
+      "glossWord": "EMAIL",
+      "animationFile": "placeholder/email.glb",
+      "description": "The message hand is supported while the other hand points outward.",
+      "fallbackType": "direct",
+      "animationDuration": 1500,
+      "leftHandPose": {
+        "position": { "x": 346, "y": 304, "z": 0 },
+        "scale": 1,
+        "wristAngle": -10,
+        "palmAngle": 6,
+        "fingerSpread": 1,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.34, "index": 0.44, "middle": 0.48, "ring": 0.54, "pinky": 0.6 }
+      },
+      "rightHandPose": {
+        "position": { "x": 560, "y": 286, "z": 0 },
+        "scale": 1,
+        "wristAngle": 8,
+        "palmAngle": -10,
+        "fingerSpread": 1,
+        "thumbSpread": 22,
+        "fingerCurls": { "thumb": 0.18, "index": 0.08, "middle": 0.84, "ring": 0.9, "pinky": 0.92 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -10, "thumb": 0.34, "index": 0.44, "middle": 0.48, "ring": 0.54, "pinky": 0.6 },
+        "right": { "wrist": 8, "thumb": 0.18, "index": 0.08, "middle": 0.84, "ring": 0.9, "pinky": 0.92 }
+      }
+    },
+    {
+      "glossWord": "DATABASE",
+      "animationFile": "placeholder/database.glb",
+      "description": "Hands stack around a central storage space.",
+      "fallbackType": "direct",
+      "animationDuration": 1500,
+      "leftHandPose": {
+        "position": { "x": 344, "y": 300, "z": 0 },
+        "scale": 1,
+        "wristAngle": -8,
+        "palmAngle": 10,
+        "fingerSpread": 1,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.4, "index": 0.48, "middle": 0.54, "ring": 0.6, "pinky": 0.66 }
+      },
+      "rightHandPose": {
+        "position": { "x": 556, "y": 300, "z": 0 },
+        "scale": 1,
+        "wristAngle": 8,
+        "palmAngle": -10,
+        "fingerSpread": 1,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.4, "index": 0.48, "middle": 0.54, "ring": 0.6, "pinky": 0.66 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -8, "thumb": 0.4, "index": 0.48, "middle": 0.54, "ring": 0.6, "pinky": 0.66 },
+        "right": { "wrist": 8, "thumb": 0.4, "index": 0.48, "middle": 0.54, "ring": 0.6, "pinky": 0.66 }
+      }
+    },
+    {
+      "glossWord": "PROGRAM",
+      "animationFile": "placeholder/program.glb",
+      "description": "One hand points while the other supports sequential coded steps.",
+      "fallbackType": "direct",
+      "animationDuration": 1450,
+      "leftHandPose": {
+        "position": { "x": 340, "y": 312, "z": 0 },
+        "scale": 1,
+        "wristAngle": -16,
+        "palmAngle": 2,
+        "fingerSpread": 1,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.34, "index": 0.12, "middle": 0.44, "ring": 0.72, "pinky": 0.78 }
+      },
+      "rightHandPose": {
+        "position": { "x": 560, "y": 292, "z": 0 },
+        "scale": 1,
+        "wristAngle": 10,
+        "palmAngle": -4,
+        "fingerSpread": 1,
+        "thumbSpread": 22,
+        "fingerCurls": { "thumb": 0.26, "index": 0.08, "middle": 0.82, "ring": 0.88, "pinky": 0.9 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -16, "thumb": 0.34, "index": 0.12, "middle": 0.44, "ring": 0.72, "pinky": 0.78 },
+        "right": { "wrist": 10, "thumb": 0.26, "index": 0.08, "middle": 0.82, "ring": 0.88, "pinky": 0.9 }
+      }
+    },
+    {
+      "glossWord": "FLOWCHART",
+      "animationFile": "placeholder/flowchart.glb",
+      "description": "Open hands trace a guided process path.",
+      "fallbackType": "direct",
+      "animationDuration": 1550,
+      "leftHandPose": {
+        "position": { "x": 326, "y": 292, "z": 0 },
+        "scale": 1,
+        "wristAngle": -6,
+        "palmAngle": -18,
+        "fingerSpread": 1.06,
+        "thumbSpread": 28,
+        "fingerCurls": { "thumb": 0.2, "index": 0.16, "middle": 0.16, "ring": 0.18, "pinky": 0.22 }
+      },
+      "rightHandPose": {
+        "position": { "x": 574, "y": 292, "z": 0 },
+        "scale": 1,
+        "wristAngle": 6,
+        "palmAngle": 18,
+        "fingerSpread": 1.06,
+        "thumbSpread": 28,
+        "fingerCurls": { "thumb": 0.2, "index": 0.16, "middle": 0.16, "ring": 0.18, "pinky": 0.22 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -6, "thumb": 0.2, "index": 0.16, "middle": 0.16, "ring": 0.18, "pinky": 0.22 },
+        "right": { "wrist": 6, "thumb": 0.2, "index": 0.16, "middle": 0.16, "ring": 0.18, "pinky": 0.22 }
+      }
+    },
+    {
+      "glossWord": "SECURITY",
+      "animationFile": "placeholder/security.glb",
+      "description": "Both hands close protectively in front of the body.",
+      "fallbackType": "direct",
+      "animationDuration": 1500,
+      "leftHandPose": {
+        "position": { "x": 354, "y": 302, "z": 0 },
+        "scale": 1,
+        "wristAngle": -8,
+        "palmAngle": 16,
+        "fingerSpread": 0.98,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.54, "index": 0.68, "middle": 0.72, "ring": 0.76, "pinky": 0.78 }
+      },
+      "rightHandPose": {
+        "position": { "x": 546, "y": 302, "z": 0 },
+        "scale": 1,
+        "wristAngle": 8,
+        "palmAngle": -16,
+        "fingerSpread": 0.98,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.54, "index": 0.68, "middle": 0.72, "ring": 0.76, "pinky": 0.78 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -8, "thumb": 0.54, "index": 0.68, "middle": 0.72, "ring": 0.76, "pinky": 0.78 },
+        "right": { "wrist": 8, "thumb": 0.54, "index": 0.68, "middle": 0.72, "ring": 0.76, "pinky": 0.78 }
+      }
+    },
+    {
+      "glossWord": "HARDWARE",
+      "animationFile": "placeholder/hardware.glb",
+      "description": "Firm hand shapes suggest solid physical components.",
+      "fallbackType": "direct",
+      "animationDuration": 1450,
+      "leftHandPose": {
+        "position": { "x": 344, "y": 308, "z": 0 },
+        "scale": 1,
+        "wristAngle": -14,
+        "palmAngle": 0,
+        "fingerSpread": 0.98,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.3, "index": 0.62, "middle": 0.66, "ring": 0.72, "pinky": 0.76 }
+      },
+      "rightHandPose": {
+        "position": { "x": 556, "y": 308, "z": 0 },
+        "scale": 1,
+        "wristAngle": 14,
+        "palmAngle": 0,
+        "fingerSpread": 0.98,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.3, "index": 0.62, "middle": 0.66, "ring": 0.72, "pinky": 0.76 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -14, "thumb": 0.3, "index": 0.62, "middle": 0.66, "ring": 0.72, "pinky": 0.76 },
+        "right": { "wrist": 14, "thumb": 0.3, "index": 0.62, "middle": 0.66, "ring": 0.72, "pinky": 0.76 }
+      }
+    },
+    {
+      "glossWord": "SOFTWARE",
+      "animationFile": "placeholder/software.glb",
+      "description": "Hands stay lighter and more open to represent software logic.",
+      "fallbackType": "direct",
+      "animationDuration": 1450,
+      "leftHandPose": {
+        "position": { "x": 338, "y": 292, "z": 0 },
+        "scale": 1,
+        "wristAngle": -8,
+        "palmAngle": -4,
+        "fingerSpread": 1.02,
+        "thumbSpread": 26,
+        "fingerCurls": { "thumb": 0.24, "index": 0.18, "middle": 0.2, "ring": 0.26, "pinky": 0.3 }
+      },
+      "rightHandPose": {
+        "position": { "x": 562, "y": 292, "z": 0 },
+        "scale": 1,
+        "wristAngle": 8,
+        "palmAngle": 4,
+        "fingerSpread": 1.02,
+        "thumbSpread": 26,
+        "fingerCurls": { "thumb": 0.24, "index": 0.18, "middle": 0.2, "ring": 0.26, "pinky": 0.3 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -8, "thumb": 0.24, "index": 0.18, "middle": 0.2, "ring": 0.26, "pinky": 0.3 },
+        "right": { "wrist": 8, "thumb": 0.24, "index": 0.18, "middle": 0.2, "ring": 0.26, "pinky": 0.3 }
+      }
+    },
+    {
+      "glossWord": "INPUT",
+      "animationFile": "placeholder/input.glb",
+      "description": "Right hand points inward to show information entering the system.",
+      "fallbackType": "direct",
+      "animationDuration": 1450,
+      "leftHandPose": {
+        "position": { "x": 340, "y": 304, "z": 0 },
+        "scale": 1,
+        "wristAngle": -10,
+        "palmAngle": 10,
+        "fingerSpread": 1,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.36, "index": 0.5, "middle": 0.6, "ring": 0.68, "pinky": 0.72 }
+      },
+      "rightHandPose": {
+        "position": { "x": 562, "y": 286, "z": 0 },
+        "scale": 1,
+        "wristAngle": 12,
+        "palmAngle": -18,
+        "fingerSpread": 1,
+        "thumbSpread": 22,
+        "fingerCurls": { "thumb": 0.14, "index": 0.08, "middle": 0.84, "ring": 0.9, "pinky": 0.92 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -10, "thumb": 0.36, "index": 0.5, "middle": 0.6, "ring": 0.68, "pinky": 0.72 },
+        "right": { "wrist": 12, "thumb": 0.14, "index": 0.08, "middle": 0.84, "ring": 0.9, "pinky": 0.92 }
+      }
+    },
+    {
+      "glossWord": "OUTPUT",
+      "animationFile": "placeholder/output.glb",
+      "description": "Right hand extends outward to show information leaving the system.",
+      "fallbackType": "direct",
+      "animationDuration": 1450,
+      "leftHandPose": {
+        "position": { "x": 340, "y": 304, "z": 0 },
+        "scale": 1,
+        "wristAngle": -10,
+        "palmAngle": 8,
+        "fingerSpread": 1,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.34, "index": 0.5, "middle": 0.6, "ring": 0.68, "pinky": 0.72 }
+      },
+      "rightHandPose": {
+        "position": { "x": 578, "y": 274, "z": 0 },
+        "scale": 1,
+        "wristAngle": 6,
+        "palmAngle": 8,
+        "fingerSpread": 1.04,
+        "thumbSpread": 26,
+        "fingerCurls": { "thumb": 0.16, "index": 0.08, "middle": 0.12, "ring": 0.22, "pinky": 0.28 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -10, "thumb": 0.34, "index": 0.5, "middle": 0.6, "ring": 0.68, "pinky": 0.72 },
+        "right": { "wrist": 6, "thumb": 0.16, "index": 0.08, "middle": 0.12, "ring": 0.22, "pinky": 0.28 }
+      }
+    },
+    {
+      "glossWord": "MEMORY",
+      "animationFile": "placeholder/memory.glb",
+      "description": "Hands gather close to the head and chest to suggest stored recall.",
+      "fallbackType": "direct",
+      "animationDuration": 1500,
+      "leftHandPose": {
+        "position": { "x": 344, "y": 284, "z": 0 },
+        "scale": 1,
+        "wristAngle": -18,
+        "palmAngle": 10,
+        "fingerSpread": 1,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.36, "index": 0.34, "middle": 0.42, "ring": 0.48, "pinky": 0.54 }
+      },
+      "rightHandPose": {
+        "position": { "x": 556, "y": 292, "z": 0 },
+        "scale": 1,
+        "wristAngle": 12,
+        "palmAngle": -8,
+        "fingerSpread": 1,
+        "thumbSpread": 24,
+        "fingerCurls": { "thumb": 0.3, "index": 0.28, "middle": 0.34, "ring": 0.42, "pinky": 0.48 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -18, "thumb": 0.36, "index": 0.34, "middle": 0.42, "ring": 0.48, "pinky": 0.54 },
+        "right": { "wrist": 12, "thumb": 0.3, "index": 0.28, "middle": 0.34, "ring": 0.42, "pinky": 0.48 }
+      }
+    },
+    {
+      "glossWord": "NETWORK",
+      "animationFile": "placeholder/network.glb",
+      "description": "Both hands frame multiple connected points in space.",
+      "fallbackType": "direct",
+      "animationDuration": 1550,
+      "leftHandPose": {
+        "position": { "x": 324, "y": 292, "z": 0 },
+        "scale": 1,
+        "wristAngle": -8,
+        "palmAngle": -18,
+        "fingerSpread": 1.1,
+        "thumbSpread": 28,
+        "fingerCurls": { "thumb": 0.18, "index": 0.1, "middle": 0.12, "ring": 0.18, "pinky": 0.22 }
+      },
+      "rightHandPose": {
+        "position": { "x": 576, "y": 292, "z": 0 },
+        "scale": 1,
+        "wristAngle": 8,
+        "palmAngle": 18,
+        "fingerSpread": 1.1,
+        "thumbSpread": 28,
+        "fingerCurls": { "thumb": 0.18, "index": 0.1, "middle": 0.12, "ring": 0.18, "pinky": 0.22 }
+      },
+      "boneRotationValues": {
+        "left": { "wrist": -8, "thumb": 0.18, "index": 0.1, "middle": 0.12, "ring": 0.18, "pinky": 0.22 },
+        "right": { "wrist": 8, "thumb": 0.18, "index": 0.1, "middle": 0.12, "ring": 0.18, "pinky": 0.22 }
+      }
+    }
+  ]
+}

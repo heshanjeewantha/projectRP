@@ -1,0 +1,876 @@
+{
+  "subject": "O/L ICT",
+  "version": "1.0.0",
+  "concepts": [
+    {
+      "conceptId": "intro_ict",
+      "conceptName": "Introduction to ICT",
+      "grade": "O/L",
+      "unit": "ICT Fundamentals",
+      "description": "Introduces the role of information and communication technology in daily life, education, business, and communication.",
+      "prerequisites": [],
+      "relatedConcepts": ["computer_hardware", "computer_software", "internet_email"],
+      "difficultyLevel": "easy",
+      "keywords": ["ICT", "information", "communication", "digital tools", "society"],
+      "questions": [
+        {
+          "questionId": "intro_ict_q1",
+          "questionText": "What does ICT stand for?",
+          "options": ["Information and Communication Technology", "Integrated Computer Type", "Internal Communication Tool", "Information Control Technique"],
+          "correctAnswer": "Information and Communication Technology",
+          "explanation": "ICT is the short form for Information and Communication Technology.",
+          "difficultyLevel": "easy",
+          "conceptId": "intro_ict"
+        },
+        {
+          "questionId": "intro_ict_q2",
+          "questionText": "Which activity is an example of using ICT in education?",
+          "options": ["Sending assignments through an LMS", "Writing with chalk only", "Locking a classroom door", "Sharpening a pencil"],
+          "correctAnswer": "Sending assignments through an LMS",
+          "explanation": "Learning management systems are ICT tools used to share lessons and assignments.",
+          "difficultyLevel": "easy",
+          "conceptId": "intro_ict"
+        },
+        {
+          "questionId": "intro_ict_q3",
+          "questionText": "Which of the following is a major benefit of ICT?",
+          "options": ["Faster access to information", "Heavier paper files", "Slower communication", "Manual copying only"],
+          "correctAnswer": "Faster access to information",
+          "explanation": "ICT improves speed when storing, searching, and sharing information.",
+          "difficultyLevel": "easy",
+          "conceptId": "intro_ict"
+        },
+        {
+          "questionId": "intro_ict_q4",
+          "questionText": "A smartphone is considered an ICT device mainly because it can:",
+          "options": ["Process and communicate information", "Boil water", "Print on paper without software", "Work without electricity or battery"],
+          "correctAnswer": "Process and communicate information",
+          "explanation": "ICT devices help users create, process, store, and share information.",
+          "difficultyLevel": "medium",
+          "conceptId": "intro_ict"
+        },
+        {
+          "questionId": "intro_ict_q5",
+          "questionText": "Which statement best describes the role of ICT in modern society?",
+          "options": ["It supports communication, automation, and data handling", "It only replaces books", "It removes the need for networks", "It is used only in offices"],
+          "correctAnswer": "It supports communication, automation, and data handling",
+          "explanation": "ICT has a broad role across communication, learning, work, and information management.",
+          "difficultyLevel": "medium",
+          "conceptId": "intro_ict"
+        }
+      ]
+    },
+    {
+      "conceptId": "computer_hardware",
+      "conceptName": "Computer Hardware",
+      "grade": "O/L",
+      "unit": "Computer Systems",
+      "description": "Covers the physical parts of a computer system such as input, output, storage, and processing devices.",
+      "prerequisites": ["intro_ict"],
+      "relatedConcepts": ["computer_software", "operating_systems", "data_representation"],
+      "difficultyLevel": "easy",
+      "keywords": ["hardware", "CPU", "input", "output", "storage"],
+      "questions": [
+        {
+          "questionId": "computer_hardware_q1",
+          "questionText": "Which hardware component is known as the brain of the computer?",
+          "options": ["CPU", "Monitor", "Keyboard", "Speaker"],
+          "correctAnswer": "CPU",
+          "explanation": "The CPU processes instructions and controls major operations.",
+          "difficultyLevel": "easy",
+          "conceptId": "computer_hardware"
+        },
+        {
+          "questionId": "computer_hardware_q2",
+          "questionText": "Which device is an input device?",
+          "options": ["Keyboard", "Projector", "Printer", "Monitor"],
+          "correctAnswer": "Keyboard",
+          "explanation": "A keyboard sends data and commands into the computer.",
+          "difficultyLevel": "easy",
+          "conceptId": "computer_hardware"
+        },
+        {
+          "questionId": "computer_hardware_q3",
+          "questionText": "Which of these is used for long-term data storage?",
+          "options": ["SSD", "RAM", "Cache", "Register"],
+          "correctAnswer": "SSD",
+          "explanation": "An SSD stores data permanently even when power is off.",
+          "difficultyLevel": "easy",
+          "conceptId": "computer_hardware"
+        },
+        {
+          "questionId": "computer_hardware_q4",
+          "questionText": "What is the main function of RAM?",
+          "options": ["Temporarily store data currently in use", "Display images", "Produce sound", "Connect to the Internet directly"],
+          "correctAnswer": "Temporarily store data currently in use",
+          "explanation": "RAM is volatile memory used while programs are running.",
+          "difficultyLevel": "medium",
+          "conceptId": "computer_hardware"
+        },
+        {
+          "questionId": "computer_hardware_q5",
+          "questionText": "A scanner is classified as which type of hardware?",
+          "options": ["Input device", "Output device", "Storage device", "Processing device"],
+          "correctAnswer": "Input device",
+          "explanation": "A scanner captures information and sends it into the computer.",
+          "difficultyLevel": "medium",
+          "conceptId": "computer_hardware"
+        }
+      ]
+    },
+    {
+      "conceptId": "computer_software",
+      "conceptName": "Computer Software",
+      "grade": "O/L",
+      "unit": "Computer Systems",
+      "description": "Explains software categories, including system software and application software, and their purposes.",
+      "prerequisites": ["intro_ict", "computer_hardware"],
+      "relatedConcepts": ["operating_systems", "programming_basics", "word_processing"],
+      "difficultyLevel": "easy",
+      "keywords": ["software", "application", "system software", "program", "utility"],
+      "questions": [
+        {
+          "questionId": "computer_software_q1",
+          "questionText": "Which of the following is software?",
+          "options": ["Spreadsheet application", "Mouse", "Motherboard", "USB cable"],
+          "correctAnswer": "Spreadsheet application",
+          "explanation": "Software consists of programs and instructions, unlike physical hardware parts.",
+          "difficultyLevel": "easy",
+          "conceptId": "computer_software"
+        },
+        {
+          "questionId": "computer_software_q2",
+          "questionText": "What is the main difference between hardware and software?",
+          "options": ["Hardware is physical, software is intangible", "Hardware is faster, software is slower", "Hardware is free, software is paid", "Hardware is only for input"],
+          "correctAnswer": "Hardware is physical, software is intangible",
+          "explanation": "Hardware can be touched, while software is a set of programs and instructions.",
+          "difficultyLevel": "easy",
+          "conceptId": "computer_software"
+        },
+        {
+          "questionId": "computer_software_q3",
+          "questionText": "Which is an example of system software?",
+          "options": ["Operating system", "Presentation file", "Worksheet", "Printer cartridge"],
+          "correctAnswer": "Operating system",
+          "explanation": "System software manages hardware and provides a base for applications.",
+          "difficultyLevel": "easy",
+          "conceptId": "computer_software"
+        },
+        {
+          "questionId": "computer_software_q4",
+          "questionText": "A word processor is best classified as:",
+          "options": ["Application software", "Firmware", "Input hardware", "Network topology"],
+          "correctAnswer": "Application software",
+          "explanation": "Application software helps users perform specific tasks such as typing documents.",
+          "difficultyLevel": "medium",
+          "conceptId": "computer_software"
+        },
+        {
+          "questionId": "computer_software_q5",
+          "questionText": "Why are utility programs grouped under system software?",
+          "options": ["They help manage and maintain the computer", "They replace keyboards", "They create network cables", "They are always games"],
+          "correctAnswer": "They help manage and maintain the computer",
+          "explanation": "Utilities support tasks like cleaning, backup, antivirus, and file management.",
+          "difficultyLevel": "medium",
+          "conceptId": "computer_software"
+        }
+      ]
+    },
+    {
+      "conceptId": "operating_systems",
+      "conceptName": "Operating Systems",
+      "grade": "O/L",
+      "unit": "Computer Systems",
+      "description": "Focuses on the purpose of an operating system and basic operating system functions such as file and device management.",
+      "prerequisites": ["computer_hardware", "computer_software"],
+      "relatedConcepts": ["computer_software", "computer_networks", "cyber_security"],
+      "difficultyLevel": "medium",
+      "keywords": ["operating system", "OS", "file management", "device management", "user interface"],
+      "questions": [
+        {
+          "questionId": "operating_systems_q1",
+          "questionText": "What is the main role of an operating system?",
+          "options": ["Manage hardware and software resources", "Create only documents", "Convert decimal to binary", "Print without a computer"],
+          "correctAnswer": "Manage hardware and software resources",
+          "explanation": "The OS coordinates hardware, files, memory, and application execution.",
+          "difficultyLevel": "easy",
+          "conceptId": "operating_systems"
+        },
+        {
+          "questionId": "operating_systems_q2",
+          "questionText": "Which of the following is an operating system?",
+          "options": ["Linux", "Excel", "PowerPoint", "Chrome webpage"],
+          "correctAnswer": "Linux",
+          "explanation": "Linux is an operating system, while the others are applications or content.",
+          "difficultyLevel": "easy",
+          "conceptId": "operating_systems"
+        },
+        {
+          "questionId": "operating_systems_q3",
+          "questionText": "Which task is handled by an operating system?",
+          "options": ["Managing files and folders", "Designing a logo by itself", "Building a keyboard", "Writing data in Morse code"],
+          "correctAnswer": "Managing files and folders",
+          "explanation": "File management is one of the standard functions of an operating system.",
+          "difficultyLevel": "medium",
+          "conceptId": "operating_systems"
+        },
+        {
+          "questionId": "operating_systems_q4",
+          "questionText": "Why is device management important in an operating system?",
+          "options": ["It lets the OS control peripherals correctly", "It increases paper usage", "It removes all software", "It converts images to sound"],
+          "correctAnswer": "It lets the OS control peripherals correctly",
+          "explanation": "The OS manages communication between the computer and connected devices.",
+          "difficultyLevel": "medium",
+          "conceptId": "operating_systems"
+        },
+        {
+          "questionId": "operating_systems_q5",
+          "questionText": "A graphical user interface helps users by:",
+          "options": ["Providing icons and windows for interaction", "Changing hardware into software", "Replacing storage devices", "Blocking all applications"],
+          "correctAnswer": "Providing icons and windows for interaction",
+          "explanation": "A GUI makes interaction easier through visual elements like icons, menus, and windows.",
+          "difficultyLevel": "medium",
+          "conceptId": "operating_systems"
+        }
+      ]
+    },
+    {
+      "conceptId": "data_representation",
+      "conceptName": "Data Representation",
+      "grade": "O/L",
+      "unit": "Data and Logic",
+      "description": "Introduces how computers represent text, numbers, images, and sound using bits and bytes.",
+      "prerequisites": ["intro_ict", "computer_hardware"],
+      "relatedConcepts": ["number_systems", "logic_gates", "databases"],
+      "difficultyLevel": "medium",
+      "keywords": ["data", "bit", "byte", "binary", "encoding"],
+      "questions": [
+        {
+          "questionId": "data_representation_q1",
+          "questionText": "What is the smallest unit of data in computing?",
+          "options": ["Bit", "Byte", "Kilobyte", "Nibble"],
+          "correctAnswer": "Bit",
+          "explanation": "A bit stores one binary value, either 0 or 1.",
+          "difficultyLevel": "easy",
+          "conceptId": "data_representation"
+        },
+        {
+          "questionId": "data_representation_q2",
+          "questionText": "How many bits are in one byte?",
+          "options": ["8", "2", "4", "16"],
+          "correctAnswer": "8",
+          "explanation": "A byte is made up of 8 bits.",
+          "difficultyLevel": "easy",
+          "conceptId": "data_representation"
+        },
+        {
+          "questionId": "data_representation_q3",
+          "questionText": "Computers represent data internally using:",
+          "options": ["Binary digits", "Roman numerals", "Only alphabetic letters", "Morse code"],
+          "correctAnswer": "Binary digits",
+          "explanation": "Computer circuits naturally work with two states, so data is stored in binary form.",
+          "difficultyLevel": "easy",
+          "conceptId": "data_representation"
+        },
+        {
+          "questionId": "data_representation_q4",
+          "questionText": "Which statement about text encoding is correct?",
+          "options": ["Characters are mapped to numeric codes", "Every letter is stored as an image", "Text can only be stored in decimal", "Text cannot be stored digitally"],
+          "correctAnswer": "Characters are mapped to numeric codes",
+          "explanation": "Encoding standards such as ASCII and Unicode represent characters using numbers.",
+          "difficultyLevel": "medium",
+          "conceptId": "data_representation"
+        },
+        {
+          "questionId": "data_representation_q5",
+          "questionText": "Why are images and sounds also converted into binary?",
+          "options": ["Because computers process all digital data as binary", "Because monitors only accept words", "Because binary is a type of cable", "Because speakers store decimal directly"],
+          "correctAnswer": "Because computers process all digital data as binary",
+          "explanation": "Different media types are encoded into binary so computers can store and process them.",
+          "difficultyLevel": "medium",
+          "conceptId": "data_representation"
+        }
+      ]
+    },
+    {
+      "conceptId": "number_systems",
+      "conceptName": "Number Systems",
+      "grade": "O/L",
+      "unit": "Data and Logic",
+      "description": "Explains decimal, binary, octal, and hexadecimal number systems and basic conversions.",
+      "prerequisites": ["data_representation"],
+      "relatedConcepts": ["logic_gates", "programming_basics", "data_representation"],
+      "difficultyLevel": "medium",
+      "keywords": ["decimal", "binary", "octal", "hexadecimal", "conversion"],
+      "questions": [
+        {
+          "questionId": "number_systems_q1",
+          "questionText": "What is the base of the binary number system?",
+          "options": ["2", "8", "10", "16"],
+          "correctAnswer": "2",
+          "explanation": "Binary uses only two symbols, 0 and 1, so its base is 2.",
+          "difficultyLevel": "easy",
+          "conceptId": "number_systems"
+        },
+        {
+          "questionId": "number_systems_q2",
+          "questionText": "Which binary number equals decimal 5?",
+          "options": ["101", "111", "100", "011"],
+          "correctAnswer": "101",
+          "explanation": "Binary 101 equals 1x4 + 0x2 + 1x1 = 5.",
+          "difficultyLevel": "medium",
+          "conceptId": "number_systems"
+        },
+        {
+          "questionId": "number_systems_q3",
+          "questionText": "Which number system commonly uses digits 0-9 and letters A-F?",
+          "options": ["Hexadecimal", "Binary", "Decimal", "Octal"],
+          "correctAnswer": "Hexadecimal",
+          "explanation": "Hexadecimal uses sixteen symbols: 0-9 and A-F.",
+          "difficultyLevel": "easy",
+          "conceptId": "number_systems"
+        },
+        {
+          "questionId": "number_systems_q4",
+          "questionText": "What is decimal 10 in binary?",
+          "options": ["1010", "1001", "1110", "1100"],
+          "correctAnswer": "1010",
+          "explanation": "Decimal 10 equals 8 + 2, which is binary 1010.",
+          "difficultyLevel": "medium",
+          "conceptId": "number_systems"
+        },
+        {
+          "questionId": "number_systems_q5",
+          "questionText": "Why is hexadecimal useful in computing?",
+          "options": ["It gives a shorter representation of binary values", "It replaces all arithmetic", "It is only used for typing letters", "It cannot represent memory addresses"],
+          "correctAnswer": "It gives a shorter representation of binary values",
+          "explanation": "One hexadecimal digit can represent four binary bits, which makes values easier to read.",
+          "difficultyLevel": "medium",
+          "conceptId": "number_systems"
+        }
+      ]
+    },
+    {
+      "conceptId": "logic_gates",
+      "conceptName": "Logic Gates",
+      "grade": "O/L",
+      "unit": "Data and Logic",
+      "description": "Introduces basic digital logic gates and how truth tables describe their behavior.",
+      "prerequisites": ["number_systems", "data_representation"],
+      "relatedConcepts": ["algorithms_flowcharts", "programming_basics", "number_systems"],
+      "difficultyLevel": "medium",
+      "keywords": ["logic gate", "AND", "OR", "NOT", "truth table"],
+      "questions": [
+        {
+          "questionId": "logic_gates_q1",
+          "questionText": "Which logic gate outputs 1 only when both inputs are 1?",
+          "options": ["AND", "OR", "NOT", "XOR"],
+          "correctAnswer": "AND",
+          "explanation": "The AND gate is true only when all inputs are true.",
+          "difficultyLevel": "easy",
+          "conceptId": "logic_gates"
+        },
+        {
+          "questionId": "logic_gates_q2",
+          "questionText": "What does a NOT gate do?",
+          "options": ["Inverts the input", "Adds two inputs", "Stores data permanently", "Displays output on a screen"],
+          "correctAnswer": "Inverts the input",
+          "explanation": "A NOT gate changes 1 to 0 and 0 to 1.",
+          "difficultyLevel": "easy",
+          "conceptId": "logic_gates"
+        },
+        {
+          "questionId": "logic_gates_q3",
+          "questionText": "If the inputs of an OR gate are 0 and 1, the output is:",
+          "options": ["1", "0", "Depends on memory size", "Undefined"],
+          "correctAnswer": "1",
+          "explanation": "An OR gate gives 1 when at least one input is 1.",
+          "difficultyLevel": "medium",
+          "conceptId": "logic_gates"
+        },
+        {
+          "questionId": "logic_gates_q4",
+          "questionText": "A truth table is used to show:",
+          "options": ["All input and output combinations of a logic circuit", "Only hardware prices", "The size of a monitor", "Steps in a word processor"],
+          "correctAnswer": "All input and output combinations of a logic circuit",
+          "explanation": "Truth tables summarize how outputs change for every possible input combination.",
+          "difficultyLevel": "medium",
+          "conceptId": "logic_gates"
+        },
+        {
+          "questionId": "logic_gates_q5",
+          "questionText": "Which pair of gates is most directly linked to binary decision making?",
+          "options": ["AND and OR", "Scanner and printer", "RAM and ROM", "Mouse and keyboard"],
+          "correctAnswer": "AND and OR",
+          "explanation": "AND and OR gates are core components used to build digital decision logic.",
+          "difficultyLevel": "medium",
+          "conceptId": "logic_gates"
+        }
+      ]
+    },
+    {
+      "conceptId": "computer_networks",
+      "conceptName": "Computer Networks",
+      "grade": "O/L",
+      "unit": "Communication Technologies",
+      "description": "Explains how computers connect to share data and resources using wired and wireless networks.",
+      "prerequisites": ["computer_hardware", "operating_systems"],
+      "relatedConcepts": ["internet_email", "cyber_security", "intro_ict"],
+      "difficultyLevel": "medium",
+      "keywords": ["network", "LAN", "WAN", "router", "resource sharing"],
+      "questions": [
+        {
+          "questionId": "computer_networks_q1",
+          "questionText": "What is the main purpose of a computer network?",
+          "options": ["To share data and resources", "To print without electricity", "To replace software", "To convert images to decimal"],
+          "correctAnswer": "To share data and resources",
+          "explanation": "Networks allow devices to communicate and share files, printers, and Internet access.",
+          "difficultyLevel": "easy",
+          "conceptId": "computer_networks"
+        },
+        {
+          "questionId": "computer_networks_q2",
+          "questionText": "A network limited to a school lab is usually a:",
+          "options": ["LAN", "WAN", "MAN", "PAN"],
+          "correctAnswer": "LAN",
+          "explanation": "A Local Area Network covers a small geographical area like a room, office, or school.",
+          "difficultyLevel": "easy",
+          "conceptId": "computer_networks"
+        },
+        {
+          "questionId": "computer_networks_q3",
+          "questionText": "Which device forwards data between different networks?",
+          "options": ["Router", "Keyboard", "Monitor", "Scanner"],
+          "correctAnswer": "Router",
+          "explanation": "Routers direct data packets between networks.",
+          "difficultyLevel": "medium",
+          "conceptId": "computer_networks"
+        },
+        {
+          "questionId": "computer_networks_q4",
+          "questionText": "Which is an advantage of networking computers in an office?",
+          "options": ["Shared printers and files", "Every computer must work alone", "No security is needed", "Software cannot be updated"],
+          "correctAnswer": "Shared printers and files",
+          "explanation": "Networks reduce duplication by enabling shared access to devices and documents.",
+          "difficultyLevel": "medium",
+          "conceptId": "computer_networks"
+        },
+        {
+          "questionId": "computer_networks_q5",
+          "questionText": "Wireless networking mainly differs from wired networking because it uses:",
+          "options": ["Radio signals", "Binary numbers only", "Mechanical switches only", "Paper cables"],
+          "correctAnswer": "Radio signals",
+          "explanation": "Wireless networks transmit data through radio waves instead of physical cables.",
+          "difficultyLevel": "medium",
+          "conceptId": "computer_networks"
+        }
+      ]
+    },
+    {
+      "conceptId": "internet_email",
+      "conceptName": "Internet and Email",
+      "grade": "O/L",
+      "unit": "Communication Technologies",
+      "description": "Covers Internet services, web browsing, search, and the proper use of email communication.",
+      "prerequisites": ["computer_networks", "intro_ict"],
+      "relatedConcepts": ["cyber_security", "computer_networks", "word_processing"],
+      "difficultyLevel": "easy",
+      "keywords": ["Internet", "email", "browser", "website", "search"],
+      "questions": [
+        {
+          "questionId": "internet_email_q1",
+          "questionText": "Which software is mainly used to browse websites?",
+          "options": ["Web browser", "Spreadsheet", "Compiler", "Media player"],
+          "correctAnswer": "Web browser",
+          "explanation": "A browser is the application used to open and navigate websites.",
+          "difficultyLevel": "easy",
+          "conceptId": "internet_email"
+        },
+        {
+          "questionId": "internet_email_q2",
+          "questionText": "What does email allow users to do?",
+          "options": ["Send electronic messages", "Repair hardware automatically", "Convert decimal to binary only", "Install an operating system physically"],
+          "correctAnswer": "Send electronic messages",
+          "explanation": "Email is a communication service for sending digital messages and attachments.",
+          "difficultyLevel": "easy",
+          "conceptId": "internet_email"
+        },
+        {
+          "questionId": "internet_email_q3",
+          "questionText": "Which part of an email address appears after the @ symbol?",
+          "options": ["Domain name", "File extension", "Password", "Message subject"],
+          "correctAnswer": "Domain name",
+          "explanation": "The domain identifies the email service or organization hosting the address.",
+          "difficultyLevel": "easy",
+          "conceptId": "internet_email"
+        },
+        {
+          "questionId": "internet_email_q4",
+          "questionText": "Why is the subject line important in an email?",
+          "options": ["It summarizes the purpose of the message", "It encrypts the keyboard", "It changes the browser", "It stores attachments permanently"],
+          "correctAnswer": "It summarizes the purpose of the message",
+          "explanation": "A clear subject helps the receiver understand the message quickly.",
+          "difficultyLevel": "medium",
+          "conceptId": "internet_email"
+        },
+        {
+          "questionId": "internet_email_q5",
+          "questionText": "Which action is a good Internet search practice?",
+          "options": ["Using specific keywords", "Typing a full paragraph every time", "Avoiding search filters", "Trusting every first result blindly"],
+          "correctAnswer": "Using specific keywords",
+          "explanation": "Specific keywords improve search accuracy and help users find better results.",
+          "difficultyLevel": "medium",
+          "conceptId": "internet_email"
+        }
+      ]
+    },
+    {
+      "conceptId": "cyber_security",
+      "conceptName": "Cyber Security",
+      "grade": "O/L",
+      "unit": "Communication Technologies",
+      "description": "Introduces safe digital behavior, common cyber threats, and methods to protect devices and information.",
+      "prerequisites": ["internet_email", "operating_systems"],
+      "relatedConcepts": ["computer_networks", "databases", "internet_email"],
+      "difficultyLevel": "medium",
+      "keywords": ["security", "password", "phishing", "malware", "privacy"],
+      "questions": [
+        {
+          "questionId": "cyber_security_q1",
+          "questionText": "Which of the following is the best example of a strong password?",
+          "options": ["T!me4Study2026", "12345678", "password", "student"],
+          "correctAnswer": "T!me4Study2026",
+          "explanation": "Strong passwords usually mix letters, numbers, and symbols and avoid common words.",
+          "difficultyLevel": "easy",
+          "conceptId": "cyber_security"
+        },
+        {
+          "questionId": "cyber_security_q2",
+          "questionText": "What is phishing?",
+          "options": ["A trick to steal personal information", "A fast Internet cable", "A type of spreadsheet formula", "A monitor cleaning method"],
+          "correctAnswer": "A trick to steal personal information",
+          "explanation": "Phishing attacks pretend to be trustworthy to obtain passwords or other private data.",
+          "difficultyLevel": "easy",
+          "conceptId": "cyber_security"
+        },
+        {
+          "questionId": "cyber_security_q3",
+          "questionText": "Why should software updates be installed regularly?",
+          "options": ["They can fix security vulnerabilities", "They make printers heavier", "They remove all files automatically", "They stop Internet access"],
+          "correctAnswer": "They can fix security vulnerabilities",
+          "explanation": "Updates often patch weaknesses attackers could exploit.",
+          "difficultyLevel": "medium",
+          "conceptId": "cyber_security"
+        },
+        {
+          "questionId": "cyber_security_q4",
+          "questionText": "Which behavior is safest when receiving an unexpected email attachment?",
+          "options": ["Verify the sender before opening it", "Open it immediately", "Forward it to everyone", "Disable antivirus first"],
+          "correctAnswer": "Verify the sender before opening it",
+          "explanation": "Checking the sender reduces the risk of opening malicious files.",
+          "difficultyLevel": "medium",
+          "conceptId": "cyber_security"
+        },
+        {
+          "questionId": "cyber_security_q5",
+          "questionText": "Why is backing up important for cyber security?",
+          "options": ["It helps recover data after loss or attack", "It weakens passwords", "It removes the need for storage", "It blocks keyboards from working"],
+          "correctAnswer": "It helps recover data after loss or attack",
+          "explanation": "Backups provide a safe copy of data if the original is deleted, damaged, or encrypted by malware.",
+          "difficultyLevel": "medium",
+          "conceptId": "cyber_security"
+        }
+      ]
+    },
+    {
+      "conceptId": "word_processing",
+      "conceptName": "Word Processing",
+      "grade": "O/L",
+      "unit": "Office Applications",
+      "description": "Teaches document creation, editing, formatting, and common features of word processing software.",
+      "prerequisites": ["computer_software", "operating_systems"],
+      "relatedConcepts": ["spreadsheets", "internet_email", "databases"],
+      "difficultyLevel": "easy",
+      "keywords": ["word processor", "document", "formatting", "spell check", "paragraph"],
+      "questions": [
+        {
+          "questionId": "word_processing_q1",
+          "questionText": "Which application is mainly used to create letters and reports?",
+          "options": ["Word processor", "Web browser", "Router software", "Operating system"],
+          "correctAnswer": "Word processor",
+          "explanation": "Word processors are designed for preparing and formatting text documents.",
+          "difficultyLevel": "easy",
+          "conceptId": "word_processing"
+        },
+        {
+          "questionId": "word_processing_q2",
+          "questionText": "What does spell check help a user do?",
+          "options": ["Find and correct spelling mistakes", "Connect to Wi-Fi", "Create flowcharts automatically", "Encrypt emails"],
+          "correctAnswer": "Find and correct spelling mistakes",
+          "explanation": "Spell check highlights misspelled words and often suggests corrections.",
+          "difficultyLevel": "easy",
+          "conceptId": "word_processing"
+        },
+        {
+          "questionId": "word_processing_q3",
+          "questionText": "Changing font size and style is part of:",
+          "options": ["Formatting", "Booting", "Networking", "Programming"],
+          "correctAnswer": "Formatting",
+          "explanation": "Formatting changes the visual appearance of text and layout.",
+          "difficultyLevel": "easy",
+          "conceptId": "word_processing"
+        },
+        {
+          "questionId": "word_processing_q4",
+          "questionText": "Why are headers and footers useful in a document?",
+          "options": ["They add repeated information like titles or page numbers", "They store antivirus files", "They replace paragraphs", "They convert text to audio"],
+          "correctAnswer": "They add repeated information like titles or page numbers",
+          "explanation": "Headers and footers help keep repeated document information consistent.",
+          "difficultyLevel": "medium",
+          "conceptId": "word_processing"
+        },
+        {
+          "questionId": "word_processing_q5",
+          "questionText": "Which feature is best for replacing every occurrence of one word with another?",
+          "options": ["Find and Replace", "Save As", "Print Preview", "Page Setup"],
+          "correctAnswer": "Find and Replace",
+          "explanation": "Find and Replace updates repeated text efficiently across a document.",
+          "difficultyLevel": "medium",
+          "conceptId": "word_processing"
+        }
+      ]
+    },
+    {
+      "conceptId": "spreadsheets",
+      "conceptName": "Spreadsheets",
+      "grade": "O/L",
+      "unit": "Office Applications",
+      "description": "Introduces spreadsheet structure, formulas, functions, and data organization.",
+      "prerequisites": ["computer_software", "number_systems"],
+      "relatedConcepts": ["databases", "word_processing", "programming_basics"],
+      "difficultyLevel": "medium",
+      "keywords": ["spreadsheet", "cell", "formula", "function", "worksheet"],
+      "questions": [
+        {
+          "questionId": "spreadsheets_q1",
+          "questionText": "A spreadsheet is mainly organized into:",
+          "options": ["Rows and columns", "Paragraphs and pages", "Frames and slides", "Nodes and links"],
+          "correctAnswer": "Rows and columns",
+          "explanation": "Spreadsheets store data in a grid of rows and columns.",
+          "difficultyLevel": "easy",
+          "conceptId": "spreadsheets"
+        },
+        {
+          "questionId": "spreadsheets_q2",
+          "questionText": "What symbol usually starts a formula in a spreadsheet?",
+          "options": ["=", "+", "#", "@"],
+          "correctAnswer": "=",
+          "explanation": "Formulas usually begin with the equals sign so the application evaluates them.",
+          "difficultyLevel": "easy",
+          "conceptId": "spreadsheets"
+        },
+        {
+          "questionId": "spreadsheets_q3",
+          "questionText": "Which function is used to add a range of numbers?",
+          "options": ["SUM", "AVG", "COUNTIF", "MAXIMUMTEXT"],
+          "correctAnswer": "SUM",
+          "explanation": "SUM is the standard function for totaling numeric values.",
+          "difficultyLevel": "easy",
+          "conceptId": "spreadsheets"
+        },
+        {
+          "questionId": "spreadsheets_q4",
+          "questionText": "What is cell B3?",
+          "options": ["The cell at column B and row 3", "A type of formula", "A chart title", "A worksheet name"],
+          "correctAnswer": "The cell at column B and row 3",
+          "explanation": "Spreadsheet cells are named by column letter followed by row number.",
+          "difficultyLevel": "medium",
+          "conceptId": "spreadsheets"
+        },
+        {
+          "questionId": "spreadsheets_q5",
+          "questionText": "Why are spreadsheets useful for marks analysis?",
+          "options": ["They can calculate and summarize data quickly", "They are only for typing essays", "They cannot create charts", "They replace backups"],
+          "correctAnswer": "They can calculate and summarize data quickly",
+          "explanation": "Spreadsheets make calculations, sorting, filtering, and charting efficient.",
+          "difficultyLevel": "medium",
+          "conceptId": "spreadsheets"
+        }
+      ]
+    },
+    {
+      "conceptId": "databases",
+      "conceptName": "Databases",
+      "grade": "O/L",
+      "unit": "Office Applications",
+      "description": "Introduces records, fields, tables, and the purpose of databases in organizing large sets of related data.",
+      "prerequisites": ["data_representation", "spreadsheets"],
+      "relatedConcepts": ["cyber_security", "word_processing", "programming_basics"],
+      "difficultyLevel": "medium",
+      "keywords": ["database", "record", "field", "table", "query"],
+      "questions": [
+        {
+          "questionId": "databases_q1",
+          "questionText": "What is a database mainly used for?",
+          "options": ["Organizing and retrieving related data", "Drawing hardware diagrams only", "Replacing operating systems", "Sending only emails"],
+          "correctAnswer": "Organizing and retrieving related data",
+          "explanation": "Databases are built to store, search, and manage structured data efficiently.",
+          "difficultyLevel": "easy",
+          "conceptId": "databases"
+        },
+        {
+          "questionId": "databases_q2",
+          "questionText": "In a student table, 'Student Name' is an example of a:",
+          "options": ["Field", "Record", "Network", "Formula"],
+          "correctAnswer": "Field",
+          "explanation": "A field represents a single attribute or data item in a table.",
+          "difficultyLevel": "easy",
+          "conceptId": "databases"
+        },
+        {
+          "questionId": "databases_q3",
+          "questionText": "A single row in a database table is called a:",
+          "options": ["Record", "Column", "Protocol", "Slide"],
+          "correctAnswer": "Record",
+          "explanation": "A record stores all the fields for one item or person.",
+          "difficultyLevel": "easy",
+          "conceptId": "databases"
+        },
+        {
+          "questionId": "databases_q4",
+          "questionText": "Why is a primary key useful in a database?",
+          "options": ["It uniquely identifies each record", "It increases monitor brightness", "It is used only for email", "It stores audio output"],
+          "correctAnswer": "It uniquely identifies each record",
+          "explanation": "A primary key prevents ambiguity by giving each record a unique identifier.",
+          "difficultyLevel": "medium",
+          "conceptId": "databases"
+        },
+        {
+          "questionId": "databases_q5",
+          "questionText": "What does a query do in a database?",
+          "options": ["Searches or filters data based on conditions", "Boots the computer", "Formats a paragraph", "Builds a network cable"],
+          "correctAnswer": "Searches or filters data based on conditions",
+          "explanation": "Queries help users retrieve the exact records they need from a database.",
+          "difficultyLevel": "medium",
+          "conceptId": "databases"
+        }
+      ]
+    },
+    {
+      "conceptId": "programming_basics",
+      "conceptName": "Programming Basics",
+      "grade": "O/L",
+      "unit": "Problem Solving",
+      "description": "Introduces variables, input, output, sequence, selection, and repetition in simple programming logic.",
+      "prerequisites": ["logic_gates", "number_systems"],
+      "relatedConcepts": ["algorithms_flowcharts", "spreadsheets", "computer_software"],
+      "difficultyLevel": "medium",
+      "keywords": ["programming", "variable", "input", "output", "loop"],
+      "questions": [
+        {
+          "questionId": "programming_basics_q1",
+          "questionText": "What is a variable in programming?",
+          "options": ["A named storage location for data", "A fixed hardware part", "A type of monitor", "An Internet address"],
+          "correctAnswer": "A named storage location for data",
+          "explanation": "Variables store values that a program can use or change.",
+          "difficultyLevel": "easy",
+          "conceptId": "programming_basics"
+        },
+        {
+          "questionId": "programming_basics_q2",
+          "questionText": "Which programming structure means steps happen one after another?",
+          "options": ["Sequence", "Selection", "Iteration", "Inheritance"],
+          "correctAnswer": "Sequence",
+          "explanation": "Sequence executes instructions in order from top to bottom.",
+          "difficultyLevel": "easy",
+          "conceptId": "programming_basics"
+        },
+        {
+          "questionId": "programming_basics_q3",
+          "questionText": "An IF statement is mainly used for:",
+          "options": ["Selection or decision making", "Permanent storage", "Screen brightness control", "Email formatting"],
+          "correctAnswer": "Selection or decision making",
+          "explanation": "IF statements allow programs to choose actions based on conditions.",
+          "difficultyLevel": "medium",
+          "conceptId": "programming_basics"
+        },
+        {
+          "questionId": "programming_basics_q4",
+          "questionText": "What is repetition in programming?",
+          "options": ["Running a set of instructions multiple times", "Deleting every variable", "Turning software into hardware", "Creating a database table manually"],
+          "correctAnswer": "Running a set of instructions multiple times",
+          "explanation": "Loops repeat instructions while a condition is met or for a set count.",
+          "difficultyLevel": "medium",
+          "conceptId": "programming_basics"
+        },
+        {
+          "questionId": "programming_basics_q5",
+          "questionText": "Why is input important in many programs?",
+          "options": ["It provides data for processing", "It replaces all output", "It prevents storage", "It removes conditions from logic"],
+          "correctAnswer": "It provides data for processing",
+          "explanation": "Programs often need data from the user, file, or device before producing useful output.",
+          "difficultyLevel": "medium",
+          "conceptId": "programming_basics"
+        }
+      ]
+    },
+    {
+      "conceptId": "algorithms_flowcharts",
+      "conceptName": "Algorithms and Flowcharts",
+      "grade": "O/L",
+      "unit": "Problem Solving",
+      "description": "Covers step-by-step problem solving, algorithms, and flowchart symbols used to represent logic clearly.",
+      "prerequisites": ["programming_basics", "logic_gates"],
+      "relatedConcepts": ["programming_basics", "number_systems", "intro_ict"],
+      "difficultyLevel": "medium",
+      "keywords": ["algorithm", "flowchart", "decision", "process", "symbol"],
+      "questions": [
+        {
+          "questionId": "algorithms_flowcharts_q1",
+          "questionText": "What is an algorithm?",
+          "options": ["A step-by-step procedure to solve a problem", "A hardware storage device", "A type of network cable", "A document header"],
+          "correctAnswer": "A step-by-step procedure to solve a problem",
+          "explanation": "An algorithm is an ordered set of instructions for completing a task or solving a problem.",
+          "difficultyLevel": "easy",
+          "conceptId": "algorithms_flowcharts"
+        },
+        {
+          "questionId": "algorithms_flowcharts_q2",
+          "questionText": "Which flowchart symbol is commonly used for a decision?",
+          "options": ["Diamond", "Rectangle", "Oval", "Arrow"],
+          "correctAnswer": "Diamond",
+          "explanation": "The diamond shape usually represents a yes/no or true/false decision point.",
+          "difficultyLevel": "easy",
+          "conceptId": "algorithms_flowcharts"
+        },
+        {
+          "questionId": "algorithms_flowcharts_q3",
+          "questionText": "Which symbol is commonly used for a process step?",
+          "options": ["Rectangle", "Diamond", "Circle", "Triangle"],
+          "correctAnswer": "Rectangle",
+          "explanation": "A rectangle is the standard flowchart symbol for a processing action.",
+          "difficultyLevel": "easy",
+          "conceptId": "algorithms_flowcharts"
+        },
+        {
+          "questionId": "algorithms_flowcharts_q4",
+          "questionText": "Why are flowcharts useful before writing code?",
+          "options": ["They help visualize logic clearly", "They replace all testing", "They increase file size only", "They convert hardware into software"],
+          "correctAnswer": "They help visualize logic clearly",
+          "explanation": "Flowcharts make the order of steps and decisions easier to review before coding.",
+          "difficultyLevel": "medium",
+          "conceptId": "algorithms_flowcharts"
+        },
+        {
+          "questionId": "algorithms_flowcharts_q5",
+          "questionText": "An algorithm should ideally be:",
+          "options": ["Clear, finite, and ordered", "Long and confusing", "Only graphical", "Dependent on one device model"],
+          "correctAnswer": "Clear, finite, and ordered",
+          "explanation": "Good algorithms have clear steps, a logical order, and an ending point.",
+          "difficultyLevel": "medium",
+          "conceptId": "algorithms_flowcharts"
+        }
+      ]
+    }
+  ]
+}

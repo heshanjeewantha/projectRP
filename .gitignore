@@ -1,0 +1,66 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Git / logs
+*.log
+*.out
+*.err
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.python-version
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+backend/venv/
+
+# Node / frontend build
+node_modules/
+frontend/node_modules/
+dist/
+build/
+frontend/dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+
+# Runtime / uploads
+uploads/
+backend/uploads/
+tmp/
+temp/
+
+# Binary assets / models / archives
+*.pt
+*.pth
+*.h5
+*.pb
+*.onnx
+*.ckpt
+*.tflite
+*.bin
+*.glb
+*.zip
+*.rar
+*.7z
+
+# ML / notebook artifacts
+.ipynb_checkpoints/

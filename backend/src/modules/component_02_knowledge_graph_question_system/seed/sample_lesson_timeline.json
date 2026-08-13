@@ -1,0 +1,98 @@
+{
+  "lessonId": "lesson_ol_ict_001",
+  "videoTitle": "O/L ICT Foundations Lesson",
+  "videoUrl": "https://example.com/videos/ol-ict-foundations.mp4",
+  "isDefault": true,
+  "timeline": [
+    {
+      "startTime": 0,
+      "endTime": 89,
+      "conceptId": "intro_ict",
+      "conceptName": "Introduction to ICT"
+    },
+    {
+      "startTime": 90,
+      "endTime": 179,
+      "conceptId": "computer_hardware",
+      "conceptName": "Computer Hardware"
+    },
+    {
+      "startTime": 180,
+      "endTime": 269,
+      "conceptId": "computer_software",
+      "conceptName": "Computer Software"
+    },
+    {
+      "startTime": 270,
+      "endTime": 359,
+      "conceptId": "operating_systems",
+      "conceptName": "Operating Systems"
+    },
+    {
+      "startTime": 360,
+      "endTime": 449,
+      "conceptId": "data_representation",
+      "conceptName": "Data Representation"
+    },
+    {
+      "startTime": 450,
+      "endTime": 539,
+      "conceptId": "number_systems",
+      "conceptName": "Number Systems"
+    },
+    {
+      "startTime": 540,
+      "endTime": 629,
+      "conceptId": "logic_gates",
+      "conceptName": "Logic Gates"
+    },
+    {
+      "startTime": 630,
+      "endTime": 719,
+      "conceptId": "computer_networks",
+      "conceptName": "Computer Networks"
+    },
+    {
+      "startTime": 720,
+      "endTime": 809,
+      "conceptId": "internet_email",
+      "conceptName": "Internet and Email"
+    },
+    {
+      "startTime": 810,
+      "endTime": 899,
+      "conceptId": "cyber_security",
+      "conceptName": "Cyber Security"
+    },
+    {
+      "startTime": 900,
+      "endTime": 989,
+      "conceptId": "word_processing",
+      "conceptName": "Word Processing"
+    },
+    {
+      "startTime": 990,
+      "endTime": 1079,
+      "conceptId": "spreadsheets",
+      "conceptName": "Spreadsheets"
+    },
+    {
+      "startTime": 1080,
+      "endTime": 1169,
+      "conceptId": "databases",
+      "conceptName": "Databases"
+    },
+    {
+      "startTime": 1170,
+      "endTime": 1259,
+      "conceptId": "programming_basics",
+      "conceptName": "Programming Basics"
+    },
+    {
+      "startTime": 1260,
+      "endTime": 1349,
+      "conceptId": "algorithms_flowcharts",
+      "conceptName": "Algorithms and Flowcharts"
+    }
+  ]
+}

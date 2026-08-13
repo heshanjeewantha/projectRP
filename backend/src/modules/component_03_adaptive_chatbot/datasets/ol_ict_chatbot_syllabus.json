@@ -1,0 +1,474 @@
+{
+  "subject": "O/L ICT",
+  "version": "2.0.0",
+  "topics": [
+    {
+      "topicId": "computer_system",
+      "topicName": "Computer System",
+      "description": "A computer system combines hardware, software, data, and users to process information.",
+      "summary": "a computer system is the combination of hardware, software, data, procedures, and users working together to process information",
+      "subtopics": [
+        "Input, process, output cycle",
+        "Hardware and software roles",
+        "Users, procedures, and data"
+      ],
+      "keyPoints": [
+        "A computer system has both physical and logical parts.",
+        "Input is processed to produce useful output.",
+        "Users and procedures are needed for correct operation."
+      ],
+      "prerequisites": [],
+      "keywords": ["computer", "system", "hardware", "software", "input", "output"],
+      "sampleQuestions": [
+        "What is a computer system?",
+        "Name the main components of a computer system."
+      ],
+      "examQuestions": [
+        "Define a computer system for 2 marks.",
+        "State three components of a computer system."
+      ],
+      "microChallenges": [
+        {
+          "challengeId": "computer_system_challenge_1",
+          "questionText": "Which part of a computer system gives meaningful results to the user?",
+          "options": ["Input", "Output", "Storage", "Control unit"],
+          "correctAnswer": "Output",
+          "explanation": "Output is the processed result produced by the computer system.",
+          "difficultyLevel": 1
+        }
+      ]
+    },
+    {
+      "topicId": "data_information",
+      "topicName": "Data and Information",
+      "description": "Data are raw facts while information is processed data with meaning.",
+      "summary": "data are raw facts and figures, while information is processed data that is meaningful for decision making",
+      "subtopics": [
+        "Difference between data and information",
+        "Sources of data",
+        "Qualities of good information"
+      ],
+      "keyPoints": [
+        "Data becomes information after processing.",
+        "Useful information should be accurate and timely.",
+        "Information supports decisions."
+      ],
+      "prerequisites": ["computer_system"],
+      "keywords": ["data", "information", "processed", "accurate", "timely"],
+      "sampleQuestions": [
+        "What is the difference between data and information?",
+        "Why is information important?"
+      ],
+      "examQuestions": [
+        "Differentiate data and information.",
+        "Give two qualities of good information."
+      ],
+      "microChallenges": [
+        {
+          "challengeId": "data_information_challenge_1",
+          "questionText": "Which one is processed data with meaning?",
+          "options": ["Data", "Information", "Input", "Noise"],
+          "correctAnswer": "Information",
+          "explanation": "Information is processed data that becomes useful and meaningful.",
+          "difficultyLevel": 1
+        }
+      ]
+    },
+    {
+      "topicId": "operating_systems",
+      "topicName": "Operating Systems",
+      "description": "An operating system manages hardware resources and provides services for applications.",
+      "summary": "an operating system is system software that manages computer hardware and provides a platform for application software",
+      "subtopics": [
+        "Functions of an operating system",
+        "Examples of operating systems",
+        "File and device management"
+      ],
+      "keyPoints": [
+        "The operating system manages memory, files, and devices.",
+        "It provides a user interface.",
+        "It allows applications to run."
+      ],
+      "prerequisites": ["computer_system"],
+      "keywords": ["operating system", "os", "windows", "linux", "resource management"],
+      "sampleQuestions": [
+        "What is an operating system?",
+        "Mention two functions of an operating system."
+      ],
+      "examQuestions": [
+        "Define an operating system.",
+        "State two functions of operating system software."
+      ],
+      "microChallenges": [
+        {
+          "challengeId": "operating_systems_challenge_1",
+          "questionText": "Which of the following is an operating system?",
+          "options": ["Linux", "Excel", "PowerPoint", "Chrome"],
+          "correctAnswer": "Linux",
+          "explanation": "Linux is an operating system. The others are application software.",
+          "difficultyLevel": 1
+        }
+      ]
+    },
+    {
+      "topicId": "word_processing",
+      "topicName": "Word Processing",
+      "description": "Word processing software is used to create, edit, format, and print text documents.",
+      "summary": "word processing uses software to create, edit, format, save, and print text documents",
+      "subtopics": [
+        "Creating and saving documents",
+        "Formatting text and paragraphs",
+        "Inserting tables and images"
+      ],
+      "keyPoints": [
+        "Documents can be edited and formatted easily.",
+        "Word processors help create professional text documents.",
+        "Features include spell check and page layout tools."
+      ],
+      "prerequisites": ["operating_systems"],
+      "keywords": ["word processing", "document", "formatting", "paragraph", "spell check"],
+      "sampleQuestions": [
+        "What is word processing?",
+        "Mention two uses of word processing software."
+      ],
+      "examQuestions": [
+        "Define word processing.",
+        "List two features of word processing software."
+      ],
+      "microChallenges": [
+        {
+          "challengeId": "word_processing_challenge_1",
+          "questionText": "Which feature checks spelling mistakes in a document?",
+          "options": ["Spell check", "Slide sorter", "Formula bar", "Browser history"],
+          "correctAnswer": "Spell check",
+          "explanation": "Spell check is used to identify and correct spelling mistakes in documents.",
+          "difficultyLevel": 1
+        }
+      ]
+    },
+    {
+      "topicId": "spreadsheets",
+      "topicName": "Spreadsheets",
+      "description": "Spreadsheet software organizes data in rows and columns and supports formulas, functions, and charts.",
+      "summary": "a spreadsheet is software that organizes data into rows and columns and performs calculations using formulas and functions",
+      "subtopics": [
+        "Rows, columns, and cells",
+        "Formulas and functions",
+        "Charts and data analysis"
+      ],
+      "keyPoints": [
+        "Data is stored in cells.",
+        "Formulas help calculate results automatically.",
+        "Charts present data visually."
+      ],
+      "prerequisites": ["data_information"],
+      "keywords": ["spreadsheet", "cells", "formula", "function", "chart", "excel"],
+      "sampleQuestions": [
+        "What is a spreadsheet?",
+        "Why are formulas used in spreadsheets?"
+      ],
+      "examQuestions": [
+        "Define spreadsheet software.",
+        "Give two uses of formulas in a spreadsheet."
+      ],
+      "microChallenges": [
+        {
+          "challengeId": "spreadsheets_challenge_1",
+          "questionText": "Which symbol usually starts a formula in a spreadsheet?",
+          "options": ["=", "#", "@", "$"],
+          "correctAnswer": "=",
+          "explanation": "Spreadsheet formulas normally begin with the equal sign.",
+          "difficultyLevel": 1
+        }
+      ]
+    },
+    {
+      "topicId": "databases",
+      "topicName": "Databases",
+      "description": "A database stores organized data so it can be accessed, updated, and managed efficiently.",
+      "summary": "a database is an organized collection of related data stored electronically for easy access, management, and updating",
+      "subtopics": [
+        "Tables, records, and fields",
+        "Keys and relationships",
+        "Sorting and searching"
+      ],
+      "keyPoints": [
+        "A table stores records about one subject.",
+        "Fields describe attributes of each record.",
+        "Databases allow efficient searching and updating."
+      ],
+      "prerequisites": ["data_information", "spreadsheets"],
+      "keywords": ["database", "table", "record", "field", "key", "query"],
+      "sampleQuestions": [
+        "What is a database?",
+        "What is the difference between a field and a record?"
+      ],
+      "examQuestions": [
+        "Define database for 2 marks.",
+        "State two advantages of using a database."
+      ],
+      "microChallenges": [
+        {
+          "challengeId": "databases_challenge_1",
+          "questionText": "A row in a database table is called a:",
+          "options": ["Record", "Field", "Query", "Form"],
+          "correctAnswer": "Record",
+          "explanation": "A record is a complete row of related data in a table.",
+          "difficultyLevel": 1
+        }
+      ]
+    },
+    {
+      "topicId": "dbms",
+      "topicName": "DBMS",
+      "description": "A DBMS is software used to create, manage, and control access to databases.",
+      "summary": "a database management system is software used to create, store, manage, and control access to databases",
+      "subtopics": [
+        "Purpose of DBMS",
+        "Examples of DBMS",
+        "Data security and backup"
+      ],
+      "keyPoints": [
+        "A DBMS manages the database structure and users.",
+        "It improves security and reduces duplication.",
+        "It supports backup and recovery."
+      ],
+      "prerequisites": ["databases"],
+      "keywords": ["dbms", "database management system", "backup", "security", "users"],
+      "sampleQuestions": [
+        "What is a DBMS?",
+        "Why is DBMS important?"
+      ],
+      "examQuestions": [
+        "Define DBMS.",
+        "State two functions of a DBMS."
+      ],
+      "microChallenges": [
+        {
+          "challengeId": "dbms_challenge_1",
+          "questionText": "Which of these is a role of a DBMS?",
+          "options": ["Managing access to data", "Sending emails", "Drawing flowcharts", "Replacing hardware"],
+          "correctAnswer": "Managing access to data",
+          "explanation": "A DBMS helps control, manage, and secure data access.",
+          "difficultyLevel": 2
+        }
+      ]
+    },
+    {
+      "topicId": "normalization",
+      "topicName": "Normalization",
+      "description": "Normalization organizes database tables to reduce redundancy and improve consistency.",
+      "summary": "normalization is the process of organizing database tables to reduce data redundancy and improve data consistency",
+      "subtopics": [
+        "Removing repeated data",
+        "Improving consistency",
+        "Basic normal forms"
+      ],
+      "keyPoints": [
+        "Normalization reduces unnecessary duplication.",
+        "It helps maintain consistent data.",
+        "Tables are reorganized into better structures."
+      ],
+      "prerequisites": ["databases", "dbms"],
+      "keywords": ["normalization", "redundancy", "consistency", "normal forms", "tables"],
+      "sampleQuestions": [
+        "What is normalization?",
+        "Why is normalization used in databases?"
+      ],
+      "examQuestions": [
+        "Define normalization.",
+        "State one benefit of normalization."
+      ],
+      "microChallenges": [
+        {
+          "challengeId": "normalization_challenge_1",
+          "questionText": "Normalization mainly helps to reduce:",
+          "options": ["Data redundancy", "Screen size", "Internet speed", "Password length"],
+          "correctAnswer": "Data redundancy",
+          "explanation": "Normalization is used to reduce repeated data and improve consistency.",
+          "difficultyLevel": 3
+        }
+      ]
+    },
+    {
+      "topicId": "internet_email",
+      "topicName": "Internet and Email",
+      "description": "The internet connects networks globally, and email is an electronic communication service.",
+      "summary": "the internet is a global network of networks, and email is a service used to send electronic messages",
+      "subtopics": [
+        "Internet services",
+        "Structure of an email address",
+        "Safe communication online"
+      ],
+      "keyPoints": [
+        "The internet connects many networks around the world.",
+        "Email allows fast electronic communication.",
+        "Safe usage includes secure passwords and careful sharing."
+      ],
+      "prerequisites": ["computer_system"],
+      "keywords": ["internet", "email", "browser", "domain", "communication"],
+      "sampleQuestions": [
+        "What is the internet?",
+        "Name the parts of an email address."
+      ],
+      "examQuestions": [
+        "Define the internet.",
+        "State two uses of email."
+      ],
+      "microChallenges": [
+        {
+          "challengeId": "internet_email_challenge_1",
+          "questionText": "Which part of an email address comes after the @ symbol?",
+          "options": ["Domain name", "Password", "File extension", "Message subject"],
+          "correctAnswer": "Domain name",
+          "explanation": "The domain name appears after the @ symbol in an email address.",
+          "difficultyLevel": 1
+        }
+      ]
+    },
+    {
+      "topicId": "networking",
+      "topicName": "Networking",
+      "description": "Networking connects computers and devices so they can share data and resources.",
+      "summary": "networking is the process of connecting computers and devices so they can communicate and share resources",
+      "subtopics": [
+        "Types of networks",
+        "Network devices",
+        "Benefits of resource sharing"
+      ],
+      "keyPoints": [
+        "Networks allow communication between devices.",
+        "Resources such as files and printers can be shared.",
+        "LAN and WAN are common network types."
+      ],
+      "prerequisites": ["internet_email"],
+      "keywords": ["network", "lan", "wan", "router", "switch", "sharing"],
+      "sampleQuestions": [
+        "What is a computer network?",
+        "State one advantage of networking."
+      ],
+      "examQuestions": [
+        "Define networking.",
+        "Give two advantages of using a computer network."
+      ],
+      "microChallenges": [
+        {
+          "challengeId": "networking_challenge_1",
+          "questionText": "A network inside one school building is usually a:",
+          "options": ["LAN", "WAN", "MAN", "VPN"],
+          "correctAnswer": "LAN",
+          "explanation": "A Local Area Network covers a small geographical area such as a school building.",
+          "difficultyLevel": 2
+        }
+      ]
+    },
+    {
+      "topicId": "programming_basics",
+      "topicName": "Programming Basics",
+      "description": "Programming basics include writing instructions, using variables, and controlling program flow.",
+      "summary": "programming is writing instructions for a computer using variables, logic, and control structures",
+      "subtopics": [
+        "Algorithms and instructions",
+        "Variables and data types",
+        "Selection and repetition"
+      ],
+      "keyPoints": [
+        "Programs are made from ordered instructions.",
+        "Variables store values for processing.",
+        "Selection and loops control program flow."
+      ],
+      "prerequisites": ["data_information"],
+      "keywords": ["programming", "variables", "algorithm", "selection", "loop"],
+      "sampleQuestions": [
+        "What is programming?",
+        "Why are variables used in a program?"
+      ],
+      "examQuestions": [
+        "Define programming.",
+        "State two uses of variables in programs."
+      ],
+      "microChallenges": [
+        {
+          "challengeId": "programming_basics_challenge_1",
+          "questionText": "Which structure repeats a step many times?",
+          "options": ["Loop", "Input", "Comment", "Output"],
+          "correctAnswer": "Loop",
+          "explanation": "A loop repeats a set of instructions while a condition is true or for a fixed number of times.",
+          "difficultyLevel": 1
+        }
+      ]
+    },
+    {
+      "topicId": "flowcharts",
+      "topicName": "Flowcharts",
+      "description": "Flowcharts represent the steps of an algorithm using standard symbols.",
+      "summary": "a flowchart is a graphical representation of an algorithm using standard symbols and arrows",
+      "subtopics": [
+        "Standard flowchart symbols",
+        "Sequence, selection, repetition",
+        "Designing simple solutions"
+      ],
+      "keyPoints": [
+        "Different symbols represent different types of steps.",
+        "Arrows show the direction of flow.",
+        "Flowcharts help understand logic clearly."
+      ],
+      "prerequisites": ["programming_basics"],
+      "keywords": ["flowchart", "algorithm", "symbols", "decision", "process"],
+      "sampleQuestions": [
+        "What is a flowchart?",
+        "State two common flowchart symbols."
+      ],
+      "examQuestions": [
+        "Define a flowchart.",
+        "Mention two uses of flowcharts."
+      ],
+      "microChallenges": [
+        {
+          "challengeId": "flowcharts_challenge_1",
+          "questionText": "Which flowchart symbol usually represents a decision?",
+          "options": ["Diamond", "Rectangle", "Oval", "Arrow"],
+          "correctAnswer": "Diamond",
+          "explanation": "The diamond symbol is normally used for decision points in a flowchart.",
+          "difficultyLevel": 2
+        }
+      ]
+    },
+    {
+      "topicId": "cyber_security",
+      "topicName": "Cyber Security",
+      "description": "Cyber security protects devices, users, and data from digital threats.",
+      "summary": "cyber security is the protection of computer systems, networks, and data from digital attacks and misuse",
+      "subtopics": [
+        "Passwords and authentication",
+        "Malware and phishing",
+        "Safe online behavior"
+      ],
+      "keyPoints": [
+        "Strong passwords improve protection.",
+        "Phishing tries to trick users into revealing information.",
+        "Safe browsing and updates reduce risk."
+      ],
+      "prerequisites": ["internet_email"],
+      "keywords": ["cyber security", "malware", "phishing", "password", "safety"],
+      "sampleQuestions": [
+        "What is cyber security?",
+        "Mention two ways to stay safe online."
+      ],
+      "examQuestions": [
+        "Define cyber security.",
+        "State two safe online practices."
+      ],
+      "microChallenges": [
+        {
+          "challengeId": "cyber_security_challenge_1",
+          "questionText": "Which one is a safe online practice?",
+          "options": ["Using strong passwords", "Sharing passwords", "Ignoring software updates", "Opening unknown links"],
+          "correctAnswer": "Using strong passwords",
+          "explanation": "Strong passwords help protect accounts from unauthorized access.",
+          "difficultyLevel": 1
+        }
+      ]
+    }
+  ]
+}

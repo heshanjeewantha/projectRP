@@ -1,0 +1,794 @@
+{
+  "subject": "O/L ICT",
+  "version": "1.0.0",
+  "diagrams": [
+    {
+      "conceptId": "intro_ict",
+      "diagram": {
+        "diagramId": "diag_intro_ict",
+        "title": "How ICT Supports Daily Work",
+        "subtitle": "People use devices to create, store, and share information.",
+        "layout": {
+          "columns": 3,
+          "rows": 2
+        },
+        "nodes": [
+          {
+            "nodeId": "need",
+            "label": "Need Information",
+            "text": "A person wants to learn, work, or communicate.",
+            "accent": "primary",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "device",
+            "label": "Use ICT Device",
+            "text": "A computer or phone is used to process information.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "store",
+            "label": "Store Data",
+            "text": "Information is saved for future use.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "share",
+            "label": "Share and Communicate",
+            "text": "Information is sent to others quickly.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 2 }
+          }
+        ],
+        "edges": [
+          { "from": "need", "to": "device", "label": "choose" },
+          { "from": "device", "to": "store", "label": "save" },
+          { "from": "device", "to": "share", "label": "send" }
+        ],
+        "summaryPoints": [
+          "ICT combines information handling and communication.",
+          "Devices help people process, store, and share information.",
+          "ICT is used in education, business, and everyday life."
+        ]
+      }
+    },
+    {
+      "conceptId": "computer_hardware",
+      "diagram": {
+        "diagramId": "diag_computer_hardware",
+        "title": "Main Hardware Groups",
+        "subtitle": "A computer system is built from input, process, storage, and output parts.",
+        "layout": {
+          "columns": 4,
+          "rows": 1
+        },
+        "nodes": [
+          {
+            "nodeId": "input",
+            "label": "Input",
+            "text": "Keyboard, mouse, scanner",
+            "accent": "primary",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "process",
+            "label": "Processing",
+            "text": "CPU handles instructions and calculations.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "storage",
+            "label": "Storage",
+            "text": "SSD or HDD keeps data for later use.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "output",
+            "label": "Output",
+            "text": "Monitor, printer, speaker",
+            "accent": "accent",
+            "position": { "col": 4, "row": 1 }
+          }
+        ],
+        "edges": [
+          { "from": "input", "to": "process", "label": "send data" },
+          { "from": "process", "to": "storage", "label": "save" },
+          { "from": "process", "to": "output", "label": "show result" }
+        ],
+        "summaryPoints": [
+          "Hardware means the physical parts of the computer.",
+          "The CPU processes instructions from users and programs.",
+          "Input and output devices connect the user to the system."
+        ]
+      }
+    },
+    {
+      "conceptId": "computer_software",
+      "diagram": {
+        "diagramId": "diag_computer_software",
+        "title": "Software Categories",
+        "subtitle": "System software supports the computer, while application software supports the user.",
+        "layout": {
+          "columns": 3,
+          "rows": 2
+        },
+        "nodes": [
+          {
+            "nodeId": "software",
+            "label": "Software",
+            "text": "Instructions that tell hardware what to do.",
+            "accent": "primary",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "system",
+            "label": "System Software",
+            "text": "Operating systems and utility tools manage the computer.",
+            "accent": "accent",
+            "position": { "col": 1, "row": 2 }
+          },
+          {
+            "nodeId": "application",
+            "label": "Application Software",
+            "text": "Programs like word processors and spreadsheets solve tasks.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 2 }
+          }
+        ],
+        "edges": [
+          { "from": "software", "to": "system", "label": "manages" },
+          { "from": "software", "to": "application", "label": "helps user" }
+        ],
+        "summaryPoints": [
+          "Software is not physical; it is a set of instructions.",
+          "System software manages hardware and the platform.",
+          "Application software helps users perform specific work."
+        ]
+      }
+    },
+    {
+      "conceptId": "operating_systems",
+      "diagram": {
+        "diagramId": "diag_operating_systems",
+        "title": "Operating System as the Manager",
+        "subtitle": "The OS stands between hardware and user applications.",
+        "layout": {
+          "columns": 3,
+          "rows": 2
+        },
+        "nodes": [
+          {
+            "nodeId": "user",
+            "label": "User",
+            "text": "The user gives commands through a screen or interface.",
+            "accent": "primary",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "os",
+            "label": "Operating System",
+            "text": "Controls memory, files, devices, and programs.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "apps",
+            "label": "Applications",
+            "text": "Programs run using services provided by the OS.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "hardware",
+            "label": "Hardware",
+            "text": "CPU, storage, memory, and devices work under OS control.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 2 }
+          }
+        ],
+        "edges": [
+          { "from": "user", "to": "os", "label": "commands" },
+          { "from": "apps", "to": "os", "label": "requests" },
+          { "from": "os", "to": "hardware", "label": "manages" }
+        ],
+        "summaryPoints": [
+          "The operating system manages resources for both user and software.",
+          "It provides file handling, device control, and memory management.",
+          "Without an OS, application programs cannot run smoothly."
+        ]
+      }
+    },
+    {
+      "conceptId": "data_representation",
+      "diagram": {
+        "diagramId": "diag_data_representation",
+        "title": "From Real-World Data to Bits",
+        "subtitle": "Computers turn different media types into binary patterns.",
+        "layout": {
+          "columns": 5,
+          "rows": 1
+        },
+        "nodes": [
+          {
+            "nodeId": "text",
+            "label": "Text",
+            "text": "Letters become character codes.",
+            "accent": "primary",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "number",
+            "label": "Numbers",
+            "text": "Values are represented digitally.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "binary",
+            "label": "Binary Form",
+            "text": "Everything is stored using 0s and 1s.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "image",
+            "label": "Images",
+            "text": "Pictures become pixels and values.",
+            "accent": "accent",
+            "position": { "col": 4, "row": 1 }
+          },
+          {
+            "nodeId": "sound",
+            "label": "Sound",
+            "text": "Audio becomes digital samples.",
+            "accent": "primary",
+            "position": { "col": 5, "row": 1 }
+          }
+        ],
+        "edges": [
+          { "from": "text", "to": "binary", "label": "encode" },
+          { "from": "number", "to": "binary", "label": "convert" },
+          { "from": "image", "to": "binary", "label": "digitize" },
+          { "from": "sound", "to": "binary", "label": "sample" }
+        ],
+        "summaryPoints": [
+          "A bit is the smallest data unit.",
+          "Binary is the common internal language of digital systems.",
+          "Text, images, and sound are all encoded into binary."
+        ]
+      }
+    },
+    {
+      "conceptId": "number_systems",
+      "diagram": {
+        "diagramId": "diag_number_systems",
+        "title": "Common Number Systems",
+        "subtitle": "Different bases help humans and computers represent values.",
+        "layout": {
+          "columns": 4,
+          "rows": 2
+        },
+        "nodes": [
+          {
+            "nodeId": "decimal",
+            "label": "Decimal",
+            "text": "Base 10 uses digits 0 to 9.",
+            "accent": "primary",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "binary",
+            "label": "Binary",
+            "text": "Base 2 uses 0 and 1.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "octal",
+            "label": "Octal",
+            "text": "Base 8 uses digits 0 to 7.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "hex",
+            "label": "Hexadecimal",
+            "text": "Base 16 uses 0 to 9 and A to F.",
+            "accent": "accent",
+            "position": { "col": 4, "row": 1 }
+          },
+          {
+            "nodeId": "convert",
+            "label": "Conversion",
+            "text": "Values can be converted between systems.",
+            "accent": "primary",
+            "position": { "col": 2, "row": 2 }
+          }
+        ],
+        "edges": [
+          { "from": "decimal", "to": "convert", "label": "change" },
+          { "from": "binary", "to": "convert", "label": "change" },
+          { "from": "octal", "to": "convert", "label": "change" },
+          { "from": "hex", "to": "convert", "label": "change" }
+        ],
+        "summaryPoints": [
+          "A number system is defined by its base.",
+          "Binary is used by computers because circuits have two states.",
+          "Hexadecimal is a compact human-friendly form of binary."
+        ]
+      }
+    },
+    {
+      "conceptId": "logic_gates",
+      "diagram": {
+        "diagramId": "diag_logic_gates",
+        "title": "Logic Gates and Decisions",
+        "subtitle": "Digital circuits use simple rules to create decisions from binary inputs.",
+        "layout": {
+          "columns": 3,
+          "rows": 2
+        },
+        "nodes": [
+          {
+            "nodeId": "inputs",
+            "label": "Inputs",
+            "text": "Binary values such as 0 and 1 enter the circuit.",
+            "accent": "primary",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "gates",
+            "label": "Logic Gates",
+            "text": "AND, OR, and NOT apply decision rules.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "output",
+            "label": "Output",
+            "text": "The result is another binary value.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "truth",
+            "label": "Truth Table",
+            "text": "Shows all possible input-output combinations.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 2 }
+          }
+        ],
+        "edges": [
+          { "from": "inputs", "to": "gates", "label": "apply rule" },
+          { "from": "gates", "to": "output", "label": "produce" },
+          { "from": "truth", "to": "gates", "label": "explains" }
+        ],
+        "summaryPoints": [
+          "Logic gates are the building blocks of digital logic.",
+          "Each gate produces an output using a defined rule.",
+          "Truth tables are used to study and compare gate behavior."
+        ]
+      }
+    },
+    {
+      "conceptId": "computer_networks",
+      "diagram": {
+        "diagramId": "diag_computer_networks",
+        "title": "How a Network Connects Devices",
+        "subtitle": "Devices share data and resources through a communication path.",
+        "layout": {
+          "columns": 3,
+          "rows": 2
+        },
+        "nodes": [
+          {
+            "nodeId": "pc1",
+            "label": "Computer A",
+            "text": "A student or office computer joins the network.",
+            "accent": "primary",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "router",
+            "label": "Router / Switch",
+            "text": "Directs data to the right place.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "pc2",
+            "label": "Computer B",
+            "text": "Another device receives or shares data.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "shared",
+            "label": "Shared Resource",
+            "text": "Printer, Internet access, or files",
+            "accent": "accent",
+            "position": { "col": 2, "row": 2 }
+          }
+        ],
+        "edges": [
+          { "from": "pc1", "to": "router", "label": "send" },
+          { "from": "router", "to": "pc2", "label": "route" },
+          { "from": "router", "to": "shared", "label": "share" }
+        ],
+        "summaryPoints": [
+          "Networks connect multiple devices so they can communicate.",
+          "Routers and switches help move data between connected points.",
+          "Networking reduces duplication by sharing resources."
+        ]
+      }
+    },
+    {
+      "conceptId": "internet_email",
+      "diagram": {
+        "diagramId": "diag_internet_email",
+        "title": "Simple Internet and Email Flow",
+        "subtitle": "Users search, browse, and exchange messages over the Internet.",
+        "layout": {
+          "columns": 4,
+          "rows": 1
+        },
+        "nodes": [
+          {
+            "nodeId": "user",
+            "label": "User",
+            "text": "A person types a website or email action.",
+            "accent": "primary",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "browser",
+            "label": "Browser / Mail App",
+            "text": "The application sends the request.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "internet",
+            "label": "Internet",
+            "text": "The global network carries the request.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "service",
+            "label": "Website / Email Server",
+            "text": "The service returns the page or message.",
+            "accent": "accent",
+            "position": { "col": 4, "row": 1 }
+          }
+        ],
+        "edges": [
+          { "from": "user", "to": "browser", "label": "request" },
+          { "from": "browser", "to": "internet", "label": "send" },
+          { "from": "internet", "to": "service", "label": "deliver" }
+        ],
+        "summaryPoints": [
+          "A browser is used to access websites.",
+          "Email allows electronic messages and attachments to be sent.",
+          "Internet services depend on connected devices and servers."
+        ]
+      }
+    },
+    {
+      "conceptId": "cyber_security",
+      "diagram": {
+        "diagramId": "diag_cyber_security",
+        "title": "Protecting Digital Information",
+        "subtitle": "Safe behavior reduces the chance of attacks and data loss.",
+        "layout": {
+          "columns": 3,
+          "rows": 2
+        },
+        "nodes": [
+          {
+            "nodeId": "threats",
+            "label": "Threats",
+            "text": "Phishing, malware, weak passwords",
+            "accent": "warning",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "user",
+            "label": "Smart User Actions",
+            "text": "Strong passwords, careful clicks, regular updates",
+            "accent": "primary",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "protection",
+            "label": "Protection",
+            "text": "Safer devices, accounts, and personal data",
+            "accent": "accent",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "backup",
+            "label": "Backup",
+            "text": "Recovery is possible after damage or attack.",
+            "accent": "primary",
+            "position": { "col": 2, "row": 2 }
+          }
+        ],
+        "edges": [
+          { "from": "threats", "to": "user", "label": "need response" },
+          { "from": "user", "to": "protection", "label": "reduces risk" },
+          { "from": "user", "to": "backup", "label": "prepare" }
+        ],
+        "summaryPoints": [
+          "Cyber security combines awareness, good habits, and technical protection.",
+          "Strong passwords and updates reduce common risks.",
+          "Backups help restore data after an attack or mistake."
+        ]
+      }
+    },
+    {
+      "conceptId": "word_processing",
+      "diagram": {
+        "diagramId": "diag_word_processing",
+        "title": "Word Processing Workflow",
+        "subtitle": "A document moves from typing to editing to final presentation.",
+        "layout": {
+          "columns": 4,
+          "rows": 1
+        },
+        "nodes": [
+          {
+            "nodeId": "draft",
+            "label": "Type Draft",
+            "text": "Enter the first version of the document.",
+            "accent": "primary",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "edit",
+            "label": "Edit Text",
+            "text": "Correct mistakes and improve wording.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "format",
+            "label": "Format Layout",
+            "text": "Adjust fonts, headings, spacing, and page setup.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "final",
+            "label": "Save or Print",
+            "text": "Prepare the final clean document.",
+            "accent": "accent",
+            "position": { "col": 4, "row": 1 }
+          }
+        ],
+        "edges": [
+          { "from": "draft", "to": "edit", "label": "review" },
+          { "from": "edit", "to": "format", "label": "polish" },
+          { "from": "format", "to": "final", "label": "publish" }
+        ],
+        "summaryPoints": [
+          "Word processors are used to create and improve text documents.",
+          "Editing changes the content; formatting changes the appearance.",
+          "Tools like spell check and find/replace improve quality quickly."
+        ]
+      }
+    },
+    {
+      "conceptId": "spreadsheets",
+      "diagram": {
+        "diagramId": "diag_spreadsheets",
+        "title": "Spreadsheet Data Flow",
+        "subtitle": "Values enter cells, formulas process them, and results become summaries.",
+        "layout": {
+          "columns": 3,
+          "rows": 2
+        },
+        "nodes": [
+          {
+            "nodeId": "cells",
+            "label": "Cells",
+            "text": "Rows and columns hold values and labels.",
+            "accent": "primary",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "formulas",
+            "label": "Formulas / Functions",
+            "text": "SUM and other functions calculate results.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "results",
+            "label": "Results",
+            "text": "Totals, averages, and patterns appear.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "charts",
+            "label": "Charts and Reports",
+            "text": "Data can be visualized for decisions.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 2 }
+          }
+        ],
+        "edges": [
+          { "from": "cells", "to": "formulas", "label": "calculate" },
+          { "from": "formulas", "to": "results", "label": "produce" },
+          { "from": "results", "to": "charts", "label": "present" }
+        ],
+        "summaryPoints": [
+          "Spreadsheets organize data in a grid.",
+          "Formulas automate repeated calculations.",
+          "Charts turn raw values into a quick visual summary."
+        ]
+      }
+    },
+    {
+      "conceptId": "databases",
+      "diagram": {
+        "diagramId": "diag_databases",
+        "title": "How a Database Organizes Information",
+        "subtitle": "Related data is stored in fields and records inside tables.",
+        "layout": {
+          "columns": 3,
+          "rows": 2
+        },
+        "nodes": [
+          {
+            "nodeId": "fields",
+            "label": "Fields",
+            "text": "Each field stores one attribute like Name or Age.",
+            "accent": "primary",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "records",
+            "label": "Records",
+            "text": "A row combines fields for one item or person.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "tables",
+            "label": "Tables",
+            "text": "Many records are stored together in a table.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "queries",
+            "label": "Queries",
+            "text": "Search conditions retrieve the exact data needed.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 2 }
+          }
+        ],
+        "edges": [
+          { "from": "fields", "to": "records", "label": "combine" },
+          { "from": "records", "to": "tables", "label": "store" },
+          { "from": "queries", "to": "tables", "label": "search" }
+        ],
+        "summaryPoints": [
+          "Databases store structured data more effectively than plain lists.",
+          "Fields describe attributes, while records describe whole items.",
+          "Queries help users find useful data quickly."
+        ]
+      }
+    },
+    {
+      "conceptId": "programming_basics",
+      "diagram": {
+        "diagramId": "diag_programming_basics",
+        "title": "Basic Program Logic",
+        "subtitle": "Programs take input, process it, and produce output.",
+        "layout": {
+          "columns": 4,
+          "rows": 1
+        },
+        "nodes": [
+          {
+            "nodeId": "input",
+            "label": "Input",
+            "text": "The program receives data from the user or device.",
+            "accent": "primary",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "variables",
+            "label": "Variables",
+            "text": "Data is stored under meaningful names.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "logic",
+            "label": "Logic",
+            "text": "Sequence, selection, and repetition control actions.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "output",
+            "label": "Output",
+            "text": "The program displays or returns a result.",
+            "accent": "accent",
+            "position": { "col": 4, "row": 1 }
+          }
+        ],
+        "edges": [
+          { "from": "input", "to": "variables", "label": "store" },
+          { "from": "variables", "to": "logic", "label": "use" },
+          { "from": "logic", "to": "output", "label": "show" }
+        ],
+        "summaryPoints": [
+          "Variables hold data for later use in the program.",
+          "Selection helps a program choose between alternatives.",
+          "Repetition runs the same block of logic multiple times."
+        ]
+      }
+    },
+    {
+      "conceptId": "algorithms_flowcharts",
+      "diagram": {
+        "diagramId": "diag_algorithms_flowcharts",
+        "title": "Problem Solving with Flowcharts",
+        "subtitle": "An algorithm can be written as clear steps and visualized with symbols.",
+        "layout": {
+          "columns": 3,
+          "rows": 2
+        },
+        "nodes": [
+          {
+            "nodeId": "start",
+            "label": "Start / End",
+            "text": "The algorithm begins and finishes at clear points.",
+            "accent": "primary",
+            "position": { "col": 1, "row": 1 }
+          },
+          {
+            "nodeId": "process",
+            "label": "Process Step",
+            "text": "A rectangle shows an action to perform.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 1 }
+          },
+          {
+            "nodeId": "decision",
+            "label": "Decision",
+            "text": "A diamond checks a condition and branches.",
+            "accent": "primary",
+            "position": { "col": 3, "row": 1 }
+          },
+          {
+            "nodeId": "flow",
+            "label": "Flow",
+            "text": "Arrows show the order of steps.",
+            "accent": "accent",
+            "position": { "col": 2, "row": 2 }
+          }
+        ],
+        "edges": [
+          { "from": "start", "to": "process", "label": "begin" },
+          { "from": "process", "to": "decision", "label": "check" },
+          { "from": "flow", "to": "decision", "label": "connect" }
+        ],
+        "summaryPoints": [
+          "An algorithm is a step-by-step solution to a problem.",
+          "Flowcharts make logic easier to understand before coding.",
+          "Each symbol has a standard meaning in the flowchart."
+        ]
+      }
+    }
+  ]
+}
