@@ -79,44 +79,50 @@ const AdminDashboardPage = () => {
           </div>
         </DashboardPanel>
 
-        <div className="dashboard-layout">
-          <DashboardPanel>
-            <Header
-              label="Teacher View"
-              icon={ChartColumnBig}
-              title="Understanding analytics"
-              description="Open the teacher dashboard to review topic-wise understanding, quiz progress, micro-challenge performance, and recommended revision areas."
-            />
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <DashboardPanel className="flex flex-col justify-between">
+            <div>
+              <Header
+                label="Teacher View"
+                icon={ChartColumnBig}
+                title="Understanding analytics"
+                description="Open the teacher dashboard to review topic-wise understanding, quiz progress, and revision recommendations."
+              />
+            </div>
             <div className="mt-6">
-              <Link to="/admin/analytics" className="chatbot-inline-button is-primary">
+              <Link to="/admin/analytics" className="chatbot-inline-button is-primary w-full justify-center">
                 Open analytics dashboard
               </Link>
             </div>
           </DashboardPanel>
 
-          <DashboardPanel>
-            <Header
-              label="Attention Monitoring"
-              icon={ChartColumnBig}
-              title="Student Attention Reports"
-              description="View and generate comprehensive attention, drowsiness, phone usage, and engagement reports for specific students."
-            />
+          <DashboardPanel className="flex flex-col justify-between">
+            <div>
+              <Header
+                label="Attention Monitoring"
+                icon={ChartColumnBig}
+                title="Attention Reports"
+                description="Generate comprehensive engagement, drowsiness, phone usage, and fatigue reports for students."
+              />
+            </div>
             <div className="mt-6">
-              <Link to="/admin/attention-reports" className="chatbot-inline-button is-primary">
+              <Link to="/admin/attention-reports" className="chatbot-inline-button is-primary w-full justify-center">
                 Open Attention Reports
               </Link>
             </div>
           </DashboardPanel>
 
-          <DashboardPanel>
-            <Header
-              label="Intervention"
-              icon={ShieldAlert}
-              title="Repeated query alerts"
-              description="Track students who are struggling with the same concept across multiple chatbot sessions."
-            />
+          <DashboardPanel className="flex flex-col justify-between">
+            <div>
+              <Header
+                label="Intervention"
+                icon={ShieldAlert}
+                title="Repeated query alerts"
+                description="Track students struggling with the same concept across multiple chatbot sessions."
+              />
+            </div>
             <div className="mt-6">
-              <Link to="/admin/repeated-alerts" className="chatbot-inline-button">
+              <Link to="/admin/repeated-alerts" className="chatbot-inline-button w-full justify-center">
                 Open alerts page
               </Link>
             </div>

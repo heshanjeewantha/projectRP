@@ -806,3 +806,151 @@ async def predict_from_landmarks_async(payload: dict[str, Any]) -> dict[str, Any
 
 async def launch_training_job_async(config: dict[str, Any]) -> dict[str, Any]:
     return await asyncio.to_thread(launch_training_job, config)
+
+
+# ---------------------------------------------------------------------------
+# Landmark sequence serving — feeds the frontend sign avatar player
+# ---------------------------------------------------------------------------
+
+def _synthetic_pose_for_gloss(gloss: str) -> list[dict[str, Any]]:
+    """Generate a deterministic unique arm-pose sequence from a gloss word.
+
+    This fallback runs when no extracted WLASL landmark files exist for a word.
+    Each character in the gloss shifts the shoulder/elbow angles so every word
+    gets visually distinct motion that is always the same for the same word.
+    """
+    seed = sum(ord(char) * (index + 1) for index, char in enumerate(gloss.lower()))
+    base_right_shoulder = 0.78 + (seed % 31) * 0.012
+    base_left_shoulder  = 2.38 - (seed % 29) * 0.011
+    base_right_elbow    = 1.52 + (seed % 23) * 0.018
+    base_left_elbow     = -1.54 - (seed % 17) * 0.014
+
+    frames = []
+    n_frames = 5
+    for i in range(n_frames):
+        progress  = i / max(n_frames - 1, 1)
+        wave      = 0.22 * (1 - abs(progress * 2 - 1))
+        direction = 1 if i % 2 == 0 else -1
+        frames.append({
+            "time":                round(progress * 1.4, 3),
+            "leftShoulderAngle":   round(base_left_shoulder  + wave * direction * 0.18, 4),
+            "leftElbowAngle":      round(base_left_elbow     - wave * direction * 0.22, 4),
+            "rightShoulderAngle":  round(base_right_shoulder + wave * direction * 0.16, 4),
+            "rightElbowAngle":     round(base_right_elbow    + wave * direction * 0.24, 4),
+            "leftHand":  [],
+            "rightHand": [],
+        })
+    return frames
+
+
+def _normalise_landmark_point(pt: dict[str, float]) -> dict[str, float]:
+    return {"x": round(float(pt.get("x", 0.0)), 5),
+            "y": round(float(pt.get("y", 0.0)), 5),
+            "z": round(float(pt.get("z", 0.0)), 5)}
+
+
+def _landmark_json_to_frames(raw_frames: list[dict[str, Any]], total_duration: float = 1.6) -> list[dict[str, Any]]:
+    """Convert extracted landmark JSON to the time-indexed frame format
+    used by the frontend signEngine landmark player."""
+    n = len(raw_frames)
+    if not n:
+        return []
+    frames = []
+    for index, raw in enumerate(raw_frames):
+        left_hand  = [_normalise_landmark_point(pt) for pt in raw.get("left_hand_landmarks",  [])]
+        right_hand = [_normalise_landmark_point(pt) for pt in raw.get("right_hand_landmarks", [])]
+        pose_pts   = raw.get("pose_landmarks", [])
+
+        # Derive rough shoulder/elbow angles from pose landmarks for the
+        # existing angle-based renderer to use as a fallback.
+        left_shoulder_angle  = 2.35
+        right_shoulder_angle = 0.79
+        left_elbow_angle     = -1.55
+        right_elbow_angle    = 1.55
+        if len(pose_pts) > 15:
+            try:
+                import math
+                ls = pose_pts[11]; le = pose_pts[13]; lw = pose_pts[15]
+                rs = pose_pts[12]; re = pose_pts[14]; rw = pose_pts[16]
+                left_shoulder_angle  = round(math.atan2(le["y"] - ls["y"], le["x"] - ls["x"]), 4)
+                left_elbow_angle     = round(math.atan2(lw["y"] - le["y"], lw["x"] - le["x"]) - left_shoulder_angle, 4)
+                right_shoulder_angle = round(math.atan2(re["y"] - rs["y"], re["x"] - rs["x"]), 4)
+                right_elbow_angle    = round(math.atan2(rw["y"] - re["y"], rw["x"] - re["x"]) - right_shoulder_angle, 4)
+            except Exception:
+                pass
+
+        frames.append({
+            "time":                round(index / max(n - 1, 1) * total_duration, 4),
+            "leftShoulderAngle":   left_shoulder_angle,
+            "leftElbowAngle":      left_elbow_angle,
+            "rightShoulderAngle":  right_shoulder_angle,
+            "rightElbowAngle":     right_elbow_angle,
+            "leftHand":            left_hand[:21],
+            "rightHand":           right_hand[:21],
+        })
+    return frames
+
+
+def get_landmark_sequence(gloss_word: str) -> dict[str, Any]:
+    """Return a time-indexed frame sequence for one gloss word.
+
+    Resolution order:
+    1. Per-gloss avatar JSON  (landmarks/{gloss}.json) — exported by Colab Cell 16.
+       These files are pre-converted to the avatar frame format and contain real
+       MediaPipe hand landmarks from the best WLASL video for that gloss.
+    2. Per-video-id JSON  (landmarks/{video_id}.json) — from full extraction run.
+    3. Deterministic synthetic pose — always unique per word, no files needed.
+    """
+    gloss = gloss_word.strip().lower()
+
+    # ── Priority 1: per-gloss avatar JSON (Colab Cell 16 output) ──
+    gloss_json_path = LANDMARKS_DIR / f"{gloss}.json"
+    if gloss_json_path.exists():
+        try:
+            data = load_json_file(gloss_json_path, {})
+            frames = data.get("frames", [])
+            if frames:
+                return {
+                    "gloss":   gloss,
+                    "source":  data.get("source", "wlasl_extracted"),
+                    "videoId": data.get("videoId"),
+                    "frames":  frames,
+                }
+        except Exception:
+            pass
+
+    # ── Priority 2: per-video-id JSONs via WLASL metadata ──
+    if WLASL_JSON_PATH.exists():
+        try:
+            wlasl_data = load_json_file(WLASL_JSON_PATH, [])
+            for entry in wlasl_data:
+                if entry.get("gloss", "").lower() != gloss:
+                    continue
+                for instance in entry.get("instances", []):
+                    video_id  = str(instance.get("video_id", "")).strip()
+                    json_path = LANDMARKS_DIR / f"{video_id}.json"
+                    if json_path.exists():
+                        raw_frames = load_json_file(json_path, [])
+                        if raw_frames:
+                            frames = _landmark_json_to_frames(raw_frames)
+                            return {
+                                "gloss":   gloss,
+                                "source":  "wlasl_extracted",
+                                "videoId": video_id,
+                                "frames":  frames,
+                            }
+        except Exception:
+            pass
+
+    # ── Priority 3: synthetic fallback — always distinct per keyword ──
+    return {
+        "gloss":   gloss,
+        "source":  "synthetic_fallback",
+        "videoId": None,
+        "frames":  _synthetic_pose_for_gloss(gloss),
+    }
+
+
+async def get_landmark_sequence_async(gloss_word: str) -> dict[str, Any]:
+    return await asyncio.to_thread(get_landmark_sequence, gloss_word)
+

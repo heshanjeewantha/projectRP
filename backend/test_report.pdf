@@ -1,0 +1,47 @@
+%PDF-1.4
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >> endobj
+4 0 obj << /Length 695 >> stream
+q
+0.1 0.5 0.3 rg
+40 760 515 45 re f
+Q
+BT
+/F1 16 Tf
+1 1 1 rg
+55 778 Td
+(SignLearn AI - Teacher Analytics Report) Tj
+ET
+BT
+/F1 10 Tf
+0.2 0.2 0.2 rg
+50 735 Td
+16 TL
+(Report Generated: 2026-08-14 17:00:00 UTC) Tj
+T* (Platform: SignLearn AI Adaptive Learning System) Tj
+T* ( ) Tj
+T* (--- TOPIC UNDERSTANDING SCORES ---) Tj
+T* (1. Computer System: 85% \(Proficient\)) Tj
+T* (2. Data and Information: 78% \(Good\)) Tj
+T* (3. Computer Memory: 62% \(Needs Revision\)) Tj
+T* (4. Storage Devices: 54% \(Weak Topic\)) Tj
+T* ( ) Tj
+T* (--- RECOMMENDATIONS ---) Tj
+T* (- Assign prerequisite micro-challenges on Storage Devices.) Tj
+T* (- Schedule forgetting-curve reinforcement quiz on Computer Memory.) Tj
+ET
+endstream endobj
+5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000987 00000 n 
+trailer << /Size 6 /Root 1 0 R >>
+startxref
+1057
+%%EOF

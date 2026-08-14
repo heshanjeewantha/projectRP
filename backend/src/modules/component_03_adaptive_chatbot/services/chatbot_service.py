@@ -450,6 +450,7 @@ async def check_micro_challenge(payload: dict[str, Any]) -> dict[str, Any]:
             "nextDifficultyLevel": 1,
         }
 
+    challenge = _ensure_meaningful_mcq_options(dict(challenge))
     is_correct = _normalize_text(payload["selectedAnswer"]) == _normalize_text(challenge["correctAnswer"])
     created_at = _utc_now()
 
@@ -1097,53 +1098,62 @@ async def callLLMApi(
 
     if not provider:
         raise LLMApiError("llm_provider_missing")
-    if not api_key:
+    if provider != "ollama" and not api_key:
         raise LLMApiError("api_key_missing")
     if not model:
         raise LLMApiError("llm_model_missing")
 
-    url, headers, body = _build_llm_request(
-        provider=provider,
-        api_key=api_key,
-        model=model,
-        prompt=prompt,
-        question=question,
-        mode=mode,
-        intent=intent,
-        learning_state=learningState,
-        topic_doc=topic_doc,
-        prerequisites=prerequisites,
-        refresh_points=refresh_points,
-    )
+    candidate_models = [model]
+    if provider == "gemini":
+        for fallback_m in ["gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"]:
+            if fallback_m not in candidate_models:
+                candidate_models.append(fallback_m)
 
     last_error = None
-    for attempt in range(2):
-        try:
-            payload = await asyncio.to_thread(
-                _post_json_request,
-                url,
-                headers,
-                body,
-                timeout_ms,
-            )
-            answer = _extract_llm_answer(provider, payload)
-            if not answer.strip():
-                raise LLMApiError("invalid_llm_response")
-            return {
-                "answer": answer,
-                "provider": provider,
-                "model": model,
-            }
-        except LLMApiError as exc:
-            last_error = exc
-            if attempt == 0 and exc.safe_reason in LLM_RETRYABLE_REASONS:
-                continue
-            raise
-        except Exception as exc:
-            last_error = LLMApiError("invalid_llm_response")
-            if attempt == 0:
-                continue
-            raise last_error from exc
+    for cur_model in candidate_models:
+        url, headers, body = _build_llm_request(
+            provider=provider,
+            api_key=api_key,
+            model=cur_model,
+            prompt=prompt,
+            question=question,
+            mode=mode,
+            intent=intent,
+            learning_state=learningState,
+            topic_doc=topic_doc,
+            prerequisites=prerequisites,
+            refresh_points=refresh_points,
+        )
+
+        for attempt in range(2):
+            try:
+                payload = await asyncio.to_thread(
+                    _post_json_request,
+                    url,
+                    headers,
+                    body,
+                    timeout_ms,
+                )
+                answer = _extract_llm_answer(provider, payload)
+                if not answer.strip():
+                    raise LLMApiError("invalid_llm_response")
+                return {
+                    "answer": answer,
+                    "provider": provider,
+                    "model": cur_model,
+                }
+            except LLMApiError as exc:
+                last_error = exc
+                if exc.safe_reason in ("quota_exceeded", "provider_server_error"):
+                    break
+                if attempt == 0 and exc.safe_reason in LLM_RETRYABLE_REASONS:
+                    continue
+                break
+            except Exception as exc:
+                last_error = LLMApiError("invalid_llm_response")
+                if attempt == 0:
+                    continue
+                break
 
     raise last_error or LLMApiError("invalid_llm_response")
 
@@ -1296,16 +1306,24 @@ def _build_llm_request(
     refresh_points: list[str],
 ) -> tuple[str, dict[str, str], dict[str, Any]]:
     topic_name = topic_doc["topicName"] if topic_doc else "General O/L ICT"
-    user_prompt = _build_llm_user_prompt(
-        prompt=prompt,
-        question=question,
-        mode=mode,
-        intent=intent,
-        learning_state=learning_state,
-        topic_doc=topic_doc,
-        prerequisites=prerequisites,
-        refresh_points=refresh_points,
-    )
+    if provider == "ollama":
+        user_prompt = (
+            f"Question: {question}\n"
+            f"Topic: {topic_name}\n"
+            f"Mode: {mode}\n"
+            "Instructions: Answer in 2-3 clear, simple sentences for a Sri Lankan O/L ICT student in plain text."
+        )
+    else:
+        user_prompt = _build_llm_user_prompt(
+            prompt=prompt,
+            question=question,
+            mode=mode,
+            intent=intent,
+            learning_state=learning_state,
+            topic_doc=topic_doc,
+            prerequisites=prerequisites,
+            refresh_points=refresh_points,
+        )
 
     if provider == "openai":
         return (
@@ -1369,7 +1387,29 @@ def _build_llm_request(
                 "contents": [{"parts": [{"text": user_prompt}]}],
                 "generationConfig": {
                     "temperature": 0.4,
-                    "maxOutputTokens": 220 if mode == "exam" else 420,
+                    "maxOutputTokens": 400 if mode == "exam" else 800,
+                },
+            },
+        )
+
+    if provider == "ollama":
+        ollama_base = getattr(settings, "OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+        return (
+            f"{ollama_base}/api/generate",
+            {
+                "Content-Type": "application/json",
+            },
+            {
+                "model": model,
+                "prompt": user_prompt,
+                "system": (
+                    "You are SignLearn AI. Answer for a Sri Lankan O/L ICT student. "
+                    "Use clean plain text only, keep explanations direct and concise, and stay grounded in the O/L ICT curriculum."
+                ),
+                "stream": False,
+                "options": {
+                    "temperature": 0.2,
+                    "num_predict": 180 if mode == "exam" else 250,
                 },
             },
         )
@@ -1459,6 +1499,8 @@ def _extract_llm_answer(provider: str, payload: dict[str, Any]) -> str:
         return _normalize_whitespace(content)
     if provider == "gemini":
         return _normalize_whitespace(_extract_gemini_response_text(payload))
+    if provider == "ollama":
+        return _normalize_whitespace(str(payload.get("response") or ""))
     raise LLMApiError("unsupported_llm_provider")
 
 
@@ -3077,7 +3119,86 @@ def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _ensure_meaningful_mcq_options(challenge: dict[str, Any]) -> dict[str, Any]:
+    raw_options = challenge.get("options") or []
+    is_placeholder = (
+        not raw_options
+        or len(raw_options) < 2
+        or any(re.match(r"^option\s*[a-d]$", str(opt).strip(), re.I) for opt in raw_options)
+    )
+    if not is_placeholder:
+        return challenge
+
+    topic_name = challenge.get("topicName") or "Computer System"
+    question = challenge.get("questionText") or f"What is {topic_name}?"
+    explanation = challenge.get("explanation") or f"Core concept in {topic_name}."
+
+    q_lower = (question + " " + topic_name).lower()
+    if "computer" in q_lower or "device" in q_lower:
+        correct = "An electronic device that accepts data, processes it, and generates output"
+        distractors = [
+            "A mechanical printer without data processing capabilities",
+            "A passive storage shelf for computer cables",
+            "An analog tool used only for electrical voltage regulation",
+        ]
+    elif "input" in q_lower:
+        correct = "A device used to enter raw data and instructions into the computer"
+        distractors = [
+            "A device that only displays processed information on a screen",
+            "A secondary storage disk for long-term backups",
+            "An internal power supply unit",
+        ]
+    elif "output" in q_lower:
+        correct = "A device that presents processed information to the user"
+        distractors = [
+            "A device used solely to type text into memory",
+            "A hardware component that executes arithmetic logic",
+            "A communication protocol for web servers",
+        ]
+    elif "network" in q_lower or "internet" in q_lower:
+        correct = "A collection of interconnected devices to share resources and communicate"
+        distractors = [
+            "A standalone personal computer disconnected from other systems",
+            "A single offline database file on a USB flash drive",
+            "A power management utility for desktop computers",
+        ]
+    elif "memory" in q_lower or "ram" in q_lower or "storage" in q_lower:
+        correct = "Hardware used to temporarily hold data and instructions for active processing"
+        distractors = [
+            "An external peripheral used only to capture video frames",
+            "A physical keyboard layout standard",
+            "An application software for drawing vector graphics",
+        ]
+    elif "data" in q_lower or "information" in q_lower:
+        correct = "Raw unorganized facts that are processed into meaningful information"
+        distractors = [
+            "A formatted spreadsheet document with charts",
+            "An executable binary program stored in ROM",
+            "A network firewall configuration file",
+        ]
+    elif "database" in q_lower or "dbms" in q_lower:
+        correct = "An organized collection of related data stored and accessed electronically"
+        distractors = [
+            "A text editor used for drafting personal emails",
+            "A computer monitor used for displaying graphic designs",
+            "A wireless router connecting devices to a local network",
+        ]
+    else:
+        correct = f"A core {topic_name} component that {explanation.lower().strip('.')}"
+        distractors = [
+            f"An unrelated peripheral not used in {topic_name}",
+            "A legacy offline storage medium",
+            "A temporary network interface identifier",
+        ]
+
+    challenge["options"] = [correct, *distractors]
+    challenge["correctAnswer"] = correct
+    challenge["explanation"] = f"{topic_name}: {correct}"
+    return challenge
+
+
 def _serialize_micro_challenge(doc: dict[str, Any]) -> dict[str, Any]:
+    doc = _ensure_meaningful_mcq_options(dict(doc))
     return {
         "challengeId": doc["challengeId"],
         "topicId": doc["topicId"],
@@ -3159,14 +3280,82 @@ def _escape_pdf_text(text: str) -> str:
     return text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
 
 
-def _generate_simple_pdf(lines: list[str]) -> bytes:
-    safe_lines = ["BT /F1 12 Tf 50 780 Td"]
-    first = True
-    for line in lines[:40]:
+def _generate_simple_pdf(lines: list[str], title: str = "SignLearn AI - Analytics Report") -> bytes:
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib import colors
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+        styles = getSampleStyleSheet()
+
+        title_style = ParagraphStyle(
+            "ReportTitle",
+            parent=styles["Heading1"],
+            fontSize=16,
+            leading=20,
+            textColor=colors.HexColor("#0f766e"),
+            spaceAfter=6,
+        )
+        subtitle_style = ParagraphStyle(
+            "ReportSubtitle",
+            parent=styles["Normal"],
+            fontSize=9,
+            leading=12,
+            textColor=colors.HexColor("#64748b"),
+            spaceAfter=14,
+        )
+
+        elements = [
+            Paragraph(title, title_style),
+            Paragraph(lines[1] if len(lines) > 1 else "Generated Report", subtitle_style),
+            Spacer(1, 8),
+        ]
+
+        table_data = [["Metric / Topic / Description", "Score / Details"]]
+        for line in lines[2:]:
+            if ":" in line:
+                parts = line.split(":", 1)
+                table_data.append([parts[0].strip(), parts[1].strip()])
+            else:
+                table_data.append([line.strip(), ""])
+
+        if len(table_data) > 1:
+            t = Table(table_data, colWidths=[280, 240])
+            t.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f766e")),
+                        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                        ("FONTSIZE", (0, 0), (-1, 0), 10),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                        ("TOPPADDING", (0, 0), (-1, -1), 6),
+                        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]),
+                    ]
+                )
+            )
+            elements.append(t)
+
+        doc.build(elements)
+        return buffer.getvalue()
+    except Exception:
+        pass
+
+    # Pure Python PDF Fallback with explicit 18 TL text leading
+    safe_lines = [
+        "BT",
+        "/F1 12 Tf",
+        "16 TL",
+        "50 780 Td",
+    ]
+    for i, line in enumerate(lines[:40]):
         escaped = _escape_pdf_text(line)
-        if first:
+        if i == 0:
             safe_lines.append(f"({escaped}) Tj")
-            first = False
         else:
             safe_lines.append(f"T* ({escaped}) Tj")
     safe_lines.append("ET")

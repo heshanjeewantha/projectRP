@@ -24,6 +24,9 @@ from src.modules.component_04_sign_avatar_lecture_generator.services import (
     sign_mnist_service,
     wlasl_pipeline_service,
 )
+from src.modules.component_04_sign_avatar_lecture_generator.services.wlasl_pipeline_service import (
+    get_landmark_sequence_async,
+)
 
 
 router = APIRouter(prefix="/api/signs", tags=["WLASL Signs"])
@@ -65,6 +68,17 @@ async def predict_sign(payload: WlaslPredictRequestModel):
 async def get_sign_model_info():
     """Return saved model, metrics, and label-map metadata."""
     return await wlasl_pipeline_service.get_model_info_async()
+
+
+@router.get("/landmark-sequence/{gloss_word}")
+async def get_landmark_sequence(gloss_word: str):
+    """Return a time-indexed frame sequence (pose + hand landmarks) for one gloss word.
+
+    Used by the frontend sign avatar player to animate the 2D canvas avatar with
+    WLASL-derived motion data. Falls back to a deterministic synthetic pose when
+    no extracted landmark files exist for the requested word.
+    """
+    return await get_landmark_sequence_async(gloss_word)
 
 
 @router.get("/mnist/status", response_model=SignMnistStatusModel)

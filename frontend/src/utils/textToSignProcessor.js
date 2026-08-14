@@ -66,6 +66,11 @@ const singularize = (value) => {
     folders: 'folder',
     websites: 'website',
     devices: 'device',
+    keyboards: 'keyboard',
+    monitors: 'monitor',
+    servers: 'server',
+    algorithms: 'algorithm',
+    browsers: 'browser',
   };
 
   return map[value] || value;
@@ -91,7 +96,7 @@ export const extractKeywords = (lessonNotes = '') => {
   });
 
   return matchedKeywords.length
-    ? matchedKeywords.slice(0, 10)
+    ? matchedKeywords
     : signDictionary.slice(0, 5).map((entry) => entry.keyword);
 };
 

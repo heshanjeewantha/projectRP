@@ -640,13 +640,14 @@ async def _ensure_indexes() -> None:
     await db[SIGN_LECTURE_HISTORY_COLLECTION].create_index([("teacherId", 1), ("createdAt", -1)])
 
 
-def _clean_input_text(input_text: str, selected_language: str) -> list[str]:
+def _clean_input_text(input_text: str, selected_language: str, limit: int | None = None) -> list[str]:
     normalized = re.sub(r"[^\w\s]", " ", input_text, flags=re.UNICODE)
     tokens = [token.strip() for token in normalized.split() if token.strip()]
     if selected_language == "Sinhala":
-        return tokens[:8]
+        return tokens[:limit] if limit else tokens
     filtered = [token for token in tokens if token.lower() not in ENGLISH_FILLER_WORDS]
-    return filtered[:8] if filtered else tokens[:8]
+    result = filtered if filtered else tokens
+    return result[:limit] if limit else result
 
 
 def _generate_gloss(cleaned_words: list[str]) -> str:
@@ -1018,7 +1019,7 @@ def _local_extract_sign_keywords(lesson_text: str, topic: str, selected_language
                 matched_keywords.append(phrase)
 
     if matched_keywords:
-        return matched_keywords[:10]
+        return matched_keywords
 
     semantic_keywords = []
     for gloss_word in _build_semantic_gloss_tokens(normalized_words, {item["glossWord"] for item in ICT_SIGN_DICTIONARY}):
@@ -1026,7 +1027,7 @@ def _local_extract_sign_keywords(lesson_text: str, topic: str, selected_language
             if entry["glossWord"] == gloss_word and entry["keyword"] not in semantic_keywords:
                 semantic_keywords.append(entry["keyword"])
     if semantic_keywords:
-        return semantic_keywords[:10]
+        return semantic_keywords
 
     return [entry["keyword"] for entry in ICT_SIGN_DICTIONARY[:5]]
 
@@ -1130,7 +1131,7 @@ def _normalize_sign_keywords(values: list[str]) -> list[str]:
         normalized = _normalize_keyword_token(value)
         if normalized in dictionary_lookup and normalized not in keywords:
             keywords.append(normalized)
-    return keywords[:10]
+    return keywords
 
 
 def _normalize_sequence_text(value: str) -> str:
@@ -1142,7 +1143,7 @@ async def _try_llm_keyword_extraction(lesson_text: str, topic: str) -> dict[str,
     api_key = str(settings.LLM_API_KEY or "").strip()
     model = str(settings.LLM_MODEL or "").strip()
     timeout_ms = max(1000, int(settings.LLM_TIMEOUT_MS or 10000))
-    if not provider or not api_key or not model:
+    if not provider or (provider != "ollama" and not api_key) or not model:
         return None
 
     request_payload = _build_llm_sequence_request(provider, api_key, model, lesson_text, topic)
@@ -1214,7 +1215,20 @@ def _build_llm_sequence_request(
             "headers": {"Content-Type": "application/json"},
             "body": {
                 "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.2, "maxOutputTokens": 220},
+                "generationConfig": {"temperature": 0.2, "maxOutputTokens": 400},
+            },
+        }
+    if provider == "ollama":
+        ollama_base = getattr(settings, "OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+        return {
+            "url": f"{ollama_base}/api/generate",
+            "headers": {"Content-Type": "application/json"},
+            "body": {
+                "model": model,
+                "prompt": prompt,
+                "stream": False,
+                "format": "json",
+                "options": {"temperature": 0.1, "num_predict": 300},
             },
         }
     return None
@@ -1254,6 +1268,8 @@ def _extract_llm_text(provider: str, payload: dict[str, Any]) -> str:
             for part in candidate.get("content", {}).get("parts", []):
                 if part.get("text"):
                     return str(part["text"])
+    if provider == "ollama":
+        return str(payload.get("response") or "")
     return ""
 
 

@@ -5,11 +5,11 @@ import Header from './Header';
 const TimelinePanel = ({ icon, title, description, currentPlaybackTime, timelineDuration, timelineProgress, segments }) => {
   return (
     <DashboardPanel>
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <Header label="Timeline" icon={icon} title={title} description={description} />
-        <div className="rounded-2xl bg-black/18 px-4 py-3 text-right">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Time</div>
-          <div className="mt-2 text-[2rem] font-black text-white">{Math.floor(currentPlaybackTime)}s</div>
+        <div className="w-fit rounded-2xl bg-black/25 px-4 py-3 text-left sm:w-auto sm:text-right border border-white/5">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Current Time</div>
+          <div className="mt-1 text-[1.6rem] sm:text-[2rem] font-black text-white">{Math.floor(currentPlaybackTime)}s</div>
         </div>
       </div>
 

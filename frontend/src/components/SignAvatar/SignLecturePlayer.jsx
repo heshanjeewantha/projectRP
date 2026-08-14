@@ -6,7 +6,7 @@ import processLessonTextToSigns from '../../utils/textToSignProcessor';
 import AvatarAnimationController from './AvatarAnimationController';
 
 const DEFAULT_LESSON_TEXT =
-  'Computer networks connect devices so data can move between computers, servers, and the internet.';
+  'Use a computer with a keyboard and mouse. Connect to the internet over a network to send an email. Store data on the cloud. Run a program to process information.';
 
 const SignLecturePlayer = ({
   userId,

@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     LLM_API_KEY: str | None = None
     LLM_MODEL: str | None = None
     LLM_TIMEOUT_MS: int = 10000
+    OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
 
     model_config = SettingsConfigDict(env_file=("backend/.env", ".env"), extra="ignore")
 
