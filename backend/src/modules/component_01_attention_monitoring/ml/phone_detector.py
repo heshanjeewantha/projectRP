@@ -1,11 +1,12 @@
 """
 ml/phone_detector.py
 ---
-MediaPipe Hands & Face Mesh Spatial Phone Usage Detector.
+MediaPipe Hands & Face Mesh Spatial Phone-in-Hand Detector.
 
-Detects phone usage postures with high accuracy:
-  1. Hand held against ear/side of head (phone call posture)
-  2. Hand raised directly in front of lower face/mouth (texting/holding phone up)
+Detects phone-in-hand usage postures with high accuracy:
+  1. Phone-in-Hand (Texting / Holding up): Hand raised in front of chest/chin with phone grip.
+  2. Phone-in-Hand (Desk / Lap Texting): Hand resting in lower field-of-view with downward gaze/pitch.
+  3. Dual-Hand Phone Holding: Both hands held close together in typing formation.
 
 Lazy initialization ensures 0-second server startup.
 """
@@ -17,7 +18,7 @@ import mediapipe as mp
 
 class PhoneDetector:
     """
-    High-accuracy Phone Detector using MediaPipe Hands + Face Mesh spatial relationship.
+    High-accuracy Phone-in-Hand Detector using MediaPipe Hands + Face Mesh.
     """
 
     CONFIRM_FRAMES = 2   # Require 2 consecutive positive detections
@@ -27,6 +28,7 @@ class PhoneDetector:
         self._positive_streak = 0
         self._negative_streak = 0
         self._currently_detected = False
+        self._current_posture = "none"
         self._face_mesh = None
         self._hands = None
 
@@ -53,15 +55,21 @@ class PhoneDetector:
 
     def analyze_frame(self, frame_bgr: np.ndarray) -> dict:
         """
-        Analyze BGR frame for cell phone usage posture.
-        Returns: { phone_detected: bool, phone_confidence: float }
+        Analyze BGR frame for cell phone in hand posture.
+        Returns: {
+            phone_detected: bool,
+            phone_in_hand: bool,
+            phone_posture: str,
+            phone_confidence: float
+        }
         """
         self._ensure_initialized()
-        raw_detected, raw_confidence = self._detect_phone_posture(frame_bgr)
+        raw_detected, raw_posture, raw_confidence = self._detect_phone_posture(frame_bgr)
 
         if raw_detected:
             self._positive_streak += 1
             self._negative_streak = 0
+            self._current_posture = raw_posture
         else:
             self._negative_streak += 1
             self._positive_streak = 0
@@ -71,17 +79,22 @@ class PhoneDetector:
             self._currently_detected = True
         elif self._currently_detected and self._negative_streak >= self.CLEAR_FRAMES:
             self._currently_detected = False
+            self._current_posture = "none"
 
         confidence = raw_confidence if self._currently_detected else 0.0
+        is_phone_in_hand = self._currently_detected and ("in_hand" in self._current_posture or "texting" in self._current_posture)
 
         return {
             "phone_detected": self._currently_detected,
+            "phone_in_hand": is_phone_in_hand,
+            "phone_posture": self._current_posture if self._currently_detected else "none",
             "phone_confidence": round(confidence, 2),
         }
 
     def _detect_phone_posture(self, frame_bgr: np.ndarray):
         """
-        Calculates spatial distance between hand landmarks and face landmarks.
+        Calculates spatial distance and hand grip geometry for phone-in-hand.
+        Returns: (detected: bool, posture: str, confidence: float)
         """
         h, w = frame_bgr.shape[:2]
         rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
@@ -89,8 +102,29 @@ class PhoneDetector:
         face_res = self._face_mesh.process(rgb)
         hand_res = self._hands.process(rgb)
 
-        if not face_res.multi_face_landmarks or not hand_res.multi_hand_landmarks:
-            return False, 0.0
+        if not hand_res.multi_hand_landmarks:
+            return False, "none", 0.0
+
+        # Case A: Both hands detected and close together (Dual-Hand Phone Texting/Holding)
+        if len(hand_res.multi_hand_landmarks) >= 2:
+            h1 = hand_res.multi_hand_landmarks[0].landmark[0] # Wrist 1
+            h2 = hand_res.multi_hand_landmarks[1].landmark[0] # Wrist 2
+            w1 = np.array([h1.x * w, h1.y * h])
+            w2 = np.array([h2.x * w, h2.y * h])
+            wrist_dist = np.linalg.norm(w1 - w2)
+
+            # If wrists are in lower half and close together (< 0.28 * width)
+            if h1.y > 0.45 and h2.y > 0.45 and wrist_dist < (w * 0.28):
+                return True, "phone_in_hand_two_hands", 0.89
+
+        if not face_res.multi_face_landmarks:
+            # If no face but hand in lower center with grip, check phone in hand
+            for hand_lms in hand_res.multi_hand_landmarks:
+                wrist = hand_lms.landmark[0]
+                if wrist.y > 0.5:
+                    if self._is_phone_grip(hand_lms.landmark, w, h):
+                        return True, "phone_in_hand_desk", 0.75
+            return False, "none", 0.0
 
         face_lms = face_res.multi_face_landmarks[0].landmark
 
@@ -99,36 +133,68 @@ class PhoneDetector:
         right_ear = np.array([face_lms[454].x * w, face_lms[454].y * h])  # Right tragus/ear
         chin      = np.array([face_lms[152].x * w, face_lms[152].y * h])  # Chin
         nose      = np.array([face_lms[1].x * w,   face_lms[1].y * h])    # Nose tip
+        forehead  = np.array([face_lms[10].x * w,  face_lms[10].y * h])   # Forehead top
 
-        # Estimate face width scale
+        # Face scale and head pitch
         face_width = np.linalg.norm(left_ear - right_ear)
-        if face_width < 10:
-            return False, 0.0
+        face_height = np.linalg.norm(forehead - chin)
+        if face_width < 10 or face_height < 10:
+            return False, "none", 0.0
 
-        threshold_dist = face_width * 0.45  # Distance threshold relative to face size
+        threshold_dist = face_width * 0.48
+
+        # Head pitch downward indicator: nose is significantly lower relative to ears
+        ears_mid_y = (left_ear[1] + right_ear[1]) / 2.0
+        is_looking_down = nose[1] > ears_mid_y + (face_height * 0.08)
 
         for hand_lms in hand_res.multi_hand_landmarks:
-            # Check key hand points: Wrist (0), Index MCP (5), Middle MCP (9), Pinky MCP (17), Middle Tip (12)
+            # Check key hand points: Wrist (0), Index MCP (5), Middle MCP (9), Pinky MCP (17), Middle Tip (12), Thumb Tip (4)
             hand_pts = [
                 np.array([hand_lms.landmark[i].x * w, hand_lms.landmark[i].y * h])
-                for i in [0, 5, 9, 12, 17]
+                for i in [0, 4, 5, 9, 12, 17]
             ]
+            wrist_y = hand_lms.landmark[0].y
 
+            # 1. Texting / Holding phone in hand in front of chest/chin
             for hp in hand_pts:
-                dist_left_ear  = np.linalg.norm(hp - left_ear)
-                dist_right_ear = np.linalg.norm(hp - right_ear)
-                dist_chin      = np.linalg.norm(hp - chin)
+                dist_chin = np.linalg.norm(hp - chin)
+                if dist_chin < (threshold_dist * 0.85) and hp[1] < chin[1] + (face_width * 0.35):
+                    return True, "phone_in_hand_texting", 0.86
 
-                # 1. Phone Call Posture: Hand near left or right ear
-                if dist_left_ear < threshold_dist or dist_right_ear < threshold_dist:
-                    confidence = 0.88 - min(dist_left_ear, dist_right_ear) / (threshold_dist * 2)
-                    return True, max(0.70, round(confidence, 2))
+            # 2. Phone in Hand (Desk / Lap texting): Hand resting low + looking downward
+            if wrist_y > 0.52 and is_looking_down:
+                if self._is_phone_grip(hand_lms.landmark, w, h):
+                    return True, "phone_in_hand_desk", 0.84
 
-                # 2. Texting / Holding phone up in front of face: Hand raised near chin
-                if dist_chin < (threshold_dist * 0.7) and hp[1] < chin[1] + (face_width * 0.2):
-                    return True, 0.82
+        return False, "none", 0.0
 
-        return False, 0.0
+    def _is_phone_grip(self, lms, w: int, h: int) -> bool:
+        """
+        Heuristic for smartphone grip:
+        Fingertips (8, 12, 16, 20) are curved inward towards MCP palm joints (5, 9, 13, 17)
+        while thumb (4) has lateral spread.
+        """
+        try:
+            # Distance from Index Tip (8) to Index MCP (5)
+            idx_tip = np.array([lms[8].x * w, lms[8].y * h])
+            idx_mcp = np.array([lms[5].x * w, lms[5].y * h])
+            # Distance from Middle Tip (12) to Middle MCP (9)
+            mid_tip = np.array([lms[12].x * w, lms[12].y * h])
+            mid_mcp = np.array([lms[9].x * w, lms[9].y * h])
+            # Wrist
+            wrist = np.array([lms[0].x * w, lms[0].y * h])
+
+            palm_size = np.linalg.norm(idx_mcp - wrist)
+            if palm_size < 5:
+                return True
+
+            idx_curl = np.linalg.norm(idx_tip - idx_mcp) / palm_size
+            mid_curl = np.linalg.norm(mid_tip - mid_mcp) / palm_size
+
+            # Curled fingers holding an object
+            return (idx_curl < 1.4 and mid_curl < 1.4)
+        except Exception:
+            return True
 
     def __del__(self):
         try:
@@ -138,3 +204,4 @@ class PhoneDetector:
                 self._hands.close()
         except Exception:
             pass
+
