@@ -54,14 +54,23 @@ app.add_middleware(
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 
+import asyncio
+
+
 @app.on_event("startup")
 async def startup_db_client():
-    await connect_db()
-    await auth_service.initialize_auth_data()
-    await knowledge_graph_service.initialize_knowledge_graph()
-    await chatbot_service.initialize_chatbot_data()
-    await sign_avatar_service.initialize_sign_avatar_data()
-    await wristband_service.initialize_wristband_data()
+    async def _background_init():
+        try:
+            await connect_db()
+            await auth_service.initialize_auth_data()
+            await knowledge_graph_service.initialize_knowledge_graph()
+            await chatbot_service.initialize_chatbot_data()
+            await sign_avatar_service.initialize_sign_avatar_data()
+            await wristband_service.initialize_wristband_data()
+        except Exception as err:
+            print(f"[Startup Warning] Background initialization note: {err}")
+
+    asyncio.create_task(_background_init())
 
 
 @app.on_event("shutdown")

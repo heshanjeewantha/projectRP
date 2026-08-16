@@ -1,33 +1,175 @@
 {
   "computer": [
-    { "time": 0, "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
+    { "time": 0,    "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
     { "time": 0.25, "leftShoulderAngle": 2.22, "leftElbowAngle": -1.78, "rightShoulderAngle": 0.92, "rightElbowAngle": 1.78 },
-    { "time": 0.5, "leftShoulderAngle": 2.3, "leftElbowAngle": -1.65, "rightShoulderAngle": 0.84, "rightElbowAngle": 1.65 },
-    { "time": 0.75, "leftShoulderAngle": 2.22, "leftElbowAngle": -1.8, "rightShoulderAngle": 0.92, "rightElbowAngle": 1.8 },
-    { "time": 1, "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+    { "time": 0.5,  "leftShoulderAngle": 2.18, "leftElbowAngle": -1.85, "rightShoulderAngle": 0.96, "rightElbowAngle": 1.85 },
+    { "time": 0.75, "leftShoulderAngle": 2.22, "leftElbowAngle": -1.78, "rightShoulderAngle": 0.92, "rightElbowAngle": 1.78 },
+    { "time": 1.0,  "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
   ],
   "network": [
-    { "time": 0, "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
-    { "time": 0.35, "leftShoulderAngle": 2.6, "leftElbowAngle": -0.95, "rightShoulderAngle": 0.54, "rightElbowAngle": 0.95 },
-    { "time": 0.7, "leftShoulderAngle": 2.15, "leftElbowAngle": -1.92, "rightShoulderAngle": 0.99, "rightElbowAngle": 1.92 },
-    { "time": 1.05, "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+    { "time": 0,    "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
+    { "time": 0.3,  "leftShoulderAngle": 2.62, "leftElbowAngle": -0.88, "rightShoulderAngle": 0.52, "rightElbowAngle": 0.88 },
+    { "time": 0.6,  "leftShoulderAngle": 2.10, "leftElbowAngle": -1.98, "rightShoulderAngle": 1.04, "rightElbowAngle": 1.98 },
+    { "time": 0.9,  "leftShoulderAngle": 2.62, "leftElbowAngle": -0.88, "rightShoulderAngle": 0.52, "rightElbowAngle": 0.88 },
+    { "time": 1.2,  "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
   ],
   "data": [
-    { "time": 0, "leftShoulderAngle": 2.25, "leftElbowAngle": -1.85, "rightShoulderAngle": 0.89, "rightElbowAngle": 1.85 },
-    { "time": 0.4, "leftShoulderAngle": 2.55, "leftElbowAngle": -1.2, "rightShoulderAngle": 0.59, "rightElbowAngle": 1.2 },
-    { "time": 0.8, "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+    { "time": 0,    "leftShoulderAngle": 2.22, "leftElbowAngle": -1.85, "rightShoulderAngle": 0.88, "rightElbowAngle": 1.85 },
+    { "time": 0.35, "leftShoulderAngle": 2.55, "leftElbowAngle": -1.18, "rightShoulderAngle": 0.59, "rightElbowAngle": 1.18 },
+    { "time": 0.7,  "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
   ],
   "internet": [
-    { "time": 0, "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
-    { "time": 0.25, "leftShoulderAngle": 2.52, "leftElbowAngle": -1.3, "rightShoulderAngle": 0.62, "rightElbowAngle": 1.3 },
-    { "time": 0.5, "leftShoulderAngle": 2.18, "leftElbowAngle": -1.88, "rightShoulderAngle": 0.96, "rightElbowAngle": 1.88 },
-    { "time": 0.75, "leftShoulderAngle": 2.45, "leftElbowAngle": -1.42, "rightShoulderAngle": 0.69, "rightElbowAngle": 1.42 },
-    { "time": 1, "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+    { "time": 0,    "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
+    { "time": 0.25, "leftShoulderAngle": 2.54, "leftElbowAngle": -1.28, "rightShoulderAngle": 0.60, "rightElbowAngle": 1.28 },
+    { "time": 0.5,  "leftShoulderAngle": 2.15, "leftElbowAngle": -1.92, "rightShoulderAngle": 0.99, "rightElbowAngle": 1.92 },
+    { "time": 0.75, "leftShoulderAngle": 2.54, "leftElbowAngle": -1.28, "rightShoulderAngle": 0.60, "rightElbowAngle": 1.28 },
+    { "time": 1.0,  "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
   ],
   "server": [
-    { "time": 0, "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
-    { "time": 0.35, "leftShoulderAngle": 2.55, "leftElbowAngle": -1.05, "rightShoulderAngle": 0.35, "rightElbowAngle": 0.55 },
-    { "time": 0.7, "leftShoulderAngle": 2.25, "leftElbowAngle": -1.75, "rightShoulderAngle": 0.7, "rightElbowAngle": 1.4 },
+    { "time": 0,    "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
+    { "time": 0.3,  "leftShoulderAngle": 2.58, "leftElbowAngle": -1.02, "rightShoulderAngle": 0.34, "rightElbowAngle": 0.52 },
+    { "time": 0.6,  "leftShoulderAngle": 2.22, "leftElbowAngle": -1.75, "rightShoulderAngle": 0.72, "rightElbowAngle": 1.40 },
+    { "time": 0.9,  "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+  ],
+  "cloud": [
+    { "time": 0,    "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
+    { "time": 0.28, "leftShoulderAngle": 2.68, "leftElbowAngle": -0.74, "rightShoulderAngle": 0.48, "rightElbowAngle": 0.74 },
+    { "time": 0.56, "leftShoulderAngle": 2.72, "leftElbowAngle": -0.66, "rightShoulderAngle": 0.44, "rightElbowAngle": 0.66 },
+    { "time": 0.84, "leftShoulderAngle": 2.58, "leftElbowAngle": -0.94, "rightShoulderAngle": 0.56, "rightElbowAngle": 0.94 },
+    { "time": 1.12, "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+  ],
+  "email": [
+    { "time": 0,    "leftShoulderAngle": 2.44, "leftElbowAngle": -1.42, "rightShoulderAngle": 0.70, "rightElbowAngle": 1.42 },
+    { "time": 0.32, "leftShoulderAngle": 2.28, "leftElbowAngle": -1.68, "rightShoulderAngle": 0.86, "rightElbowAngle": 1.68 },
+    { "time": 0.64, "leftShoulderAngle": 2.50, "leftElbowAngle": -1.22, "rightShoulderAngle": 0.64, "rightElbowAngle": 1.22 },
+    { "time": 0.96, "leftShoulderAngle": 2.44, "leftElbowAngle": -1.42, "rightShoulderAngle": 0.70, "rightElbowAngle": 1.42 }
+  ],
+  "information": [
+    { "time": 0,    "leftShoulderAngle": 2.62, "leftElbowAngle": -0.90, "rightShoulderAngle": 0.62, "rightElbowAngle": 0.90 },
+    { "time": 0.35, "leftShoulderAngle": 2.42, "leftElbowAngle": -1.38, "rightShoulderAngle": 0.82, "rightElbowAngle": 1.38 },
+    { "time": 0.7,  "leftShoulderAngle": 2.62, "leftElbowAngle": -0.90, "rightShoulderAngle": 0.62, "rightElbowAngle": 0.90 },
     { "time": 1.05, "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+  ],
+  "keyboard": [
+    { "time": 0,    "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
+    { "time": 0.22, "leftShoulderAngle": 2.18, "leftElbowAngle": -1.88, "rightShoulderAngle": 0.96, "rightElbowAngle": 1.88 },
+    { "time": 0.44, "leftShoulderAngle": 2.25, "leftElbowAngle": -1.72, "rightShoulderAngle": 0.89, "rightElbowAngle": 1.72 },
+    { "time": 0.66, "leftShoulderAngle": 2.18, "leftElbowAngle": -1.88, "rightShoulderAngle": 0.96, "rightElbowAngle": 1.88 },
+    { "time": 0.88, "leftShoulderAngle": 2.25, "leftElbowAngle": -1.72, "rightShoulderAngle": 0.89, "rightElbowAngle": 1.72 },
+    { "time": 1.1,  "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+  ],
+  "mouse": [
+    { "time": 0,    "leftShoulderAngle": 2.42, "leftElbowAngle": -1.38, "rightShoulderAngle": 0.82, "rightElbowAngle": 1.38 },
+    { "time": 0.3,  "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.60, "rightElbowAngle": 1.22 },
+    { "time": 0.6,  "leftShoulderAngle": 2.42, "leftElbowAngle": -1.38, "rightShoulderAngle": 0.82, "rightElbowAngle": 1.38 },
+    { "time": 0.9,  "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.60, "rightElbowAngle": 1.22 },
+    { "time": 1.2,  "leftShoulderAngle": 2.42, "leftElbowAngle": -1.38, "rightShoulderAngle": 0.82, "rightElbowAngle": 1.38 }
+  ],
+  "program": [
+    { "time": 0,    "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
+    { "time": 0.32, "leftShoulderAngle": 2.18, "leftElbowAngle": -1.82, "rightShoulderAngle": 0.55, "rightElbowAngle": 1.12 },
+    { "time": 0.64, "leftShoulderAngle": 2.48, "leftElbowAngle": -1.28, "rightShoulderAngle": 0.88, "rightElbowAngle": 1.88 },
+    { "time": 0.96, "leftShoulderAngle": 2.18, "leftElbowAngle": -1.82, "rightShoulderAngle": 0.55, "rightElbowAngle": 1.12 },
+    { "time": 1.28, "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+  ],
+  "software": [
+    { "time": 0,    "leftShoulderAngle": 2.60, "leftElbowAngle": -0.92, "rightShoulderAngle": 0.64, "rightElbowAngle": 0.92 },
+    { "time": 0.35, "leftShoulderAngle": 2.38, "leftElbowAngle": -1.48, "rightShoulderAngle": 0.84, "rightElbowAngle": 1.48 },
+    { "time": 0.7,  "leftShoulderAngle": 2.60, "leftElbowAngle": -0.92, "rightShoulderAngle": 0.64, "rightElbowAngle": 0.92 }
+  ],
+  "hardware": [
+    { "time": 0,    "leftShoulderAngle": 2.28, "leftElbowAngle": -1.72, "rightShoulderAngle": 0.86, "rightElbowAngle": 1.72 },
+    { "time": 0.4,  "leftShoulderAngle": 2.15, "leftElbowAngle": -1.95, "rightShoulderAngle": 0.99, "rightElbowAngle": 1.95 },
+    { "time": 0.8,  "leftShoulderAngle": 2.28, "leftElbowAngle": -1.72, "rightShoulderAngle": 0.86, "rightElbowAngle": 1.72 }
+  ],
+  "security": [
+    { "time": 0,    "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
+    { "time": 0.3,  "leftShoulderAngle": 2.14, "leftElbowAngle": -1.92, "rightShoulderAngle": 1.00, "rightElbowAngle": 1.92 },
+    { "time": 0.6,  "leftShoulderAngle": 2.14, "leftElbowAngle": -1.92, "rightShoulderAngle": 1.00, "rightElbowAngle": 1.92 },
+    { "time": 0.9,  "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+  ],
+  "database": [
+    { "time": 0,    "leftShoulderAngle": 2.45, "leftElbowAngle": -1.35, "rightShoulderAngle": 0.75, "rightElbowAngle": 1.35 },
+    { "time": 0.35, "leftShoulderAngle": 2.22, "leftElbowAngle": -1.78, "rightShoulderAngle": 0.92, "rightElbowAngle": 1.78 },
+    { "time": 0.7,  "leftShoulderAngle": 2.55, "leftElbowAngle": -1.12, "rightShoulderAngle": 0.68, "rightElbowAngle": 1.12 },
+    { "time": 1.05, "leftShoulderAngle": 2.45, "leftElbowAngle": -1.35, "rightShoulderAngle": 0.75, "rightElbowAngle": 1.35 }
+  ],
+  "algorithm": [
+    { "time": 0,    "leftShoulderAngle": 2.52, "leftElbowAngle": -1.14, "rightShoulderAngle": 0.65, "rightElbowAngle": 1.14 },
+    { "time": 0.28, "leftShoulderAngle": 2.28, "leftElbowAngle": -1.68, "rightShoulderAngle": 0.86, "rightElbowAngle": 1.68 },
+    { "time": 0.56, "leftShoulderAngle": 2.52, "leftElbowAngle": -1.14, "rightShoulderAngle": 0.65, "rightElbowAngle": 1.14 },
+    { "time": 0.84, "leftShoulderAngle": 2.28, "leftElbowAngle": -1.68, "rightShoulderAngle": 0.86, "rightElbowAngle": 1.68 },
+    { "time": 1.12, "leftShoulderAngle": 2.52, "leftElbowAngle": -1.14, "rightShoulderAngle": 0.65, "rightElbowAngle": 1.14 }
+  ],
+  "memory": [
+    { "time": 0,    "leftShoulderAngle": 2.68, "leftElbowAngle": -0.78, "rightShoulderAngle": 0.58, "rightElbowAngle": 0.78 },
+    { "time": 0.35, "leftShoulderAngle": 2.48, "leftElbowAngle": -1.28, "rightShoulderAngle": 0.74, "rightElbowAngle": 1.28 },
+    { "time": 0.7,  "leftShoulderAngle": 2.68, "leftElbowAngle": -0.78, "rightShoulderAngle": 0.58, "rightElbowAngle": 0.78 }
+  ],
+  "storage": [
+    { "time": 0,    "leftShoulderAngle": 2.30, "leftElbowAngle": -1.68, "rightShoulderAngle": 0.84, "rightElbowAngle": 1.68 },
+    { "time": 0.38, "leftShoulderAngle": 2.20, "leftElbowAngle": -1.84, "rightShoulderAngle": 0.94, "rightElbowAngle": 1.84 },
+    { "time": 0.76, "leftShoulderAngle": 2.30, "leftElbowAngle": -1.68, "rightShoulderAngle": 0.84, "rightElbowAngle": 1.68 }
+  ],
+  "input": [
+    { "time": 0,    "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
+    { "time": 0.4,  "leftShoulderAngle": 2.42, "leftElbowAngle": -1.38, "rightShoulderAngle": 0.46, "rightElbowAngle": 1.08 },
+    { "time": 0.8,  "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+  ],
+  "output": [
+    { "time": 0,    "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
+    { "time": 0.4,  "leftShoulderAngle": 2.42, "leftElbowAngle": -1.38, "rightShoulderAngle": 1.08, "rightElbowAngle": 0.52 },
+    { "time": 0.8,  "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+  ],
+  "monitor": [
+    { "time": 0,    "leftShoulderAngle": 2.72, "leftElbowAngle": -0.62, "rightShoulderAngle": 0.44, "rightElbowAngle": 0.62 },
+    { "time": 0.35, "leftShoulderAngle": 2.62, "leftElbowAngle": -0.86, "rightShoulderAngle": 0.52, "rightElbowAngle": 0.86 },
+    { "time": 0.7,  "leftShoulderAngle": 2.72, "leftElbowAngle": -0.62, "rightShoulderAngle": 0.44, "rightElbowAngle": 0.62 }
+  ],
+  "password": [
+    { "time": 0,    "leftShoulderAngle": 2.18, "leftElbowAngle": -1.88, "rightShoulderAngle": 0.96, "rightElbowAngle": 1.88 },
+    { "time": 0.32, "leftShoulderAngle": 2.32, "leftElbowAngle": -1.62, "rightShoulderAngle": 0.82, "rightElbowAngle": 1.62 },
+    { "time": 0.64, "leftShoulderAngle": 2.18, "leftElbowAngle": -1.88, "rightShoulderAngle": 0.96, "rightElbowAngle": 1.88 }
+  ],
+  "login": [
+    { "time": 0,    "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
+    { "time": 0.35, "leftShoulderAngle": 2.48, "leftElbowAngle": -1.28, "rightShoulderAngle": 0.55, "rightElbowAngle": 1.28 },
+    { "time": 0.7,  "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+  ],
+  "file": [
+    { "time": 0,    "leftShoulderAngle": 2.55, "leftElbowAngle": -1.08, "rightShoulderAngle": 0.69, "rightElbowAngle": 1.08 },
+    { "time": 0.4,  "leftShoulderAngle": 2.38, "leftElbowAngle": -1.48, "rightShoulderAngle": 0.84, "rightElbowAngle": 1.48 },
+    { "time": 0.8,  "leftShoulderAngle": 2.55, "leftElbowAngle": -1.08, "rightShoulderAngle": 0.69, "rightElbowAngle": 1.08 }
+  ],
+  "folder": [
+    { "time": 0,    "leftShoulderAngle": 2.62, "leftElbowAngle": -0.90, "rightShoulderAngle": 0.52, "rightElbowAngle": 0.90 },
+    { "time": 0.35, "leftShoulderAngle": 2.42, "leftElbowAngle": -1.36, "rightShoulderAngle": 0.72, "rightElbowAngle": 1.36 },
+    { "time": 0.7,  "leftShoulderAngle": 2.62, "leftElbowAngle": -0.90, "rightShoulderAngle": 0.52, "rightElbowAngle": 0.90 }
+  ],
+  "browser": [
+    { "time": 0,    "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 },
+    { "time": 0.3,  "leftShoulderAngle": 2.65, "leftElbowAngle": -0.82, "rightShoulderAngle": 0.49, "rightElbowAngle": 0.82 },
+    { "time": 0.6,  "leftShoulderAngle": 2.35, "leftElbowAngle": -1.55, "rightShoulderAngle": 0.79, "rightElbowAngle": 1.55 }
+  ],
+  "website": [
+    { "time": 0,    "leftShoulderAngle": 2.68, "leftElbowAngle": -0.72, "rightShoulderAngle": 0.46, "rightElbowAngle": 0.72 },
+    { "time": 0.35, "leftShoulderAngle": 2.44, "leftElbowAngle": -1.32, "rightShoulderAngle": 0.78, "rightElbowAngle": 1.32 },
+    { "time": 0.7,  "leftShoulderAngle": 2.68, "leftElbowAngle": -0.72, "rightShoulderAngle": 0.46, "rightElbowAngle": 0.72 }
+  ],
+  "device": [
+    { "time": 0,    "leftShoulderAngle": 2.40, "leftElbowAngle": -1.44, "rightShoulderAngle": 0.74, "rightElbowAngle": 1.44 },
+    { "time": 0.35, "leftShoulderAngle": 2.22, "leftElbowAngle": -1.76, "rightShoulderAngle": 0.92, "rightElbowAngle": 1.76 },
+    { "time": 0.7,  "leftShoulderAngle": 2.40, "leftElbowAngle": -1.44, "rightShoulderAngle": 0.74, "rightElbowAngle": 1.44 }
+  ],
+  "cpu": [
+    { "time": 0,    "leftShoulderAngle": 2.48, "leftElbowAngle": -1.28, "rightShoulderAngle": 0.66, "rightElbowAngle": 1.28 },
+    { "time": 0.3,  "leftShoulderAngle": 2.32, "leftElbowAngle": -1.64, "rightShoulderAngle": 0.82, "rightElbowAngle": 1.64 },
+    { "time": 0.6,  "leftShoulderAngle": 2.48, "leftElbowAngle": -1.28, "rightShoulderAngle": 0.66, "rightElbowAngle": 1.28 }
+  ],
+  "code": [
+    { "time": 0,    "leftShoulderAngle": 2.28, "leftElbowAngle": -1.72, "rightShoulderAngle": 0.86, "rightElbowAngle": 1.72 },
+    { "time": 0.32, "leftShoulderAngle": 2.18, "leftElbowAngle": -1.88, "rightShoulderAngle": 0.55, "rightElbowAngle": 1.08 },
+    { "time": 0.64, "leftShoulderAngle": 2.45, "leftElbowAngle": -1.32, "rightShoulderAngle": 0.88, "rightElbowAngle": 1.88 },
+    { "time": 0.96, "leftShoulderAngle": 2.28, "leftElbowAngle": -1.72, "rightShoulderAngle": 0.86, "rightElbowAngle": 1.72 }
   ]
 }

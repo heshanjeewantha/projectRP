@@ -11,9 +11,11 @@ import TeacherAnalyticsDashboard from './modules/component-03-adaptive-chatbot/p
 import RepeatedQueryAlertsPage from './modules/component-03-adaptive-chatbot/pages/RepeatedQueryAlertsPage';
 import SignAvatarPage from './modules/component-04-sign-avatar-lecture-generator/pages/SignAvatarPage';
 import WristbandPage from './modules/component-05-smart-wristband-iot/pages/WristbandPage';
+import SignCoursePage from './modules/component-05-smart-wristband-iot/pages/SignCoursePage';
 import HomePage from './modules/shared-app/pages/HomePage';
 import AdminUpload from './modules/shared-app/pages/AdminUpload';
 import AdminDashboardPage from './modules/shared-app/pages/AdminDashboardPage';
+import AdminAttentionReportsPage from './modules/component-01-attention-monitoring/pages/AdminAttentionReportsPage';
 import LoginPage from './modules/shared-app/pages/LoginPage';
 import SignupPage from './modules/shared-app/pages/SignupPage';
 import useStore from './modules/shared-app/utils/useStore';
@@ -64,9 +66,11 @@ const AnimatedRoutes = () => {
         <Route path="/chatbot" element={<ProtectedRoute allowedRoles={['student']}><PageWrapper><ChatbotPage /></PageWrapper></ProtectedRoute>} />
         <Route path="/lesson-summary/:topicId" element={<ProtectedRoute allowedRoles={['student']}><PageWrapper><LessonSummaryPage /></PageWrapper></ProtectedRoute>} />
         <Route path="/sign-avatar" element={<ProtectedRoute allowedRoles={['student']}><PageWrapper><SignAvatarPage /></PageWrapper></ProtectedRoute>} />
+        <Route path="/sign-course" element={<ProtectedRoute allowedRoles={['student']}><PageWrapper><SignCoursePage /></PageWrapper></ProtectedRoute>} />
         <Route path="/wristband" element={<ProtectedRoute allowedRoles={['student']}><PageWrapper><WristbandPage /></PageWrapper></ProtectedRoute>} />
         <Route path="/history" element={<ProtectedRoute allowedRoles={['student']}><PageWrapper><History /></PageWrapper></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><PageWrapper><AdminDashboardPage /></PageWrapper></ProtectedRoute>} />
+        <Route path="/admin/attention-reports" element={<ProtectedRoute allowedRoles={['admin']}><PageWrapper><AdminAttentionReportsPage /></PageWrapper></ProtectedRoute>} />
         <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><PageWrapper><TeacherAnalyticsDashboard /></PageWrapper></ProtectedRoute>} />
         <Route path="/admin/repeated-alerts" element={<ProtectedRoute allowedRoles={['admin']}><PageWrapper><RepeatedQueryAlertsPage /></PageWrapper></ProtectedRoute>} />
         <Route path="/upload" element={<ProtectedRoute allowedRoles={['admin']}><PageWrapper><AdminUpload /></PageWrapper></ProtectedRoute>} />
@@ -86,9 +90,13 @@ const AppShell = () => {
     location.pathname === '/chatbot' ||
     location.pathname.startsWith('/lesson-summary') ||
     location.pathname === '/sign-avatar' ||
+    location.pathname === '/sign-course' ||
     location.pathname === '/wristband' ||
+    location.pathname === '/history' ||
+    location.pathname === '/upload' ||
     location.pathname === '/admin' ||
     location.pathname === '/admin/analytics' ||
+    location.pathname === '/admin/attention-reports' ||
     location.pathname === '/admin/repeated-alerts';
 
   return (
@@ -98,7 +106,9 @@ const AppShell = () => {
         <AnimatedRoutes />
       </main>
       {!hideFooter && <Footer />}
-      <FloatingChatbot pathname={location.pathname} />
+      {!['/login', '/signup', '/chatbot'].includes(location.pathname) && (
+        <FloatingChatbot pathname={location.pathname} />
+      )}
     </div>
   );
 };

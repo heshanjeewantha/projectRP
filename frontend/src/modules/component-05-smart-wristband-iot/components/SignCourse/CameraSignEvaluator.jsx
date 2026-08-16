@@ -1,0 +1,1005 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  Camera,
+  CameraOff,
+  Sparkles,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  RotateCcw,
+  Play,
+  Vibrate,
+  ShieldCheck,
+  Hand,
+  Zap,
+  Check,
+  Flame,
+  RefreshCw,
+  Keyboard,
+  Timer,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
+
+// Authentic ASL Dual-Hand Specifications (Mirrored User Perspective)
+// - Screen Left Box = User's Physical RIGHT Hand
+// - Screen Right Box = User's Physical LEFT Hand
+// `count` is the number of extended fingers required (0 = fist, 5 = open palm, etc.)
+const DUAL_HAND_SPECS = {
+  computer: {
+    name: 'Open 5-Finger Typing',
+    icon: '⌨️',
+    rightHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
+    leftHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
+    description: 'Raise both hands with 5 fingers open and flutter in typing motion.',
+    action: 'Place hands in Left and Right boxes and move fingers.',
+  },
+  hardware: {
+    name: 'Fist Strike on Palm',
+    icon: '🔨',
+    rightHandReq: { count: 0, label: 'Closed Fist ✊' },
+    leftHandReq: { count: 5, label: 'Flat Palm 🖐️' },
+    description: 'Right hand closed solid fist, Left hand flat receiving palm.',
+    action: 'Right hand (Screen Left) fist, Left hand (Screen Right) flat palm.',
+  },
+  software: {
+    name: 'V-Glide Across Palm',
+    icon: '📜',
+    rightHandReq: { count: 2, label: '2-Finger (V) ✌️' },
+    leftHandReq: { count: 5, label: 'Flat Palm 🖐️' },
+    description: 'Right hand 2-finger V-glide across Left flat palm.',
+    action: 'Right hand (Screen Left) V-sign, Left hand (Screen Right) flat palm.',
+  },
+  database: {
+    name: 'Tiered C-Shapes',
+    icon: '🗄️',
+    rightHandReq: { count: 3, label: 'C-Shape 🗄️' },
+    leftHandReq: { count: 3, label: 'C-Shape 🗄️' },
+    description: 'Both hands curved into C-shapes showing layered tiers.',
+    action: 'Show curved C-handshape in both Left and Right boxes.',
+  },
+  network: {
+    name: 'Linked Middle Nodes',
+    icon: '🌐',
+    rightHandReq: { count: 3, label: 'Middle Touch 🤞' },
+    leftHandReq: { count: 3, label: 'Middle Touch 🤞' },
+    description: 'Both hands extended with middle fingers prominent.',
+    action: 'Extend fingers in Left and Right boxes.',
+  },
+  internet: {
+    name: 'Open 5 Orbital Hands',
+    icon: '🌍',
+    rightHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
+    leftHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
+    description: 'Both hands open with 5 fingers spread in circular orbits.',
+    action: 'Show 5 open fingers in both Left and Right boxes.',
+  },
+  email: {
+    name: 'Envelope Slot Pass',
+    icon: '✉️',
+    rightHandReq: { count: 2, label: 'Flat Sender ✌️' },
+    leftHandReq: { count: 3, label: 'Envelope Slot ✉️' },
+    description: 'Right hand 2 flat fingers entering Left hand envelope slot.',
+    action: 'Right hand (Screen Left) sender, Left hand (Screen Right) slot.',
+  },
+  security: {
+    name: 'Dual Closed S-Fists',
+    icon: '🛡️',
+    rightHandReq: { count: 0, label: 'Closed S-Fist ✊' },
+    leftHandReq: { count: 0, label: 'Closed S-Fist ✊' },
+    description: 'Both hands closed tightly into S-fists across chest.',
+    action: 'Show closed fists in both Left and Right boxes.',
+  },
+};
+
+// Standard MediaPipe hand landmark indices
+// 0 wrist | 1-4 thumb | 5-8 index | 9-12 middle | 13-16 ring | 17-20 pinky
+const FINGER_DEFS = [
+  { tip: 8, pip: 6 },   // index
+  { tip: 12, pip: 10 }, // middle
+  { tip: 16, pip: 14 }, // ring
+  { tip: 20, pip: 18 }, // pinky
+];
+const FINGER_BONES = [
+  [0, 1, 2, 3, 4],      // thumb
+  [0, 5, 6, 7, 8],      // index
+  [0, 9, 10, 11, 12],   // middle
+  [0, 13, 14, 15, 16],  // ring
+  [0, 17, 18, 19, 20],  // pinky
+];
+
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+// Count extended fingers from 21 landmark points (already in pixel space).
+// Thumb uses distance-from-wrist since its bend axis differs from the other four.
+const countExtendedFingers = (pts) => {
+  let count = 0;
+  const wrist = pts[0];
+  const thumbTip = pts[4];
+  const thumbMcp = pts[2];
+  if (dist(thumbTip, wrist) > dist(thumbMcp, wrist) * 1.15) count += 1;
+
+  FINGER_DEFS.forEach(({ tip, pip }) => {
+    if (pts[tip].y < pts[pip].y) count += 1; // tip above pip (in pixel coords, up = smaller y) = extended
+  });
+  return count;
+};
+
+// Convert MediaPipe's raw (unmirrored, normalized) landmarks into mirrored pixel
+// coordinates matching our mirrored canvas.
+//
+// Hand identity is assigned from MediaPipe's own handedness classification, NOT
+// from which side of the screen the hand happens to be on. MediaPipe's handedness
+// labels assume the frame fed to it was already selfie-mirrored — we feed it the
+// RAW, unmirrored video (we only mirror on the canvas for display), so its label
+// is backwards relative to the user's actual hand and must be inverted here.
+//
+// "YOUR RIGHT HAND" is the screen-left box and "YOUR LEFT HAND" is the screen-right
+// box (signer-facing-you convention, matching the avatar demo) — so the user's
+// physical right hand should register in the left box, and physical left hand in
+// the right box.
+const classifyHands = (result, w, h) => {
+  let rightRes = { detected: false, count: -1, landmarks: null };
+  let leftRes = { detected: false, count: -1, landmarks: null };
+
+  if (!result?.landmarks?.length) return { rightRes, leftRes };
+
+  result.landmarks.forEach((lms, i) => {
+    const pts = lms.map((p) => ({ x: w - p.x * w, y: p.y * h }));
+    const count = countExtendedFingers(pts);
+
+    const rawLabel = result.handedness?.[i]?.[0]?.categoryName; // 'Left' | 'Right' (mirrored assumption)
+    const actualHand = rawLabel === 'Left' ? 'Right' : rawLabel === 'Right' ? 'Left' : null;
+
+    const entry = { detected: true, count, landmarks: pts };
+
+    if (actualHand === 'Right') {
+      rightRes = entry;
+    } else if (actualHand === 'Left') {
+      leftRes = entry;
+    }
+  });
+
+  return { rightRes, leftRes };
+};
+
+const matchesRequirement = (res, req) => res.detected && res.count === req.count;
+
+// Difficulty badge color
+const difficultyColor = (difficulty) => {
+  if (!difficulty) return 'bg-slate-700/50 text-slate-300 border-slate-600/40';
+  const d = difficulty.toLowerCase();
+  if (d === 'easy') return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+  if (d === 'medium') return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+  if (d === 'hard') return 'bg-red-500/20 text-red-300 border-red-500/40';
+  return 'bg-slate-700/50 text-slate-300 border-slate-600/40';
+};
+
+const CameraSignEvaluator = ({
+  keyword,
+  keywordMeta,
+  onPassKeyword,
+  onErrorTrigger,
+  examMode = false,
+  streak = 0,
+}) => {
+  const normKey = (keyword || 'computer').toLowerCase();
+  const spec = DUAL_HAND_SPECS[normKey] || DUAL_HAND_SPECS.computer;
+
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraLoading, setCameraLoading] = useState(false);
+  const [cameraError, setCameraError] = useState(null);
+  const [isSimulated, setIsSimulated] = useState(false);
+  const [modelReady, setModelReady] = useState(false);
+  const [modelError, setModelError] = useState(null);
+  const [currentAccuracy, setCurrentAccuracy] = useState(0);
+  const [isMatching, setIsMatching] = useState(false);
+  const [holdProgress, setHoldProgress] = useState(0);
+  const [rightInZone, setRightInZone] = useState(false); // Screen Left = User Right Hand (UI only)
+  const [leftInZone, setLeftInZone] = useState(false);   // Screen Right = User Left Hand (UI only)
+  const [statusMessage, setStatusMessage] = useState('Raise hands into the Left and Right boxes.');
+  const [secondaryTip, setSecondaryTip] = useState(spec.action);
+
+  // NEW UX state
+  const [flashOverlay, setFlashOverlay] = useState(null); // 'pass' | 'fail' | null
+  const [countdown, setCountdown] = useState(null); // 2,1 countdown before advance
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [showKeyboardHint, setShowKeyboardHint] = useState(true);
+  const [rightZonePulse, setRightZonePulse] = useState(false);
+  const [leftZonePulse, setLeftZonePulse] = useState(false);
+
+  const rightInZoneRef = useRef(false);
+  const leftInZoneRef = useRef(false);
+
+  const holdStartRef = useRef(null);
+  const lastPassTimeRef = useRef(0);
+  const lastStateSyncRef = useRef(0);
+  const lastDetectRef = useRef(0);
+  const lastDetectResultRef = useRef({
+    rightRes: { detected: false, count: -1, landmarks: null },
+    leftRes: { detected: false, count: -1, landmarks: null },
+  });
+  const animationFrameRef = useRef(null);
+  const streamRef = useRef(null);
+  const handLandmarkerRef = useRef(null);
+  const elapsedRef = useRef(null);
+  const keywordStartRef = useRef(Date.now());
+
+  // Load the real hand-tracking model once on mount.
+  useEffect(() => {
+    let cancelled = false;
+    const initModel = async () => {
+      try {
+        const vision = await FilesetResolver.forVisionTasks(
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+        );
+        const landmarker = await HandLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath:
+              'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+            delegate: 'GPU',
+          },
+          runningMode: 'VIDEO',
+          numHands: 2,
+        });
+        if (!cancelled) {
+          handLandmarkerRef.current = landmarker;
+          setModelReady(true);
+        }
+      } catch (err) {
+        console.error('Hand landmarker failed to load:', err);
+        if (!cancelled) setModelError('Hand-tracking model failed to load. Check your connection and refresh.');
+      }
+    };
+    initModel();
+    return () => {
+      cancelled = true;
+      handLandmarkerRef.current?.close?.();
+    };
+  }, []);
+
+  const startCamera = async () => {
+    try {
+      setCameraLoading(true);
+      setCameraError(null);
+      setIsSimulated(false);
+
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = async () => {
+          try {
+            await videoRef.current?.play();
+          } catch (pErr) {
+            console.warn('Metadata play error:', pErr);
+          }
+        };
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          console.warn('Auto-play error:', playErr);
+        }
+      }
+
+      setIsCameraActive(true);
+      setCameraLoading(false);
+      setStatusMessage('Camera active. Place hands in both boxes.');
+      setSecondaryTip(spec.action);
+    } catch (err) {
+      console.warn('Webcam start error:', err);
+      setCameraError('Webcam unavailable or blocked. You can retry or use Virtual Hand Evaluator.');
+      setCameraLoading(false);
+      setIsCameraActive(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+    setIsSimulated(false);
+  };
+
+  const enableSimulationMode = () => {
+    stopCamera();
+    setIsSimulated(true);
+    setIsCameraActive(true);
+    setCameraError(null);
+    setStatusMessage('Virtual Dual-Hand Simulation Active. Place hands in zones.');
+    setSecondaryTip(spec.action);
+  };
+
+  useEffect(() => {
+    if (isCameraActive && streamRef.current && videoRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch((err) => console.warn('Stream sync play error:', err));
+    }
+  }, [isCameraActive]);
+
+  useEffect(() => {
+    startCamera();
+    return () => stopCamera();
+  }, []);
+
+  // Time elapsed counter per keyword
+  useEffect(() => {
+    keywordStartRef.current = Date.now();
+    setElapsedSeconds(0);
+    clearInterval(elapsedRef.current);
+    elapsedRef.current = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - keywordStartRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(elapsedRef.current);
+  }, [keyword]);
+
+  // Reset state when keyword changes
+  useEffect(() => {
+    holdStartRef.current = null;
+    setHoldProgress(0);
+    setCurrentAccuracy(0);
+    setIsMatching(false);
+    rightInZoneRef.current = false;
+    leftInZoneRef.current = false;
+    setRightInZone(false);
+    setLeftInZone(false);
+    setFlashOverlay(null);
+    setCountdown(null);
+    setStatusMessage(`Perform sign: '${keyword?.toUpperCase()}'. Place hands in both boxes.`);
+    setSecondaryTip(spec.action);
+  }, [keyword, spec]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        handleInstantPass();
+      } else if (e.code === 'KeyE') {
+        e.preventDefault();
+        handleTriggerError();
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [keyword, spec]);
+
+  // Flash overlay helper
+  const triggerFlash = (type) => {
+    setFlashOverlay(type);
+    setTimeout(() => setFlashOverlay(null), 700);
+  };
+
+  // Auto-advance countdown
+  const startCountdown = useCallback((kw, accuracy) => {
+    setCountdown(2);
+    const t1 = setTimeout(() => setCountdown(1), 1000);
+    const t2 = setTimeout(() => {
+      setCountdown(null);
+      onPassKeyword?.(kw, accuracy);
+    }, 2000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [onPassKeyword]);
+
+  const processFrame = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (isCameraActive && canvas) {
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const w = canvas.width;
+      const h = canvas.height;
+
+      const videoValid = video && video.readyState >= 2 && video.videoWidth > 0 && !video.paused;
+
+      if (videoValid) {
+        ctx.save();
+        ctx.translate(w, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0, w, h);
+        ctx.restore();
+      } else {
+        const grad = ctx.createLinearGradient(0, 0, w, h);
+        grad.addColorStop(0, '#090d16');
+        grad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+        ctx.lineWidth = 1;
+        for (let gx = 0; gx < w; gx += 30) {
+          ctx.beginPath();
+          ctx.moveTo(gx, 0);
+          ctx.lineTo(gx, h);
+          ctx.stroke();
+        }
+        for (let gy = 0; gy < h; gy += 30) {
+          ctx.beginPath();
+          ctx.moveTo(0, gy);
+          ctx.lineTo(w, gy);
+          ctx.stroke();
+        }
+      }
+
+      const boxW = Math.floor(w * 0.40);
+      const boxH = Math.floor(h * 0.68);
+      const boxY = Math.floor(h * 0.22);
+
+      const screenLeftBox = { x: Math.floor(w * 0.05), y: boxY, w: boxW, h: boxH, title: 'YOUR RIGHT HAND' };
+      const screenRightBox = { x: Math.floor(w * 0.55), y: boxY, w: boxW, h: boxH, title: 'YOUR LEFT HAND' };
+
+      let rightRes = { detected: false, count: -1, landmarks: null };
+      let leftRes = { detected: false, count: -1, landmarks: null };
+
+      const now = Date.now();
+
+      if (videoValid && handLandmarkerRef.current) {
+        // Real detection is throttled to ~12/sec — plenty for a hold-gesture UX
+        // and far cheaper than running the model every animation frame.
+        if (now - lastDetectRef.current > 80) {
+          lastDetectRef.current = now;
+          try {
+            const result = handLandmarkerRef.current.detectForVideo(video, performance.now());
+            lastDetectResultRef.current = classifyHands(result, w, h);
+          } catch (e) {
+            // model not ready for this frame yet; keep last known result
+          }
+        }
+        rightRes = lastDetectResultRef.current.rightRes;
+        leftRes = lastDetectResultRef.current.leftRes;
+      } else if (isSimulated) {
+        rightRes = rightInZoneRef.current
+          ? { detected: true, count: spec.rightHandReq.count, landmarks: null }
+          : { detected: false, count: -1, landmarks: null };
+        leftRes = leftInZoneRef.current
+          ? { detected: true, count: spec.leftHandReq.count, landmarks: null }
+          : { detected: false, count: -1, landmarks: null };
+      }
+
+      const drawBox = (box, res, targetReq) => {
+        const ok = matchesRequirement(res, targetReq);
+        const hasHand = res.detected;
+        ctx.strokeStyle = ok ? '#10b981' : hasHand ? '#f59e0b' : 'rgba(56, 189, 248, 0.6)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([6, 6]);
+        ctx.strokeRect(box.x, box.y, box.w, box.h);
+        ctx.setLineDash([]);
+
+        const c = 16;
+        ctx.strokeStyle = ok ? '#34d399' : hasHand ? '#fbbf24' : '#38bdf8';
+        ctx.lineWidth = 3.5;
+
+        ctx.beginPath();
+        ctx.moveTo(box.x, box.y + c);
+        ctx.lineTo(box.x, box.y);
+        ctx.lineTo(box.x + c, box.y);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(box.x + box.w - c, box.y);
+        ctx.lineTo(box.x + box.w, box.y);
+        ctx.lineTo(box.x + box.w, box.y + c);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(box.x, box.y + box.h - c);
+        ctx.lineTo(box.x, box.y + box.h);
+        ctx.lineTo(box.x + c, box.y + box.h);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(box.x + box.w - c, box.y + box.h);
+        ctx.lineTo(box.x + box.w, box.y + box.h);
+        ctx.lineTo(box.x + box.w, box.y + box.h - c);
+        ctx.stroke();
+
+        ctx.fillStyle = ok ? 'rgba(16, 185, 129, 0.9)' : hasHand ? 'rgba(180, 83, 9, 0.9)' : 'rgba(15, 23, 42, 0.85)';
+        ctx.fillRect(box.x + 6, box.y + 6, box.w - 12, 22);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px sans-serif';
+        const label = !hasHand
+          ? `${box.title}: ✋ RAISE HERE (${targetReq.label})`
+          : ok
+          ? `${box.title}: ✓ MATCHED (${targetReq.label})`
+          : `${box.title}: shape ≠ target (${res.count} fingers, need ${targetReq.count})`;
+        ctx.fillText(label, box.x + 10, box.y + 20);
+      };
+
+      drawBox(screenLeftBox, rightRes, spec.rightHandReq);
+      drawBox(screenRightBox, leftRes, spec.leftHandReq);
+
+      // Draw the real 21-point skeleton, confined to wherever the hand actually is.
+      const drawSkeleton = (res) => {
+        if (!res.detected || !res.landmarks) return;
+        const pts = res.landmarks;
+
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 2.5;
+        FINGER_BONES.forEach((chain) => {
+          ctx.beginPath();
+          chain.forEach((idx, i) => {
+            const p = pts[idx];
+            if (i === 0) ctx.moveTo(p.x, p.y);
+            else ctx.lineTo(p.x, p.y);
+          });
+          ctx.stroke();
+        });
+
+        pts.forEach((p, idx) => {
+          if (idx === 0) {
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI);
+            ctx.fill();
+          } else if ([4, 8, 12, 16, 20].includes(idx)) {
+            ctx.fillStyle = '#10b981';
+            ctx.shadowColor = '#10b981';
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          } else {
+            ctx.fillStyle = '#34d399';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 3, 0, 2 * Math.PI);
+            ctx.fill();
+          }
+        });
+      };
+
+      drawSkeleton(rightRes);
+      drawSkeleton(leftRes);
+
+      if (now - lastStateSyncRef.current > 100) {
+        lastStateSyncRef.current = now;
+
+        if (videoValid) {
+          rightInZoneRef.current = rightRes.detected;
+          leftInZoneRef.current = leftRes.detected;
+          setRightInZone(rightRes.detected);
+          setLeftInZone(leftRes.detected);
+        }
+
+        const rightOk = matchesRequirement(rightRes, spec.rightHandReq);
+        const leftOk = matchesRequirement(leftRes, spec.leftHandReq);
+        const bothOk = rightOk && leftOk;
+
+        if (bothOk) {
+          setCurrentAccuracy(97);
+          setIsMatching(true);
+
+          if (!holdStartRef.current) {
+            holdStartRef.current = now;
+          }
+          const elapsed = now - holdStartRef.current;
+          const progress = Math.min(100, Math.round((elapsed / 1200) * 100));
+          setHoldProgress(progress);
+          setStatusMessage(`Both hands match! Hold for ${(1.2 - elapsed / 1000).toFixed(1)}s...`);
+          setSecondaryTip(`Sign '${keyword?.toUpperCase()}' matched.`);
+
+          if (progress >= 100 && now - lastPassTimeRef.current > 2000) {
+            lastPassTimeRef.current = now;
+            holdStartRef.current = null;
+            setStatusMessage(`PASSED! '${keyword?.toUpperCase()}' verified!`);
+            setSecondaryTip('Advancing to next sign...');
+            triggerFlash('pass');
+            startCountdown(keyword, 97);
+          }
+        } else {
+          holdStartRef.current = null;
+          setHoldProgress(0);
+          if (!rightRes.detected && !leftRes.detected) {
+            setCurrentAccuracy(0);
+            setIsMatching(false);
+            setStatusMessage('Raise your hands into the Left and Right boxes.');
+            setSecondaryTip(spec.action);
+          } else {
+            setCurrentAccuracy(40);
+            setIsMatching(false);
+            setStatusMessage('Hand detected — adjust the shape to match the target.');
+            setSecondaryTip(spec.action);
+          }
+        }
+      }
+    }
+
+    animationFrameRef.current = requestAnimationFrame(processFrame);
+  }, [isCameraActive, isSimulated, spec, keyword, startCountdown]);
+
+  useEffect(() => {
+    animationFrameRef.current = requestAnimationFrame(processFrame);
+    return () => cancelAnimationFrame(animationFrameRef.current);
+  }, [processFrame]);
+
+  const handleInstantPass = () => {
+    setIsMatching(true);
+    setCurrentAccuracy(98);
+    setStatusMessage(`Verified '${keyword?.toUpperCase()}' sign!`);
+    setSecondaryTip('Advancing to next sign...');
+    triggerFlash('pass');
+
+    let p = 0;
+    const interval = setInterval(() => {
+      p += 34;
+      setHoldProgress(p);
+      if (p >= 100) {
+        clearInterval(interval);
+        startCountdown(keyword, 98);
+      }
+    }, 120);
+  };
+
+  const handleTriggerError = () => {
+    setIsMatching(false);
+    setCurrentAccuracy(20);
+    setHoldProgress(0);
+    setStatusMessage(`Incorrect sign for '${keyword?.toUpperCase()}'.`);
+    setSecondaryTip('Smart wristband vibrated (RETRY SIGN).');
+    triggerFlash('fail');
+    onErrorTrigger?.({
+      keyword,
+      reason: spec.description,
+      accuracy: 20,
+    });
+  };
+
+  const formatElapsed = (s) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
+  };
+
+  return (
+    <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-950 p-5 sm:p-6 shadow-2xl">
+
+      {/* SUCCESS / FAIL flash overlay */}
+      <AnimatePresence>
+        {flashOverlay && (
+          <motion.div
+            key={flashOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, exit: { duration: 0.5 } }}
+            className={`pointer-events-none absolute inset-0 z-50 rounded-3xl ${
+              flashOverlay === 'pass'
+                ? 'bg-emerald-500/25 ring-4 ring-inset ring-emerald-400/60'
+                : 'bg-red-500/25 ring-4 ring-inset ring-red-400/60'
+            }`}
+          >
+            <div className="flex h-full items-center justify-center">
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 1.3, opacity: 0 }}
+                className={`flex items-center gap-3 rounded-2xl px-6 py-4 text-xl font-black shadow-2xl ${
+                  flashOverlay === 'pass'
+                    ? 'bg-emerald-500 text-white shadow-emerald-500/50'
+                    : 'bg-red-500 text-white shadow-red-500/50'
+                }`}
+              >
+                {flashOverlay === 'pass' ? <CheckCircle2 size={28} /> : <XCircle size={28} />}
+                {flashOverlay === 'pass' ? 'SIGN PASSED! ✨' : 'WRONG SIGN 🔴'}
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* AUTO-ADVANCE countdown toast */}
+      <AnimatePresence>
+        {countdown !== null && (
+          <motion.div
+            initial={{ y: -40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -40, opacity: 0 }}
+            className="absolute top-4 inset-x-4 z-40 flex items-center justify-center"
+          >
+            <div className="flex items-center gap-3 rounded-2xl bg-emerald-500 px-5 py-2.5 text-sm font-black text-white shadow-xl shadow-emerald-500/40">
+              <Sparkles size={18} />
+              Advancing to next sign in {countdown}…
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
+        <div className="flex items-center gap-2.5">
+          <div
+            className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
+              isMatching ? 'bg-emerald-500/20 text-emerald-400' : 'bg-primary/20 text-primary'
+            }`}
+          >
+            <Camera size={20} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="text-sm font-bold text-white">Live Camera Evaluator</h4>
+              {isCameraActive && (
+                <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Dual-Hand Active
+                </span>
+              )}
+              {!modelReady && !modelError && (
+                <span className="text-[11px] font-bold text-amber-400 bg-amber-500/15 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                  Loading model...
+                </span>
+              )}
+              {modelError && (
+                <span className="text-[11px] font-bold text-red-400 bg-red-500/15 px-2.5 py-0.5 rounded-full border border-red-500/30">
+                  Model error
+                </span>
+              )}
+              {/* Difficulty badge */}
+              {keywordMeta?.difficulty && (
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${difficultyColor(keywordMeta.difficulty)}`}>
+                  {keywordMeta.difficulty}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+              <p className="text-xs text-slate-400">
+                Target Sign: <strong className="text-cyan-400 uppercase">{keyword}</strong> • {spec.name}
+              </p>
+              {/* Time elapsed */}
+              <span className="flex items-center gap-1 text-[11px] font-mono text-slate-500">
+                <Timer size={11} />
+                {formatElapsed(elapsedSeconds)}
+              </span>
+              {/* Streak */}
+              {streak > 0 && (
+                <motion.span
+                  key={streak}
+                  initial={{ scale: 1.4 }}
+                  animate={{ scale: 1 }}
+                  className="flex items-center gap-1 text-[11px] font-black text-orange-400 bg-orange-500/15 px-2 py-0.5 rounded-full border border-orange-500/30"
+                >
+                  <Flame size={12} />
+                  {streak} streak
+                </motion.span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={isCameraActive ? stopCamera : startCamera}
+          className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all shadow-sm ${
+            isCameraActive
+              ? 'border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20'
+              : 'border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20'
+          }`}
+        >
+          {isCameraActive ? <CameraOff size={15} /> : <Camera size={15} />}
+          {isCameraActive ? 'Stop Camera' : 'Open Camera'}
+        </button>
+      </div>
+
+      <div className="relative mt-4 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-inner">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 h-full w-full object-contain opacity-0 pointer-events-none"
+        />
+
+        <canvas
+          ref={canvasRef}
+          width={640}
+          height={480}
+          className={`h-full w-full object-contain bg-slate-950 ${!isCameraActive ? 'hidden' : ''}`}
+        />
+
+        {!isCameraActive && (
+          <div className="flex flex-col items-center justify-center p-6 text-center max-w-sm">
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 text-slate-400 border border-white/10 shadow-lg">
+              {cameraError ? <AlertTriangle size={28} className="text-amber-400" /> : <Camera size={28} />}
+            </div>
+            <p className="text-sm font-bold text-white">
+              {cameraError ? 'Camera Access Issue' : 'Camera is currently inactive'}
+            </p>
+            <p className="mt-1 text-xs text-slate-400 leading-relaxed">
+              {cameraError || 'Open camera to track both hands in real-time or enable Virtual Hand Simulation.'}
+            </p>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <button
+                onClick={startCamera}
+                disabled={cameraLoading}
+                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {cameraLoading ? <RefreshCw size={15} className="animate-spin" /> : <Camera size={15} />}
+                {cameraLoading ? 'Starting Camera...' : 'Retry Camera Feed'}
+              </button>
+              <button
+                onClick={enableSimulationMode}
+                className="flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition-all active:scale-95"
+              >
+                <Sparkles size={15} />
+                Virtual Hand Mode
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isCameraActive && (
+          <div className="absolute top-3 right-3 flex items-center gap-2.5 rounded-xl border border-white/15 bg-black/85 px-3 py-1.5 backdrop-blur-md shadow-lg z-10">
+            <div className="text-right">
+              <div className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Dual Match</div>
+              <div
+                className={`text-base font-black font-mono ${
+                  currentAccuracy >= 60 ? 'text-emerald-400' : 'text-amber-400'
+                }`}
+              >
+                {currentAccuracy}%
+              </div>
+            </div>
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                currentAccuracy >= 60
+                  ? 'bg-emerald-500/20 text-emerald-400'
+                  : 'bg-amber-500/20 text-amber-400'
+              }`}
+            >
+              {currentAccuracy >= 60 ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
+            </div>
+          </div>
+        )}
+
+        {holdProgress > 0 && (
+          <div className="absolute bottom-4 inset-x-8 z-20">
+            <div className="flex justify-between text-xs font-black text-white mb-1.5 drop-shadow-md">
+              <span className="flex items-center gap-1.5 text-emerald-300">
+                <Sparkles size={14} />
+                HOLDING DUAL-HAND SIGN...
+              </span>
+              <span>{holdProgress}%</span>
+            </div>
+            <div className="h-3.5 w-full overflow-hidden rounded-full bg-slate-950/90 border-2 border-emerald-500/60 backdrop-blur shadow-xl">
+              <motion.div
+                className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400"
+                style={{ width: `${holdProgress}%` }}
+                transition={{ ease: 'linear' }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Hand zone buttons with pulse animation on partial detection */}
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <motion.button
+          onClick={() => {
+            const next = !rightInZone;
+            rightInZoneRef.current = next;
+            setRightInZone(next);
+          }}
+          animate={rightInZone && !isMatching ? { scale: [1, 1.025, 1], transition: { repeat: Infinity, duration: 1.2 } } : {}}
+          className={`rounded-2xl border p-3.5 transition-all text-left ${
+            rightInZone
+              ? 'border-emerald-500/50 bg-emerald-950/30 shadow-[0_0_14px_rgba(16,185,129,0.15)]'
+              : 'border-white/10 bg-slate-900/80 hover:border-primary/40'
+          }`}
+        >
+          <div className="flex items-center justify-between text-xs font-mono font-bold mb-1">
+            <span className="text-primary">YOUR RIGHT HAND (Screen Left):</span>
+            <span className={rightInZone ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
+              {rightInZone ? '✓ IN ZONE' : 'EMPTY'}
+            </span>
+          </div>
+          <p className="text-xs font-bold text-white">{spec.rightHandReq.label}</p>
+        </motion.button>
+
+        <motion.button
+          onClick={() => {
+            const next = !leftInZone;
+            leftInZoneRef.current = next;
+            setLeftInZone(next);
+          }}
+          animate={leftInZone && !isMatching ? { scale: [1, 1.025, 1], transition: { repeat: Infinity, duration: 1.2, delay: 0.3 } } : {}}
+          className={`rounded-2xl border p-3.5 transition-all text-left ${
+            leftInZone
+              ? 'border-emerald-500/50 bg-emerald-950/30 shadow-[0_0_14px_rgba(16,185,129,0.15)]'
+              : 'border-white/10 bg-slate-900/80 hover:border-primary/40'
+          }`}
+        >
+          <div className="flex items-center justify-between text-xs font-mono font-bold mb-1">
+            <span className="text-cyan-400">YOUR LEFT HAND (Screen Right):</span>
+            <span className={leftInZone ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
+              {leftInZone ? '✓ IN ZONE' : 'EMPTY'}
+            </span>
+          </div>
+          <p className="text-xs font-bold text-white">{spec.leftHandReq.label}</p>
+        </motion.button>
+      </div>
+
+      <div
+        className={`mt-4 rounded-2xl border p-4 transition-colors ${
+          isMatching
+            ? 'border-emerald-500/40 bg-emerald-950/40 shadow-emerald-500/10'
+            : 'border-white/10 bg-slate-900/60'
+        }`}
+      >
+        <div className="flex items-start gap-3">
+          <div
+            className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+              isMatching ? 'bg-emerald-500 text-slate-950' : 'bg-cyan-500 text-slate-950'
+            }`}
+          >
+            {isMatching ? <CheckCircle2 size={15} /> : <Hand size={15} />}
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-white">{statusMessage}</p>
+            <p className="text-xs text-slate-300 mt-1">{secondaryTip}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/10 pt-4">
+        <button
+          onClick={handleInstantPass}
+          className="flex w-full sm:w-auto flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-emerald-500/30 hover:from-emerald-500 hover:to-teal-400 transition-all active:scale-95"
+        >
+          <Sparkles size={18} />
+          PASS SIGN & ADVANCE ({keyword?.toUpperCase()})
+        </button>
+
+        <button
+          onClick={handleTriggerError}
+          className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-3.5 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all active:scale-95 shadow-sm"
+        >
+          <Vibrate size={16} />
+          Test Wrong Sign Vibration
+        </button>
+      </div>
+
+      {/* Keyboard shortcut hint */}
+      <AnimatePresence>
+        {showKeyboardHint && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-3 overflow-hidden"
+          >
+            <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2 text-[11px] text-slate-500">
+              <span className="flex items-center gap-3">
+                <Keyboard size={12} className="shrink-0" />
+                <span>
+                  <kbd className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-white">Space</kbd> Pass
+                  {' · '}
+                  <kbd className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-white">E</kbd> Error
+                </span>
+              </span>
+              <button onClick={() => setShowKeyboardHint(false)} className="hover:text-white transition-colors">
+                ✕
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default CameraSignEvaluator;

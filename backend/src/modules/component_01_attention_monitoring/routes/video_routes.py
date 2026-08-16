@@ -36,6 +36,40 @@ async def upload_video(
     return doc
 
 
+@router.post("/convert-sign-video")
+async def convert_sign_video_to_transcript(
+    file: UploadFile = File(...),
+    title: str = Form("Sign Language Video"),
+):
+    """Directly converts a sign language video file into time-aligned transcript segments."""
+    if not file.filename.endswith(('.mp4', '.avi', '.mov', '.webm')):
+        raise HTTPException(status_code=400, detail="Invalid video format. Use MP4, WebM, AVI, or MOV.")
+
+    doc = await video_service.save_video(file, title)
+    result = await transcription_service.transcribe_sign_video_direct(
+        video_path=doc["storage_path"],
+        title=title,
+    )
+    result["video_id"] = doc["_id"]
+    result["video_url"] = doc.get("video_url")
+    return result
+
+
+@router.post("/{video_id}/convert-transcript")
+async def convert_existing_video_to_transcript(video_id: str, background_tasks: BackgroundTasks):
+    """Trigger on-demand sign video transcription for an existing video."""
+    video = await video_service.get_video(video_id)
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    background_tasks.add_task(
+        transcription_service.transcribe_video,
+        video_id=video["_id"],
+        storage_path=video["storage_path"],
+    )
+    return {"message": "Transcription initiated", "video_id": video["_id"], "status": "processing"}
+
+
 @router.get("", response_model=List[VideoOut])
 async def list_videos():
     """List all uploaded videos."""
@@ -50,3 +84,4 @@ async def get_video(video_id: str):
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     return video
+

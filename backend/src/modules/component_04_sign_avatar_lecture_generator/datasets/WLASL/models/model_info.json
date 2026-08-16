@@ -1,0 +1,10 @@
+{
+  "classCount": 9,
+  "sequenceLength": 60,
+  "featureDimension": 279,
+  "lastTrainedAt": "2026-08-14T05:37:03.923147+00:00",
+  "trainingStatus": "completed",
+  "valAccuracy": 0.9811,
+  "architecture": "BiLSTM",
+  "normalisation": "wrist_relative"
+}
