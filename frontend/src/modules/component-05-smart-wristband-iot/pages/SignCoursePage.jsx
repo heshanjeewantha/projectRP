@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Award,
   BookOpen,
@@ -17,42 +17,7 @@ import {
   Watch,
   Wifi,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-
-// Simple CSS confetti burst
-const ConfettiBurst = () => {
-  const pieces = Array.from({ length: 40 }, (_, i) => i);
-  const colors = ['#10b981', '#34d399', '#fbbf24', '#f59e0b', '#60a5fa', '#a78bfa', '#fb7185'];
-  return (
-    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
-      {pieces.map((i) => (
-        <motion.div
-          key={i}
-          initial={{
-            x: `${30 + Math.random() * 40}vw`,
-            y: `-${10 + Math.random() * 10}vh`,
-            opacity: 1,
-            rotate: 0,
-            scale: 0.8 + Math.random() * 0.8,
-          }}
-          animate={{
-            y: `${90 + Math.random() * 20}vh`,
-            rotate: (Math.random() - 0.5) * 720,
-            opacity: [1, 1, 0],
-          }}
-          transition={{ duration: 2.5 + Math.random() * 1.5, delay: Math.random() * 0.8, ease: 'easeIn' }}
-          style={{
-            position: 'absolute',
-            width: 8 + Math.random() * 8,
-            height: 8 + Math.random() * 8,
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-            backgroundColor: colors[Math.floor(Math.random() * colors.length)],
-          }}
-        />
-      ))}
-    </div>
-  );
-};
+import { motion } from 'framer-motion';
 
 import useStore from '../../shared-app/utils/useStore';
 import Header from '../../../components/layout/Dashboard/Header';
@@ -89,9 +54,6 @@ const SignCoursePage = () => {
   const [isBleConnected, setIsBleConnected] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
   const [showVirtualBand, setShowVirtualBand] = useState(true);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [displayedMastery, setDisplayedMastery] = useState(0);
-  const masteryAnimRef = useRef(null);
 
   // Fetch modules and student progress
   const loadCourseData = async () => {
@@ -243,33 +205,8 @@ const SignCoursePage = () => {
   const completedCount = progress?.completedKeywords?.length || 0;
   const masteryPercentage = Math.round((completedCount / Math.max(1, totalKeywords)) * 100);
 
-  // Animate the mastery % counter up
-  useEffect(() => {
-    clearInterval(masteryAnimRef.current);
-    const target = masteryPercentage;
-    if (displayedMastery === target) return;
-    const step = target > displayedMastery ? 1 : -1;
-    masteryAnimRef.current = setInterval(() => {
-      setDisplayedMastery((prev) => {
-        if (prev === target) { clearInterval(masteryAnimRef.current); return prev; }
-        return prev + step;
-      });
-    }, 18);
-    return () => clearInterval(masteryAnimRef.current);
-  }, [masteryPercentage]);
-
-  // Confetti on 100%
-  useEffect(() => {
-    if (masteryPercentage >= 100 && completedCount > 0) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 4500);
-    }
-  }, [masteryPercentage, completedCount]);
-
   return (
     <div className="w-full min-h-screen pb-16 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col gap-6">
-      {/* Confetti burst on course completion */}
-      <AnimatePresence>{showConfetti && <ConfettiBurst />}</AnimatePresence>
       {/* Hero Header Card */}
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 p-6 sm:p-8 shadow-2xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -283,11 +220,10 @@ const SignCoursePage = () => {
           <div className="flex items-center gap-2 self-start md:self-auto">
             <button
               onClick={() => setShowVirtualBand(!showVirtualBand)}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all shadow-md ${
-                showVirtualBand
+              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all shadow-md ${showVirtualBand
                   ? 'border border-primary/40 bg-primary/20 text-primary'
                   : 'border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-              }`}
+                }`}
             >
               <Watch size={16} />
               {showVirtualBand ? 'Hide Virtual Wristband' : 'Show Virtual Wristband'}
@@ -303,12 +239,7 @@ const SignCoursePage = () => {
             </div>
             <div>
               <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Mastery Progress</div>
-              <motion.div
-                key={masteryPercentage}
-                className="text-xl font-black text-white font-mono"
-              >
-                {displayedMastery}%
-              </motion.div>
+              <div className="text-xl font-black text-white font-mono">{masteryPercentage}%</div>
             </div>
           </div>
 
@@ -353,11 +284,10 @@ const SignCoursePage = () => {
         <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
           <button
             onClick={() => setActiveTab('course')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${
-              activeTab === 'course'
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${activeTab === 'course'
                 ? 'bg-primary text-white shadow-lg shadow-primary/30'
                 : 'border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-            }`}
+              }`}
           >
             <BookOpen size={15} />
             Course Curriculum
@@ -365,11 +295,10 @@ const SignCoursePage = () => {
 
           <button
             onClick={() => setActiveTab('practice')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${
-              activeTab === 'practice'
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${activeTab === 'practice'
                 ? 'bg-primary text-white shadow-lg shadow-primary/30'
                 : 'border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-            }`}
+              }`}
           >
             <Hand size={15} />
             Camera Practice Arena
@@ -377,11 +306,10 @@ const SignCoursePage = () => {
 
           <button
             onClick={() => setActiveTab('device')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${
-              activeTab === 'device'
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${activeTab === 'device'
                 ? 'bg-primary text-white shadow-lg shadow-primary/30'
                 : 'border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-            }`}
+              }`}
           >
             <Watch size={15} />
             Wristband IoT Settings
@@ -431,20 +359,18 @@ const SignCoursePage = () => {
                   return (
                     <div
                       key={mod.id}
-                      className={`group relative overflow-hidden rounded-2xl border p-5 transition-all ${
-                        isModComplete
+                      className={`group relative overflow-hidden rounded-2xl border p-5 transition-all ${isModComplete
                           ? 'border-emerald-500/40 bg-emerald-950/10'
                           : 'border-white/10 bg-slate-900/60 hover:border-primary/40 hover:bg-slate-900/90'
-                      }`}
+                        }`}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="flex items-start gap-4">
                           <div
-                            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
-                              isModComplete
+                            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${isModComplete
                                 ? 'bg-emerald-500/20 text-emerald-400'
                                 : 'bg-primary/20 text-primary'
-                            }`}
+                              }`}
                           >
                             <IconComponent size={24} />
                           </div>
@@ -474,16 +400,6 @@ const SignCoursePage = () => {
                         <span className="text-xs text-slate-400 font-semibold mr-1">Keywords:</span>
                         {mod.keywords.map((kw) => {
                           const isKwPassed = progress?.completedKeywords?.includes(kw.keyword);
-                          const isActive = activeKeyword?.keyword === kw.keyword;
-                          // Difficulty color
-                          const d = (kw.difficulty || '').toLowerCase();
-                          const diffClass = d === 'easy'
-                            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                            : d === 'hard'
-                            ? 'border-red-500/30 bg-red-500/10 text-red-300'
-                            : d === 'medium'
-                            ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
-                            : '';
                           return (
                             <button
                               key={kw.id}
@@ -491,18 +407,13 @@ const SignCoursePage = () => {
                                 setActiveModule(mod);
                                 handleSelectKeyword(kw);
                               }}
-                              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all border ${
-                                isKwPassed
-                                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                                  : isActive
-                                  ? 'border-primary/60 bg-primary/20 text-primary'
-                                  : diffClass || 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:border-primary/40'
-                              }`}
+                              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${isKwPassed
+                                  ? 'border border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                                  : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:border-primary/40'
+                                }`}
                             >
                               {isKwPassed ? (
                                 <CheckCircle2 size={12} className="text-emerald-400" />
-                              ) : isActive ? (
-                                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                               ) : (
                                 <Hand size={12} className="text-slate-400" />
                               )}
