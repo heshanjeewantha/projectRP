@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Award,
   BookOpen,
@@ -17,7 +17,42 @@ import {
   Watch,
   Wifi,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Simple CSS confetti burst
+const ConfettiBurst = () => {
+  const pieces = Array.from({ length: 40 }, (_, i) => i);
+  const colors = ['#10b981', '#34d399', '#fbbf24', '#f59e0b', '#60a5fa', '#a78bfa', '#fb7185'];
+  return (
+    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
+      {pieces.map((i) => (
+        <motion.div
+          key={i}
+          initial={{
+            x: `${30 + Math.random() * 40}vw`,
+            y: `-${10 + Math.random() * 10}vh`,
+            opacity: 1,
+            rotate: 0,
+            scale: 0.8 + Math.random() * 0.8,
+          }}
+          animate={{
+            y: `${90 + Math.random() * 20}vh`,
+            rotate: (Math.random() - 0.5) * 720,
+            opacity: [1, 1, 0],
+          }}
+          transition={{ duration: 2.5 + Math.random() * 1.5, delay: Math.random() * 0.8, ease: 'easeIn' }}
+          style={{
+            position: 'absolute',
+            width: 8 + Math.random() * 8,
+            height: 8 + Math.random() * 8,
+            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
 import useStore from '../../shared-app/utils/useStore';
 import Header from '../../../components/layout/Dashboard/Header';
@@ -54,6 +89,9 @@ const SignCoursePage = () => {
   const [isBleConnected, setIsBleConnected] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
   const [showVirtualBand, setShowVirtualBand] = useState(true);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [displayedMastery, setDisplayedMastery] = useState(0);
+  const masteryAnimRef = useRef(null);
 
   // Fetch modules and student progress
   const loadCourseData = async () => {
@@ -205,8 +243,33 @@ const SignCoursePage = () => {
   const completedCount = progress?.completedKeywords?.length || 0;
   const masteryPercentage = Math.round((completedCount / Math.max(1, totalKeywords)) * 100);
 
+  // Animate the mastery % counter up
+  useEffect(() => {
+    clearInterval(masteryAnimRef.current);
+    const target = masteryPercentage;
+    if (displayedMastery === target) return;
+    const step = target > displayedMastery ? 1 : -1;
+    masteryAnimRef.current = setInterval(() => {
+      setDisplayedMastery((prev) => {
+        if (prev === target) { clearInterval(masteryAnimRef.current); return prev; }
+        return prev + step;
+      });
+    }, 18);
+    return () => clearInterval(masteryAnimRef.current);
+  }, [masteryPercentage]);
+
+  // Confetti on 100%
+  useEffect(() => {
+    if (masteryPercentage >= 100 && completedCount > 0) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 4500);
+    }
+  }, [masteryPercentage, completedCount]);
+
   return (
     <div className="w-full min-h-screen pb-16 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col gap-6">
+      {/* Confetti burst on course completion */}
+      <AnimatePresence>{showConfetti && <ConfettiBurst />}</AnimatePresence>
       {/* Hero Header Card */}
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 p-6 sm:p-8 shadow-2xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -240,7 +303,12 @@ const SignCoursePage = () => {
             </div>
             <div>
               <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Mastery Progress</div>
-              <div className="text-xl font-black text-white font-mono">{masteryPercentage}%</div>
+              <motion.div
+                key={masteryPercentage}
+                className="text-xl font-black text-white font-mono"
+              >
+                {displayedMastery}%
+              </motion.div>
             </div>
           </div>
 
@@ -406,6 +474,16 @@ const SignCoursePage = () => {
                         <span className="text-xs text-slate-400 font-semibold mr-1">Keywords:</span>
                         {mod.keywords.map((kw) => {
                           const isKwPassed = progress?.completedKeywords?.includes(kw.keyword);
+                          const isActive = activeKeyword?.keyword === kw.keyword;
+                          // Difficulty color
+                          const d = (kw.difficulty || '').toLowerCase();
+                          const diffClass = d === 'easy'
+                            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                            : d === 'hard'
+                            ? 'border-red-500/30 bg-red-500/10 text-red-300'
+                            : d === 'medium'
+                            ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                            : '';
                           return (
                             <button
                               key={kw.id}
@@ -413,14 +491,18 @@ const SignCoursePage = () => {
                                 setActiveModule(mod);
                                 handleSelectKeyword(kw);
                               }}
-                              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all border ${
                                 isKwPassed
-                                  ? 'border border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                                  : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:border-primary/40'
+                                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                                  : isActive
+                                  ? 'border-primary/60 bg-primary/20 text-primary'
+                                  : diffClass || 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:border-primary/40'
                               }`}
                             >
                               {isKwPassed ? (
                                 <CheckCircle2 size={12} className="text-emerald-400" />
+                              ) : isActive ? (
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                               ) : (
                                 <Hand size={12} className="text-slate-400" />
                               )}

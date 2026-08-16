@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -13,11 +13,36 @@ import {
   RotateCcw,
   Sparkles,
   Watch,
+  Info,
+  X,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import CameraSignEvaluator from './CameraSignEvaluator';
 import SignAvatarDemo from './SignAvatarDemo';
+
+const TUTORIAL_STEPS = [
+  {
+    icon: '📦',
+    title: 'Two Hand Zones',
+    body: 'The camera shows two dashed boxes. Place each hand in its designated zone.',
+  },
+  {
+    icon: '🖐️',
+    title: 'Match the Shape',
+    body: 'Form the finger shape shown in the Avatar demo. The box turns green when your hand matches.',
+  },
+  {
+    icon: '⏱️',
+    title: 'Hold for 1.2 seconds',
+    body: 'Keep both hands in matching shapes for 1.2 seconds to confirm the sign and advance.',
+  },
+  {
+    icon: '⌚',
+    title: 'Wristband Feedback',
+    body: 'The smart wristband vibrates on mistakes (error buzz) and on correct signs (success pulse).',
+  },
+];
 
 const SignPracticeArena = ({
   activeModule,
@@ -30,10 +55,20 @@ const SignPracticeArena = ({
 }) => {
   const [examMode, setExamMode] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [streak, setStreak] = useState(0);
+  const [showTutorial, setShowTutorial] = useState(() => {
+    try { return !localStorage.getItem('c05_tutorial_seen'); } catch { return true; }
+  });
+  const [tutorialStep, setTutorialStep] = useState(0);
 
   const keywords = activeModule?.keywords || [];
   const currentIndex = keywords.findIndex((k) => k.keyword === activeKeyword?.keyword);
   const isPassed = progress?.completedKeywords?.includes(activeKeyword?.keyword);
+
+  const closeTutorial = () => {
+    setShowTutorial(false);
+    try { localStorage.setItem('c05_tutorial_seen', '1'); } catch {}
+  };
 
   const handleNext = () => {
     if (currentIndex < keywords.length - 1) {
@@ -47,8 +82,108 @@ const SignPracticeArena = ({
     }
   };
 
+  const handlePassKeyword = (keyword, accuracy) => {
+    setStreak((s) => s + 1);
+    onPassKeyword(keyword, accuracy);
+  };
+
+  const handleErrorTrigger = (args) => {
+    setStreak(0);
+    onErrorTrigger(args);
+  };
+
   return (
     <div className="flex flex-col gap-6 w-full">
+      {/* First-Visit Tutorial Overlay */}
+      <AnimatePresence>
+        {showTutorial && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 20 }}
+              className="relative w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl"
+            >
+              <button
+                onClick={closeTutorial}
+                className="absolute right-4 top-4 rounded-lg border border-white/10 p-1.5 text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+              >
+                <X size={16} />
+              </button>
+
+              <div className="flex items-center gap-2.5 mb-5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/20 text-primary">
+                  <Info size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">How to Use the Camera Arena</h3>
+                  <p className="text-xs text-slate-400">Step {tutorialStep + 1} of {TUTORIAL_STEPS.length}</p>
+                </div>
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={tutorialStep}
+                  initial={{ x: 30, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -30, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center"
+                >
+                  <div className="text-4xl mb-3">{TUTORIAL_STEPS[tutorialStep].icon}</div>
+                  <h4 className="text-sm font-bold text-white mb-2">{TUTORIAL_STEPS[tutorialStep].title}</h4>
+                  <p className="text-xs text-slate-300 leading-relaxed">{TUTORIAL_STEPS[tutorialStep].body}</p>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Step dots */}
+              <div className="mt-4 flex justify-center gap-1.5">
+                {TUTORIAL_STEPS.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setTutorialStep(i)}
+                    className={`h-1.5 rounded-full transition-all ${
+                      i === tutorialStep ? 'w-5 bg-primary' : 'w-1.5 bg-white/20'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <div className="mt-5 flex gap-2">
+                {tutorialStep > 0 && (
+                  <button
+                    onClick={() => setTutorialStep((s) => s - 1)}
+                    className="flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-sm font-bold text-slate-300 hover:bg-white/10 transition-colors"
+                  >
+                    Back
+                  </button>
+                )}
+                {tutorialStep < TUTORIAL_STEPS.length - 1 ? (
+                  <button
+                    onClick={() => setTutorialStep((s) => s + 1)}
+                    className="flex-1 rounded-2xl bg-primary py-2.5 text-sm font-bold text-white hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+                  >
+                    Next
+                  </button>
+                ) : (
+                  <button
+                    onClick={closeTutorial}
+                    className="flex-1 rounded-2xl bg-emerald-500 py-2.5 text-sm font-black text-white hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/30"
+                  >
+                    Let's Practice! 🚀
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Top Header Card */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/90 p-5 shadow-xl backdrop-blur-md">
         <div className="flex items-center gap-3">
@@ -71,6 +206,30 @@ const SignPracticeArena = ({
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
+          {/* Streak badge */}
+          <AnimatePresence>
+            {streak > 1 && (
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                className="flex items-center gap-1.5 rounded-xl border border-orange-500/40 bg-orange-500/15 px-3 py-2 text-sm font-black text-orange-400"
+              >
+                <Flame size={16} />
+                {streak} 🔥
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Tutorial button */}
+          <button
+            onClick={() => { setShowTutorial(true); setTutorialStep(0); }}
+            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-xs font-bold text-slate-300 hover:bg-white/10 transition-colors"
+            title="Show tutorial"
+          >
+            <Info size={15} />
+          </button>
+
           {/* Mode Switcher */}
           <button
             onClick={() => setExamMode(!examMode)}
@@ -85,6 +244,34 @@ const SignPracticeArena = ({
           </button>
         </div>
       </div>
+
+      {/* Module keyword strip with active highlight */}
+      {keywords.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mr-1">Signs:</span>
+          {keywords.map((kw, idx) => {
+            const isActive = kw.keyword === activeKeyword?.keyword;
+            const isPast = progress?.completedKeywords?.includes(kw.keyword);
+            return (
+              <button
+                key={kw.id || kw.keyword}
+                onClick={() => onSelectKeyword(kw)}
+                className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all border ${
+                  isActive
+                    ? 'border-primary/60 bg-primary/20 text-primary shadow-[0_0_10px_rgba(var(--color-primary-rgb,99,102,241),0.3)]'
+                    : isPast
+                    ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                    : 'border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                {isPast && !isActive && <CheckCircle2 size={11} className="text-emerald-400" />}
+                {isActive && <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
+                <span className="uppercase">{kw.keyword}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Main Split Grid: Left = Avatar & Instructions, Right = Camera Evaluator */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
@@ -102,9 +289,19 @@ const SignPracticeArena = ({
                 </div>
               </div>
 
-              <span className="rounded-lg bg-white/5 px-2.5 py-1 text-xs font-mono text-slate-300 border border-white/10">
-                {activeKeyword?.difficulty}
-              </span>
+              {activeKeyword?.difficulty && (
+                <span className={`rounded-lg px-2.5 py-1 text-xs font-bold border ${
+                  (() => {
+                    const d = (activeKeyword.difficulty || '').toLowerCase();
+                    if (d === 'easy') return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+                    if (d === 'medium') return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+                    if (d === 'hard') return 'bg-red-500/20 text-red-300 border-red-500/40';
+                    return 'bg-white/5 text-slate-300 border-white/10';
+                  })()
+                }`}>
+                  {activeKeyword.difficulty}
+                </span>
+              )}
             </div>
 
             {/* Avatar Animation Player Area */}
@@ -179,9 +376,10 @@ const SignPracticeArena = ({
           <CameraSignEvaluator
             keyword={activeKeyword?.keyword}
             keywordMeta={activeKeyword}
-            onPassKeyword={onPassKeyword}
-            onErrorTrigger={onErrorTrigger}
+            onPassKeyword={handlePassKeyword}
+            onErrorTrigger={handleErrorTrigger}
             examMode={examMode}
+            streak={streak}
           />
 
           {/* Keyword Module Navigation Strip */}

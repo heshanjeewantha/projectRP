@@ -15,6 +15,8 @@ import {
   Check,
   Flame,
   RefreshCw,
+  Keyboard,
+  Timer,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
@@ -163,12 +165,23 @@ const classifyHands = (result, w, h) => {
 
 const matchesRequirement = (res, req) => res.detected && res.count === req.count;
 
+// Difficulty badge color
+const difficultyColor = (difficulty) => {
+  if (!difficulty) return 'bg-slate-700/50 text-slate-300 border-slate-600/40';
+  const d = difficulty.toLowerCase();
+  if (d === 'easy') return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+  if (d === 'medium') return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+  if (d === 'hard') return 'bg-red-500/20 text-red-300 border-red-500/40';
+  return 'bg-slate-700/50 text-slate-300 border-slate-600/40';
+};
+
 const CameraSignEvaluator = ({
   keyword,
   keywordMeta,
   onPassKeyword,
   onErrorTrigger,
   examMode = false,
+  streak = 0,
 }) => {
   const normKey = (keyword || 'computer').toLowerCase();
   const spec = DUAL_HAND_SPECS[normKey] || DUAL_HAND_SPECS.computer;
@@ -189,6 +202,14 @@ const CameraSignEvaluator = ({
   const [statusMessage, setStatusMessage] = useState('Raise hands into the Left and Right boxes.');
   const [secondaryTip, setSecondaryTip] = useState(spec.action);
 
+  // NEW UX state
+  const [flashOverlay, setFlashOverlay] = useState(null); // 'pass' | 'fail' | null
+  const [countdown, setCountdown] = useState(null); // 2,1 countdown before advance
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [showKeyboardHint, setShowKeyboardHint] = useState(true);
+  const [rightZonePulse, setRightZonePulse] = useState(false);
+  const [leftZonePulse, setLeftZonePulse] = useState(false);
+
   const rightInZoneRef = useRef(false);
   const leftInZoneRef = useRef(false);
 
@@ -203,6 +224,8 @@ const CameraSignEvaluator = ({
   const animationFrameRef = useRef(null);
   const streamRef = useRef(null);
   const handLandmarkerRef = useRef(null);
+  const elapsedRef = useRef(null);
+  const keywordStartRef = useRef(Date.now());
 
   // Load the real hand-tracking model once on mount.
   useEffect(() => {
@@ -315,6 +338,17 @@ const CameraSignEvaluator = ({
     return () => stopCamera();
   }, []);
 
+  // Time elapsed counter per keyword
+  useEffect(() => {
+    keywordStartRef.current = Date.now();
+    setElapsedSeconds(0);
+    clearInterval(elapsedRef.current);
+    elapsedRef.current = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - keywordStartRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(elapsedRef.current);
+  }, [keyword]);
+
   // Reset state when keyword changes
   useEffect(() => {
     holdStartRef.current = null;
@@ -325,9 +359,44 @@ const CameraSignEvaluator = ({
     leftInZoneRef.current = false;
     setRightInZone(false);
     setLeftInZone(false);
+    setFlashOverlay(null);
+    setCountdown(null);
     setStatusMessage(`Perform sign: '${keyword?.toUpperCase()}'. Place hands in both boxes.`);
     setSecondaryTip(spec.action);
   }, [keyword, spec]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        handleInstantPass();
+      } else if (e.code === 'KeyE') {
+        e.preventDefault();
+        handleTriggerError();
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [keyword, spec]);
+
+  // Flash overlay helper
+  const triggerFlash = (type) => {
+    setFlashOverlay(type);
+    setTimeout(() => setFlashOverlay(null), 700);
+  };
+
+  // Auto-advance countdown
+  const startCountdown = useCallback((kw, accuracy) => {
+    setCountdown(2);
+    const t1 = setTimeout(() => setCountdown(1), 1000);
+    const t2 = setTimeout(() => {
+      setCountdown(null);
+      onPassKeyword?.(kw, accuracy);
+    }, 2000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [onPassKeyword]);
 
   const processFrame = useCallback(() => {
     const video = videoRef.current;
@@ -531,7 +600,8 @@ const CameraSignEvaluator = ({
             holdStartRef.current = null;
             setStatusMessage(`PASSED! '${keyword?.toUpperCase()}' verified!`);
             setSecondaryTip('Advancing to next sign...');
-            onPassKeyword?.(keyword, 97);
+            triggerFlash('pass');
+            startCountdown(keyword, 97);
           }
         } else {
           holdStartRef.current = null;
@@ -552,7 +622,7 @@ const CameraSignEvaluator = ({
     }
 
     animationFrameRef.current = requestAnimationFrame(processFrame);
-  }, [isCameraActive, isSimulated, spec, keyword, onPassKeyword]);
+  }, [isCameraActive, isSimulated, spec, keyword, startCountdown]);
 
   useEffect(() => {
     animationFrameRef.current = requestAnimationFrame(processFrame);
@@ -563,7 +633,8 @@ const CameraSignEvaluator = ({
     setIsMatching(true);
     setCurrentAccuracy(98);
     setStatusMessage(`Verified '${keyword?.toUpperCase()}' sign!`);
-    setSecondaryTip('Passing to next sign...');
+    setSecondaryTip('Advancing to next sign...');
+    triggerFlash('pass');
 
     let p = 0;
     const interval = setInterval(() => {
@@ -571,7 +642,7 @@ const CameraSignEvaluator = ({
       setHoldProgress(p);
       if (p >= 100) {
         clearInterval(interval);
-        onPassKeyword?.(keyword, 98);
+        startCountdown(keyword, 98);
       }
     }, 120);
   };
@@ -582,6 +653,7 @@ const CameraSignEvaluator = ({
     setHoldProgress(0);
     setStatusMessage(`Incorrect sign for '${keyword?.toUpperCase()}'.`);
     setSecondaryTip('Smart wristband vibrated (RETRY SIGN).');
+    triggerFlash('fail');
     onErrorTrigger?.({
       keyword,
       reason: spec.description,
@@ -589,8 +661,66 @@ const CameraSignEvaluator = ({
     });
   };
 
+  const formatElapsed = (s) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
+  };
+
   return (
     <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-950 p-5 sm:p-6 shadow-2xl">
+
+      {/* SUCCESS / FAIL flash overlay */}
+      <AnimatePresence>
+        {flashOverlay && (
+          <motion.div
+            key={flashOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, exit: { duration: 0.5 } }}
+            className={`pointer-events-none absolute inset-0 z-50 rounded-3xl ${
+              flashOverlay === 'pass'
+                ? 'bg-emerald-500/25 ring-4 ring-inset ring-emerald-400/60'
+                : 'bg-red-500/25 ring-4 ring-inset ring-red-400/60'
+            }`}
+          >
+            <div className="flex h-full items-center justify-center">
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 1.3, opacity: 0 }}
+                className={`flex items-center gap-3 rounded-2xl px-6 py-4 text-xl font-black shadow-2xl ${
+                  flashOverlay === 'pass'
+                    ? 'bg-emerald-500 text-white shadow-emerald-500/50'
+                    : 'bg-red-500 text-white shadow-red-500/50'
+                }`}
+              >
+                {flashOverlay === 'pass' ? <CheckCircle2 size={28} /> : <XCircle size={28} />}
+                {flashOverlay === 'pass' ? 'SIGN PASSED! ✨' : 'WRONG SIGN 🔴'}
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* AUTO-ADVANCE countdown toast */}
+      <AnimatePresence>
+        {countdown !== null && (
+          <motion.div
+            initial={{ y: -40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -40, opacity: 0 }}
+            className="absolute top-4 inset-x-4 z-40 flex items-center justify-center"
+          >
+            <div className="flex items-center gap-3 rounded-2xl bg-emerald-500 px-5 py-2.5 text-sm font-black text-white shadow-xl shadow-emerald-500/40">
+              <Sparkles size={18} />
+              Advancing to next sign in {countdown}…
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
         <div className="flex items-center gap-2.5">
@@ -602,7 +732,7 @@ const CameraSignEvaluator = ({
             <Camera size={20} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h4 className="text-sm font-bold text-white">Live Camera Evaluator</h4>
               {isCameraActive && (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
@@ -620,10 +750,35 @@ const CameraSignEvaluator = ({
                   Model error
                 </span>
               )}
+              {/* Difficulty badge */}
+              {keywordMeta?.difficulty && (
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${difficultyColor(keywordMeta.difficulty)}`}>
+                  {keywordMeta.difficulty}
+                </span>
+              )}
             </div>
-            <p className="text-xs text-slate-400">
-              Target Sign: <strong className="text-cyan-400 uppercase">{keyword}</strong> • {spec.name}
-            </p>
+            <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+              <p className="text-xs text-slate-400">
+                Target Sign: <strong className="text-cyan-400 uppercase">{keyword}</strong> • {spec.name}
+              </p>
+              {/* Time elapsed */}
+              <span className="flex items-center gap-1 text-[11px] font-mono text-slate-500">
+                <Timer size={11} />
+                {formatElapsed(elapsedSeconds)}
+              </span>
+              {/* Streak */}
+              {streak > 0 && (
+                <motion.span
+                  key={streak}
+                  initial={{ scale: 1.4 }}
+                  animate={{ scale: 1 }}
+                  className="flex items-center gap-1 text-[11px] font-black text-orange-400 bg-orange-500/15 px-2 py-0.5 rounded-full border border-orange-500/30"
+                >
+                  <Flame size={12} />
+                  {streak} streak
+                </motion.span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -731,16 +886,18 @@ const CameraSignEvaluator = ({
         )}
       </div>
 
+      {/* Hand zone buttons with pulse animation on partial detection */}
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <button
+        <motion.button
           onClick={() => {
             const next = !rightInZone;
             rightInZoneRef.current = next;
             setRightInZone(next);
           }}
+          animate={rightInZone && !isMatching ? { scale: [1, 1.025, 1], transition: { repeat: Infinity, duration: 1.2 } } : {}}
           className={`rounded-2xl border p-3.5 transition-all text-left ${
             rightInZone
-              ? 'border-emerald-500/50 bg-emerald-950/30'
+              ? 'border-emerald-500/50 bg-emerald-950/30 shadow-[0_0_14px_rgba(16,185,129,0.15)]'
               : 'border-white/10 bg-slate-900/80 hover:border-primary/40'
           }`}
         >
@@ -751,17 +908,18 @@ const CameraSignEvaluator = ({
             </span>
           </div>
           <p className="text-xs font-bold text-white">{spec.rightHandReq.label}</p>
-        </button>
+        </motion.button>
 
-        <button
+        <motion.button
           onClick={() => {
             const next = !leftInZone;
             leftInZoneRef.current = next;
             setLeftInZone(next);
           }}
+          animate={leftInZone && !isMatching ? { scale: [1, 1.025, 1], transition: { repeat: Infinity, duration: 1.2, delay: 0.3 } } : {}}
           className={`rounded-2xl border p-3.5 transition-all text-left ${
             leftInZone
-              ? 'border-emerald-500/50 bg-emerald-950/30'
+              ? 'border-emerald-500/50 bg-emerald-950/30 shadow-[0_0_14px_rgba(16,185,129,0.15)]'
               : 'border-white/10 bg-slate-900/80 hover:border-primary/40'
           }`}
         >
@@ -772,7 +930,7 @@ const CameraSignEvaluator = ({
             </span>
           </div>
           <p className="text-xs font-bold text-white">{spec.leftHandReq.label}</p>
-        </button>
+        </motion.button>
       </div>
 
       <div
@@ -814,6 +972,32 @@ const CameraSignEvaluator = ({
           Test Wrong Sign Vibration
         </button>
       </div>
+
+      {/* Keyboard shortcut hint */}
+      <AnimatePresence>
+        {showKeyboardHint && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-3 overflow-hidden"
+          >
+            <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2 text-[11px] text-slate-500">
+              <span className="flex items-center gap-3">
+                <Keyboard size={12} className="shrink-0" />
+                <span>
+                  <kbd className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-white">Space</kbd> Pass
+                  {' · '}
+                  <kbd className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-white">E</kbd> Error
+                </span>
+              </span>
+              <button onClick={() => setShowKeyboardHint(false)} className="hover:text-white transition-colors">
+                ✕
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
