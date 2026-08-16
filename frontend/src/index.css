@@ -45,20 +45,6 @@ body {
   position: relative;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(134, 239, 172, 0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(134, 239, 172, 0.018) 1px, transparent 1px);
-  background-size: 60px 60px;
-  mask-image: radial-gradient(circle at center, black 35%, transparent 95%);
-  opacity: 0.2;
-  animation: gridFloat 18s linear infinite;
-}
-
 #root {
   min-height: 100vh;
 }

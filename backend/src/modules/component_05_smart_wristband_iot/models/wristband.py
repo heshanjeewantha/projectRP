@@ -14,6 +14,9 @@ AlertTypeLiteral = Literal[
     "Popup Question",
     "Exam Reminder",
     "Sign Avatar Replay",
+    "Wrong Sign Alert",
+    "Sign Success Alert",
+    "Sign Practice Reminder",
 ]
 
 VibrationPatternLiteral = Literal[

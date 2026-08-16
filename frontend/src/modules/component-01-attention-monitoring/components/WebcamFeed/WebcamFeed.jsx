@@ -166,7 +166,7 @@ const WebcamFeed = ({ videoRef, compact = false }) => {
               className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full bg-red-500/90 px-3 py-1.5 text-xs font-bold text-white shadow-lg backdrop-blur-sm"
             >
               <Smartphone size={12} />
-              Phone Detected!
+              Phone in Hand Detected!
             </motion.div>
           )}
         </AnimatePresence>

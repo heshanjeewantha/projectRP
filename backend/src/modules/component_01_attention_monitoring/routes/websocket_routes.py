@@ -94,10 +94,16 @@ async def websocket_attention_endpoint(websocket: WebSocket, session_id: str):
                 result = {**attention_result, **phone_result, **sign_result}
                 result["timestamp"] = video_timestamp
 
-                # ── Override reason/status for phone detection (Lowest Priority) ───
-                if phone_result["phone_detected"] and result["reason"] == "ok":
-                    result["reason"] = "phone_detected"
-                    result["status"] = "not_attentive"
+                # ── Override reason/status for phone detection ───
+                if phone_result.get("phone_detected"):
+                    if result["reason"] == "ok":
+                        result["reason"] = "phone_detected"
+                        result["status"] = "not_attentive"
+                    result["phone_in_hand"] = phone_result.get("phone_in_hand", False)
+                    result["phone_posture"] = phone_result.get("phone_posture", "none")
+                else:
+                    result["phone_in_hand"] = False
+                    result["phone_posture"] = "none"
 
                 # ── Stability voting ──────────────────────────────────────
                 if result.get("reason") == "no_face":

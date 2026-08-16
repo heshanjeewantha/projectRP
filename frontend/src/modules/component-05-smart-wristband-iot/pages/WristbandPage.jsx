@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Activity,
   BellRing,
@@ -8,6 +9,7 @@ import {
   Send,
   Settings2,
   SmartphoneCharging,
+  Sparkles,
   Watch,
   Wifi,
 } from 'lucide-react';
@@ -67,6 +69,27 @@ const ALERT_PRESETS = [
     oledMessage: 'REPLAY SIGN',
     intensity: 88,
     duration: 1800,
+  },
+  {
+    alertType: 'Wrong Sign Alert',
+    vibrationPattern: 'Repeated Pulse',
+    oledMessage: 'WRONG SIGN',
+    intensity: 90,
+    duration: 1200,
+  },
+  {
+    alertType: 'Sign Success Alert',
+    vibrationPattern: 'Short Pulse',
+    oledMessage: 'SIGN PASSED',
+    intensity: 50,
+    duration: 300,
+  },
+  {
+    alertType: 'Sign Practice Reminder',
+    vibrationPattern: 'Double Pulse',
+    oledMessage: 'PRACTICE SIGN',
+    intensity: 65,
+    duration: 600,
   },
 ];
 
@@ -233,19 +256,29 @@ const WristbandPage = () => {
               description="Configure the SignLearn wristband so system alerts can trigger vibration patterns and OLED messages for distraction, popup, chatbot, and sign replay events."
             />
 
-            <div className="mt-5 dashboard-chip-row">
-              <span className="dashboard-chip">
-                <Wifi size={16} className="text-primary" />
-                Device: {device?.connectionStatus || 'connected'}
-              </span>
-              <span className="dashboard-chip">
-                <Activity size={16} className="text-primary" />
-                Attention Link: {derivedStatus}
-              </span>
-              <span className="dashboard-chip">
-                <Cpu size={16} className="text-primary" />
-                ESP32 + OLED + Haptic Motor
-              </span>
+            <div className="mt-5 dashboard-chip-row flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="dashboard-chip">
+                  <Wifi size={16} className="text-primary" />
+                  Device: {device?.connectionStatus || 'connected'}
+                </span>
+                <span className="dashboard-chip">
+                  <Activity size={16} className="text-primary" />
+                  Attention Link: {derivedStatus}
+                </span>
+                <span className="dashboard-chip">
+                  <Cpu size={16} className="text-primary" />
+                  ESP32 + OLED + Haptic Motor
+                </span>
+              </div>
+
+              <Link
+                to="/sign-course"
+                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all"
+              >
+                <Sparkles size={14} />
+                Launch ICT Sign Course & Camera
+              </Link>
             </div>
           </DashboardPanel>
 

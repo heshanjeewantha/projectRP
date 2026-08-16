@@ -383,7 +383,7 @@ const AdminAttentionReportsPage = () => {
                     { label: 'Looking Away / Head Turned', count: reasons.head_turned || 0, color: '#a78bfa' },
                     { label: 'Drowsy / Sleepy (PERCLOS)', count: reasons.drowsy || 0, color: '#f59e0b' },
                     { label: 'Yawning (MAR)', count: reasons.yawning || 0, color: '#fb923c' },
-                    { label: 'Phone Usage (Hand-to-Head)', count: reasons.phone_detected || 0, color: '#ef4444' },
+                    { label: 'Phone in Hand', count: reasons.phone_detected || 0, color: '#ef4444' },
                     { label: 'Eyes Closed', count: reasons.eyes_closed || 0, color: '#e879f9' },
                     { label: 'No Face Visible', count: reasons.no_face || 0, color: '#94a3b8' },
                   ].map((item) => {

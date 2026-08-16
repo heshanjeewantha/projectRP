@@ -21,6 +21,7 @@ const studentNavItems = [
   { to: '/lesson', icon: BookOpen, label: 'Lesson' },
   { to: '/chatbot', icon: MessageSquare, label: 'Chatbot' },
   { to: '/sign-avatar', icon: Hand, label: 'Sign Avatar' },
+  { to: '/sign-course', icon: Sparkles, label: 'Sign Course' },
   { to: '/wristband', icon: Watch, label: 'Wristband' },
   { to: '/history', icon: History, label: 'History' },
 ];

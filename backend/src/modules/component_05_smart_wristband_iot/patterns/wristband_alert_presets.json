@@ -48,6 +48,30 @@
       "intensity": 88,
       "duration": 1800,
       "description": "Used when sign-avatar playback should be replayed carefully."
+    },
+    {
+      "alertType": "Wrong Sign Alert",
+      "vibrationPattern": "Repeated Pulse",
+      "oledMessage": "WRONG SIGN",
+      "intensity": 90,
+      "duration": 1200,
+      "description": "Used in ICT sign language course when the student performs an incorrect hand gesture."
+    },
+    {
+      "alertType": "Sign Success Alert",
+      "vibrationPattern": "Short Pulse",
+      "oledMessage": "SIGN PASSED",
+      "intensity": 50,
+      "duration": 300,
+      "description": "Used when the student successfully masters and passes an ICT sign keyword."
+    },
+    {
+      "alertType": "Sign Practice Reminder",
+      "vibrationPattern": "Double Pulse",
+      "oledMessage": "PRACTICE SIGN",
+      "intensity": 65,
+      "duration": 600,
+      "description": "Used to nudge student to activate camera and perform the sign."
     }
   ]
 }

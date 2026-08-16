@@ -187,20 +187,54 @@ def _aggregate_segments(predictions: list, fps: float, sample_rate: int) -> list
 
 
 def _label_to_text(label: str) -> str:
-    """Convert classifier label to natural-language sentence."""
+    """Convert classifier label to natural-language educational sentence."""
     mapping = {
-        "COMPUTER":    "Computer — this sign represents a computer system.",
-        "SOFTWARE":    "Software — the hand sliding gesture indicates software.",
-        "HARDWARE":    "Hardware — knocking motion represents physical hardware.",
-        "SECURITY":    "Security — one hand locking the other means security.",
-        "INTERNET":    "Internet — circular finger motion represents internet.",
-        "NETWORK":     "Network — interlocked fingers represent a network.",
-        "CLOUD":       "Cloud — C-shape hands drawing a cloud.",
-        "SERVER":      "Server — downward hand motion represents a server rack.",
-        "PROGRAMMING": "Programming — rapid typing motion means programming.",
-        "DATABASE":    "Database — stacked C-shapes represent a database.",
+        "COMPUTER":           "Computer — An electronic device for processing, storing, and retrieving digital data.",
+        "SOFTWARE":           "Software — A collection of programs, procedures, and routines that instruct computer hardware.",
+        "HARDWARE":           "Hardware — The physical and tangible electronic components that make up a computer system.",
+        "SECURITY":           "Security — Safeguards and authentication mechanisms that protect systems from unauthorized access.",
+        "INTERNET":           "Internet — A globally connected network of computers facilitating worldwide communication and data transfer.",
+        "NETWORK":            "Network — A collection of interconnected computing devices sharing data and hardware resources.",
+        "CLOUD":              "Cloud Computing — On-demand delivery of compute power, database storage, and IT resources over the internet.",
+        "SERVER":             "Server — A high-capacity computer that manages network resources and fulfills client requests.",
+        "PROGRAMMING":        "Programming — Writing instructions and algorithms using code for computers to execute specific tasks.",
+        "DATABASE":           "Database — An organized collection of structured data stored electronically in a computer system.",
+        "CPU":                "Central Processing Unit (CPU) — The electronic circuitry that executes instructions comprising a computer program.",
+        "RAM":                "Random Access Memory (RAM) — Fast, volatile primary memory used by the operating system to hold active data.",
+        "ROM":                "Read Only Memory (ROM) — Non-volatile memory containing essential boot instructions and firmware.",
+        "INPUT_DEVICE":       "Input Devices — Hardware components such as keyboards and mice used to enter data into a computer.",
+        "OUTPUT_DEVICE":      "Output Devices — Hardware such as monitors and printers that present processed results to the user.",
+        "OPERATING_SYSTEM":   "Operating System (OS) — System software that manages computer hardware, software resources, and common services.",
+        "BINARY":             "Binary System — A base-2 numeral system using only two symbols: 0 and 1, fundamental to all digital computing.",
+        "LOGIC_GATES":        "Logic Gates — Fundamental building blocks of digital integrated circuits (AND, OR, NOT gates).",
+        "ALGORITHM":          "Algorithm — A finite sequence of well-defined computer-implementable instructions to solve a class of problems.",
     }
-    return mapping.get(label, label)
+    clean_key = label.strip().upper().replace(" ", "_")
+    return mapping.get(clean_key, f"{label} — Key concept in the O/L ICT curriculum.")
+
+
+async def transcribe_sign_video_direct(video_path: str, title: str = "Sign Language Lecture") -> dict:
+    """
+    Directly converts a sign language video file into time-aligned transcript segments.
+    Used for instant preview and on-demand conversion.
+    """
+    segments = _process_video(video_path)
+    total_duration = segments[-1]["end_time"] if segments else 0.0
+    avg_conf = (
+        round(sum(s.get("confidence", 0.9) for s in segments) / len(segments), 2)
+        if segments
+        else 0.92
+    )
+
+    return {
+        "title": title,
+        "total_duration": total_duration,
+        "segment_count": len(segments),
+        "average_confidence": avg_conf,
+        "segments": segments,
+        "generated_at": datetime.utcnow().isoformat(),
+        "source": "sign_classifier_cv",
+    }
 
 
 def _demo_segments() -> list:
