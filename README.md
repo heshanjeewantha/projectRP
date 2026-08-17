@@ -1,179 +1,204 @@
-# SignLearn AI
+# SignLearn AI — Adaptive O/L ICT Learning Platform
 
-SignLearn AI is a full-stack adaptive learning platform for O/L ICT. It combines attention monitoring, knowledge-graph question prompts, an adaptive chatbot, a sign-avatar lecture workflow, and a smart wristband integration in one project.
+**SignLearn AI** is an intelligent multimodal e-learning and sign language support platform designed for Sri Lankan G.C.E. Ordinary Level (O/L) Information and Communication Technology (ICT) education.
 
-## Main Components
+---
 
-1. `component_01_attention_monitoring`
-   Detects attention state, missed segments, and playback-related learner signals.
-2. `component_02_knowledge_graph_question_system`
-   Uses concept relationships and popup questions for guided learning.
-3. `component_03_adaptive_chatbot`
-   Answers O/L ICT questions using lesson datasets, short notes, and lesson questions.
-4. `component_04_sign_avatar_lecture_generator`
-   Converts text to gloss-like sign sequences and renders the animated avatar.
-5. `component_05_smart_wristband_iot`
-   Sends haptic and OLED alerts to the ESP32-based wristband workflow.
+## 🏛️ Core Research Components
 
-## Tech Stack
+1. **Component 01: Real-Time Attention Monitoring & Telemetry**
+   * Live webcam facial telemetry via MediaPipe FaceMesh & Pose (EAR, MAR, PERCLOS drowsiness tracking, Gaze Vectoring).
+   * YOLOv8 smartphone and unauthorized distraction detection.
+   * Real-time WebSocket streaming at `/ws/attention/{session_id}` with high-tech biometric HUD and video timeline attention heatmaps.
 
-- Frontend: React, Vite, React Router, Zustand, Axios
-- Backend: FastAPI, Uvicorn, Pydantic, Motor, PyMongo
-- Database: MongoDB
-- CV / ML libraries: MediaPipe, OpenCV, NumPy, TensorFlow, Torch, scikit-learn
-- IoT: ESP32 / Arduino firmware
+2. **Component 02: Knowledge Graph Driven Popup Question System**
+   * Graph-based weighted question selection algorithm (**GQSA**: 60% active concept, 25% prerequisite, 15% related concepts).
+   * Dynamic automated concept node and MCQ generator from video transcripts ([dynamic_question_generator.py](backend/src/modules/component_02_knowledge_graph_question_system/services/dynamic_question_generator.py)).
+   * Interactive concept visual SVG diagrams and spaced repetition reinforcement.
 
-## Project Structure
+3. **Component 03: Emotion-Aware Adaptive Chatbot (EARA) & Knowledge Growth**
+   * Attention-aware lesson revision suggestions bridging low-attention timestamps from Component 1 to syllabus weak spots.
+   * Instant High-Yield Short Notes Knowledge Bank with real-world analogies, O/L exam tips, and memory mnemonics.
+   * Visual Knowledge Growth & Concept Mastery Matrix (domain progress bars, attention correlation index, 7-day trend).
+   * Multi-style Explain Mode toggles (`Standard`, `Simple (ELI10)`, `Real-World Analogy`, `O/L Exam Focus`).
+   * Hybrid backend engine: Online LLM with timeout, retry, and grounded local dataset fallback.
 
-```text
-projectRP/
-  backend/
-    src/
-      common/
-      modules/
-  frontend/
-    src/
-      modules/
-  docs/
-  iot/
-  uploads/
-```
+4. **Component 04: Sign Avatar Lecture Generator**
+   * Text-to-sign gloss conversion and MediaPipe 21-point landmark hand-rig animation controller.
+   * Full lesson script to sign lecture generator with segment jumping, replay, and JSON export.
 
-## Setup
+5. **Component 05: Smart Haptic Wristband IoT & Sign Practice Arena**
+   * ESP32 wearable haptic feedback (`SSD1306 OLED` + `ERM Vibration Motor`) over BLE/Serial with customizable alert presets.
+   * Interactive Sign Language Course with side-by-side avatar demonstration and real-time student webcam pose evaluator ([CameraSignEvaluator.jsx](frontend/src/modules/component-05-smart-wristband-iot/components/SignCourse/CameraSignEvaluator.jsx)).
+   * Automated module completion certificate generator.
 
-### 1. Clone and install
+---
 
-Frontend:
+## 💻 Tech Stack
 
+* **Frontend**: React 19, Vite 6, TailwindCSS v4, Framer Motion, Lucide React, Zustand
+* **Backend**: FastAPI, Uvicorn, Motor (Async MongoDB), Pydantic v2, OpenCV, MediaPipe, Ultralytics YOLOv8
+* **Database**: MongoDB Atlas / Local MongoDB
+* **IoT Hardware**: ESP32 Dev Module, SSD1306 I2C OLED (128x64), Coreless Vibration Motor
+
+---
+
+## 📋 Prerequisites
+
+Before running the application, ensure you have:
+* **Node.js**: `v18.0.0` or higher (Recommended: `v20+`)
+* **Python**: `3.10` or `3.11` (64-bit)
+* **MongoDB**: MongoDB Atlas URI or local MongoDB instance running on port `27017`
+* **Webcam**: Standard USB or built-in laptop camera for attention tracking and sign evaluation
+
+---
+
+## 🚀 Step-by-Step Setup & Run Instructions
+
+### 1. Clone & Open Repository
+Open PowerShell or your terminal in the project root:
 ```powershell
-cd frontend
-npm install
+cd g:\projectRP
 ```
 
-Backend:
+---
 
+### 2. Backend Setup & Execution
+
+#### A. Create and Activate Python Virtual Environment
 ```powershell
 cd backend
-python -m venv venv
-.\venv\Scripts\activate
+python -m venv .venv
+.\.venv\Scripts\activate
+```
+
+#### B. Install Python Dependencies
+```powershell
 pip install -r requirements.txt
 ```
 
-### 2. Environment Variables
-
-Backend: create `backend/.env` from `backend/.env.example`
-
+#### C. Configure Backend `.env`
+Create `backend/.env` (or verify existing configuration):
 ```env
-MONGODB_URI=mongodb://localhost:27017
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.adxbwve.mongodb.net/?appName=Cluster0
 DATABASE_NAME=sign_language_system
 UPLOAD_DIR=uploads
 MAX_UPLOAD_SIZE_MB=500
-LLM_PROVIDER=openai
-LLM_API_KEY=your_api_key_here
-LLM_MODEL=gpt-4.1-mini
-LLM_TIMEOUT_MS=10000
+
+# LLM Configuration (Gemini / OpenAI / Ollama)
+LLM_PROVIDER=gemini
+LLM_API_KEY=your_gemini_api_key_here
+LLM_MODEL=gemini-flash-lite-latest
+LLM_TIMEOUT_MS=15000
 ```
 
-Frontend: create `frontend/.env` from `frontend/.env.example`
+#### D. Start the FastAPI Backend Server
+```powershell
+# From the backend directory with virtual environment activated:
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+* Backend will be live at: **`http://localhost:8000`**
+* Interactive Swagger API Docs: **`http://localhost:8000/docs`**
 
+---
+
+### 3. Frontend Setup & Execution
+
+Open a **new PowerShell terminal window**:
+
+#### A. Navigate to Frontend & Install Dependencies
+```powershell
+cd g:\projectRP\frontend
+npm install
+```
+
+#### B. Configure Frontend `.env`
+Create `frontend/.env`:
 ```env
 VITE_API_ROOT=/api
 ```
 
-## Run Commands
-
-Frontend:
-
+#### C. Start Vite Development Server
 ```powershell
-cd frontend
 npm run dev
 ```
+* Frontend will be live at: **`http://localhost:5173`**
 
-Backend:
+---
 
-```powershell
-cd backend
-.\venv\Scripts\python.exe -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
+## 🌐 Application Navigation & Routes
 
-Frontend default URL:
+| Route | Description |
+| :--- | :--- |
+| `http://localhost:5173/` | **Home Dashboard**: System status overview, quick actions, and login quiz modal |
+| `http://localhost:5173/lesson` | **Lesson & Attention HUD**: Video player, live webcam attention tracker, heatmap, and concept popups |
+| `http://localhost:5173/chatbot` | **Adaptive Chatbot**: Chat thread, weak spot revision banner, Short Notes, and Knowledge Growth graph |
+| `http://localhost:5173/sign-avatar` | **Sign Avatar Studio**: Text-to-gloss sign generator and realistic upper-body avatar viewer |
+| `http://localhost:5173/sign-course` | **Sign Course & Arena**: Interactive curriculum units, dual-camera practice arena, and certificate generator |
+| `http://localhost:5173/wristband` | **Smart Wristband IoT**: ESP32 BLE device pairing, vibration preset tuning, and OLED preview |
+| `http://localhost:5173/history` | **Student History**: Recorded attention sessions, distraction timelines, and answer stats |
+| `http://localhost:5173/admin` | **Admin Dashboard**: Pipeline analytics, uploaded video management, and alert reports |
+| `http://localhost:5173/upload` | **Admin Video Upload**: Upload O/L ICT video lessons and generate automatic transcripts |
+
+---
+
+## 🛠️ Smart Wristband Firmware Setup (Component 05)
+
+1. Open `backend/src/modules/component_05_smart_wristband_iot/firmware/SmartHapticWristband.ino` in Arduino IDE.
+2. Install required libraries via Library Manager:
+   * `Adafruit SSD1306` & `Adafruit GFX Library`
+   * `ESP32 BLE Arduino`
+3. Connect ESP32 via USB and select the COM port.
+4. Click **Upload**.
+5. The device will advertise as `SignLearn-Band` and automatically pair with the web dashboard on `/wristband`.
+
+---
+
+## 📂 Project Directory Layout
 
 ```text
-http://127.0.0.1:5173
+projectRP/
+├── backend/
+│   ├── src/
+│   │   ├── common/                               # DB connection, security, CORS, base configs
+│   │   └── modules/
+│   │       ├── component_01_attention_monitoring/ # FaceMesh, PERCLOS, YOLOv8, WebSocket
+│   │       ├── component_02_knowledge_graph_question_system/ # GQSA, dynamic MCQ generator, datasets
+│   │       ├── component_03_adaptive_chatbot/     # EARA, short notes, growth matrix, LLM service
+│   │       ├── component_04_sign_avatar_lecture_generator/ # WLASL, hand rig controller, gesture library
+│   │       └── component_05_smart_wristband_iot/ # ESP32 BLE service, sign course, firmware
+│   ├── main.py                                   # FastAPI entry point
+│   ├── requirements.txt                          # Python package dependencies
+│   └── .env                                      # Backend environment variables
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/layout/                    # Navbar, DashboardPanel, Header
+│   │   └── modules/
+│   │       ├── component-01-attention-monitoring/ # WebcamFeed, AttentionHeatmap, VideoPlayer
+│   │       ├── component-02-knowledge-graph-question-system/ # Popups, ConceptDiagramPanel
+│   │       ├── component-03-adaptive-chatbot/     # ChatbotPage, ShortNotesCard, KnowledgeGrowthGraph
+│   │       ├── component-04-sign-avatar-lecture-generator/ # RealisticAvatarViewer, HandRigController
+│   │       ├── component-05-smart-wristband-iot/ # WristbandPage, SignPracticeArena, CameraSignEvaluator
+│   │       └── shared-app/                       # Store (Zustand), Admin pages, Auth
+│   ├── package.json                              # Frontend package dependencies
+│   └── vite.config.js                            # Vite development & proxy configuration
+│
+└── docs/                                         # Detailed markdown technical documentation
 ```
 
-Backend default URL:
+---
 
-```text
-http://127.0.0.1:8000
-```
+## 🧪 Testing & Verification
 
-## GitHub Upload Notes
-
-- Do not commit `backend/.env` or `frontend/.env`
-- Do not commit `venv`, `node_modules`, `dist`, `build`, `__pycache__`, or runtime upload files
-- Do not commit logs that may contain local connection details
-- Large trained models and binary artifacts are ignored by `.gitignore`
-
-## Datasets and Large Files
-
-- Runtime-uploaded videos under `backend/uploads/` are intentionally ignored
-- Python virtual environment files are intentionally ignored
-- If you later add large private datasets or trained model binaries, keep only a sample in GitHub and document the download process here
-
-## API Notes
-
-- Backend root: `GET /`
-- Chatbot APIs live under `/api/chatbot`
-- Sign avatar APIs live under `/api/sign-avatar`
-- Lecture-generation APIs live under `/api/sign-lecture`
-
-## Chatbot LLM Fallback
-
-Component 03 now supports two answer sources inside the existing chatbot flow:
-
-- `LLM` mode: the backend sends the EARA prompt, topic context, prerequisite reminders, and lesson summary hints to the configured LLM provider.
-- `LOCAL_DATASET` fallback: if the provider is not configured, times out, returns quota/auth/server errors, or produces an invalid reply, the chatbot immediately answers from the local O/L ICT dataset instead.
-
-### Add the LLM API key
-
-1. Copy `backend/.env.example` to `backend/.env`.
-2. Set `LLM_PROVIDER` to `openai`, `gemini`, or `openrouter`.
-3. Add `LLM_API_KEY`, `LLM_MODEL`, and optionally change `LLM_TIMEOUT_MS`.
-4. Restart the FastAPI backend.
-
-### How fallback answers are generated
-
-- Topic detection uses the selected topic, question keywords, lesson summaries, and dataset keywords.
-- Intent detection switches between learning mode and exam mode.
-- Prerequisites are pulled from the chatbot dataset and knowledge graph labels.
-- Exam fallback answers stay short and marks-friendly.
-- Learning fallback answers add simple explanations, examples, and prerequisite reminders.
-- Distracted, bored, and not-understanding states still use EARA-style adaptation.
-
-### How to test API failure
-
-- Remove `LLM_API_KEY` from `backend/.env` and ask a chatbot question.
-- Set a very small `LLM_TIMEOUT_MS` to simulate a timeout path.
-- Disconnect the network or use an invalid provider/model to confirm the local dataset fallback path.
-- In the UI, the chatbot should show `Dataset Fallback Answer` and the note `Answered using local lesson dataset.`
-
-### Add new ICT topics
-
-Update `backend/src/modules/component_03_adaptive_chatbot/datasets/ol_ict_chatbot_syllabus.json` with:
-
-- `topicId`
-- `topicName`
-- `summary`
-- `keyPoints`
-- `prerequisites`
-- `examQuestions`
-- `simpleDefinitions`
-- `examples`
-- `microChallenges`
-
-## Development Notes
-
-- The backend reads configuration from `backend/.env`
-- The frontend can use `VITE_API_ROOT` to target a deployed backend
-- MongoDB credentials should always stay in local env files or GitHub Secrets, never in source code
+* **Frontend Build Validation**:
+  ```powershell
+  cd frontend
+  npm run build
+  ```
+* **Backend Endpoint Health Check**:
+  ```powershell
+  curl http://localhost:8000/api/videos
+  curl http://localhost:8000/api/knowledge-graph
+  curl http://localhost:8000/api/chatbot/topics
+  ```

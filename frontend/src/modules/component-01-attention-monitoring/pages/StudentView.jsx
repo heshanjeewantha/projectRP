@@ -600,7 +600,7 @@ const StudentView = () => {
               label="Attention"
               icon={Activity}
               title="Attention Analytics"
-              description="Real-time engagement score, drowsiness (PERCLOS), gaze direction, blink rate, phone detections, and live sign captions."
+              description="Real-time engagement score, drowsiness (PERCLOS), gaze direction, blink rate, and phone detections."
             />
             <div className="mt-4">
               <AttentionStatsPanel />

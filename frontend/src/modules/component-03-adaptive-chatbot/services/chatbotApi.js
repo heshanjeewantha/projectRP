@@ -100,3 +100,19 @@ export const downloadAnalyticsReport = async ({ format = 'pdf', studentId, topic
       `analytics-report.${format === 'csv' ? 'csv' : 'pdf'}`,
   };
 };
+
+export const getAttentionRecommendations = async (studentId) => {
+  const response = await axios.get(`${API_BASE}/attention-recommendations/${studentId}`);
+  return response.data;
+};
+
+export const getShortNotes = async (topicId) => {
+  const response = await axios.get(`${API_BASE}/short-notes/${topicId}`);
+  return response.data;
+};
+
+export const getKnowledgeGrowth = async (studentId) => {
+  const response = await axios.get(`${API_BASE}/knowledge-growth/${studentId}`);
+  return response.data;
+};
+

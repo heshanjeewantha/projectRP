@@ -204,3 +204,64 @@ class RepeatedQueryCheckResponseModel(BaseModel):
     alertCreated: bool
     topic: str | None = None
     exampleQuestions: list[str] = Field(default_factory=list)
+
+
+# ── Attention & Knowledge Growth Extensions ──────────────────────────────────
+
+class AttentionRecommendationItem(BaseModel):
+    lessonId: str
+    lessonTitle: str
+    conceptId: str
+    conceptName: str
+    averageAttention: float
+    distractionReason: str
+    recommendedAction: str
+    suggestedPrompt: str
+    timestamp: float | None = 0.0
+
+
+class AttentionRecommendationsResponse(BaseModel):
+    studentId: str
+    hasLowAttentionAlerts: bool
+    summaryMessage: str
+    recommendations: list[AttentionRecommendationItem] = Field(default_factory=list)
+
+
+class ShortNoteSection(BaseModel):
+    title: str
+    bullets: list[str] = Field(default_factory=list)
+
+
+class ShortNoteModel(BaseModel):
+    topicId: str
+    topicName: str
+    summary: str
+    keyConcepts: list[str] = Field(default_factory=list)
+    realWorldAnalogy: str
+    examTip: str
+    commonMistakes: list[str] = Field(default_factory=list)
+    memoryHook: str
+    sections: list[ShortNoteSection] = Field(default_factory=list)
+
+
+class KnowledgeGrowthTopicModel(BaseModel):
+    topicId: str
+    topicName: str
+    masteryScore: int            # 0 to 100
+    attentionCorrelation: int    # 0 to 100
+    level: str                   # 'Novice' | 'Developing' | 'Proficient' | 'Master'
+    questionsAnswered: int
+    accuracyRate: int            # 0 to 100
+    lastReviewed: str | None = None
+
+
+class KnowledgeGrowthResponse(BaseModel):
+    studentId: str
+    overallMastery: int          # 0 to 100
+    overallAttention: int        # 0 to 100
+    growthStreakDays: int
+    strongestTopic: str
+    needsAttentionTopic: str
+    topics: list[KnowledgeGrowthTopicModel] = Field(default_factory=list)
+    growthHistory: list[dict] = Field(default_factory=list)
+

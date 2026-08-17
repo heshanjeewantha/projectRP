@@ -1,5 +1,5 @@
-import { useRef, useEffect, useState } from 'react';
-import { Camera, CameraOff, Smartphone, Moon, Hand } from 'lucide-react';
+import { useRef, useEffect } from 'react';
+import { Camera, CameraOff, Smartphone, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useStore from '../../../shared-app/utils/useStore';
 import { useWebSocket } from '../../hooks/useWebSocket';
@@ -16,29 +16,14 @@ const WebcamFeed = ({ videoRef, compact = false }) => {
     attentionStatus,
     drowsinessScore, phoneDetected, yawning,
     gazeDirection, blinkRate, engagementScore,
-    liveSignText, liveSignExplanation,
   } = useStore();
 
   const effectiveUserId               = userId || 'student_demo_123';
   const { isConnected, latestDetection, sendFrame } = useWebSocket(sessionId);
 
-  // Track sign text visibility (auto-hide after 3s)
-  const [visibleSign, setVisibleSign] = useState(null);
-  const signTimerRef = useRef(null);
-
   useEffect(() => {
     latestDetectionRef.current = latestDetection;
   }, [latestDetection]);
-
-  // Sign caption auto-hide logic
-  useEffect(() => {
-    if (liveSignText) {
-      setVisibleSign(liveSignText);
-      clearTimeout(signTimerRef.current);
-      signTimerRef.current = setTimeout(() => setVisibleSign(null), 3000);
-    }
-    return () => clearTimeout(signTimerRef.current);
-  }, [liveSignText]);
 
   // Setup webcam
   useEffect(() => {
@@ -200,22 +185,6 @@ const WebcamFeed = ({ videoRef, compact = false }) => {
           )}
         </AnimatePresence>
 
-        {/* Live sign caption */}
-        <AnimatePresence>
-          {visibleSign && (
-            <motion.div
-              key={visibleSign}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="absolute bottom-14 inset-x-3 flex items-center gap-2 rounded-2xl bg-black/70 px-4 py-2 backdrop-blur-sm"
-            >
-              <Hand size={14} className="shrink-0 text-primary" />
-              <span className="text-sm font-semibold text-white">{visibleSign}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Audio bars */}
         {!isWebcamActive && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-text-muted">
@@ -331,27 +300,6 @@ const WebcamFeed = ({ videoRef, compact = false }) => {
             />
           </div>
         )}
-
-        {/* Live sign caption */}
-        <AnimatePresence>
-          {visibleSign && (
-            <motion.div
-              key={visibleSign}
-              initial={{ opacity: 0, y: 12, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12 }}
-              className="absolute bottom-14 inset-x-3 flex items-center gap-2 rounded-2xl bg-black/75 px-4 py-2.5 backdrop-blur-md"
-            >
-              <Hand size={16} className="shrink-0 text-primary" />
-              <div className="min-w-0">
-                <span className="block text-sm font-bold text-white">{visibleSign}</span>
-                {liveSignExplanation && (
-                  <span className="block truncate text-[10px] text-text-muted">{liveSignExplanation}</span>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Camera inactive */}
         {!isWebcamActive && (

@@ -85,13 +85,18 @@ async def websocket_attention_endpoint(websocket: WebSocket, session_id: str):
                 if frame is None:
                     continue
 
-                # ── Run all detectors ─────────────────────────────────────
+                # ── Run attention and phone detectors ──────────────────────
                 attention_result = _attention_detector.analyze_frame(frame)
                 phone_result     = _phone_detector.analyze_frame(frame)
-                sign_result      = _sign_recognizer.analyze_frame(frame)
 
                 # ── Merge results ─────────────────────────────────────────
-                result = {**attention_result, **phone_result, **sign_result}
+                result = {
+                    **attention_result,
+                    **phone_result,
+                    "sign_text": None,
+                    "sign_confidence": 0.0,
+                    "sign_explanation": "",
+                }
                 result["timestamp"] = video_timestamp
 
                 # ── Override reason/status for phone detection ───

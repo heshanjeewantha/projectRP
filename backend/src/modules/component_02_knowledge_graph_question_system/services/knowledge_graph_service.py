@@ -134,12 +134,28 @@ async def get_popup_question(student_id: str, lesson_id: str, current_time: floa
             "message": "The current playback time is outside the configured lesson timeline.",
         }
 
-    current_concept = await db[KNOWLEDGE_GRAPH_COLLECTION].find_one(
-        {"conceptId": timeline_window["conceptId"]}
-    )
+    current_concept = None
+    try:
+        current_concept = await db[KNOWLEDGE_GRAPH_COLLECTION].find_one(
+            {"conceptId": timeline_window["conceptId"]}
+        )
+    except Exception as e:
+        print(f"[KnowledgeGraph] DB concept find error: {e}")
+
+    # Fallback to local dataset if DB is unreachable or concept is missing
+    if not current_concept:
+        try:
+            dataset = _read_json(KNOWLEDGE_GRAPH_DATASET)
+            matched = next((c for c in dataset.get("concepts", []) if c.get("conceptId") == timeline_window.get("conceptId")), None)
+            if not matched and dataset.get("concepts"):
+                matched = dataset["concepts"][0]
+            current_concept = matched
+        except Exception:
+            current_concept = None
+
     if not current_concept:
         return {
-            "lessonId": lesson_timeline["lessonId"],
+            "lessonId": lesson_timeline.get("lessonId", lesson_id),
             "requestedLessonId": lesson_id,
             "currentConcept": None,
             "timelineWindow": timeline_window,
@@ -150,25 +166,47 @@ async def get_popup_question(student_id: str, lesson_id: str, current_time: floa
         }
 
     concept_scope = _build_concept_scope(current_concept)
-    student_profile = await _build_student_profile(student_id)
+    student_profile = {"overallAccuracy": None, "conceptAccuracy": {}, "totalAnswers": 0}
+    try:
+        student_profile = await _build_student_profile(student_id)
+    except Exception:
+        pass
 
     all_scope_questions = []
-    cursor = db[POPUP_QUESTIONS_COLLECTION].find(
-        {
-            "conceptId": {"$in": list(concept_scope.keys())},
-        }
-    )
-    async for question in cursor:
-        question["selectionScore"] = _score_question(question, concept_scope, student_profile)
-        all_scope_questions.append(question)
+    try:
+        cursor = db[POPUP_QUESTIONS_COLLECTION].find(
+            {
+                "conceptId": {"$in": list(concept_scope.keys())},
+            }
+        )
+        async for question in cursor:
+            question["selectionScore"] = _score_question(question, concept_scope, student_profile)
+            all_scope_questions.append(question)
+    except Exception as e:
+        print(f"[KnowledgeGraph] DB questions query error: {e}")
 
-    answered_docs = await db[STUDENT_ANSWERS_COLLECTION].find(
-        {
-            "studentId": student_id,
-            "questionId": {"$in": [question["questionId"] for question in all_scope_questions]},
-        }
-    ).to_list(length=None)
-    answered_lookup = {doc["questionId"]: doc for doc in answered_docs}
+    # Fallback to concept embedded questions from dataset
+    if not all_scope_questions and current_concept.get("questions"):
+        for q in current_concept["questions"]:
+            q_copy = dict(q)
+            q_copy["conceptId"] = current_concept["conceptId"]
+            q_copy["conceptName"] = current_concept["conceptName"]
+            q_copy["grade"] = current_concept.get("grade", "O/L")
+            q_copy["unit"] = current_concept.get("unit", "ICT")
+            q_copy["selectionScore"] = 1.0
+            all_scope_questions.append(q_copy)
+
+    answered_lookup = {}
+    try:
+        answered_docs = await db[STUDENT_ANSWERS_COLLECTION].find(
+            {
+                "studentId": student_id,
+                "questionId": {"$in": [question["questionId"] for question in all_scope_questions]},
+            }
+        ).to_list(length=None)
+        answered_lookup = {doc["questionId"]: doc for doc in answered_docs}
+    except Exception:
+        answered_lookup = {}
 
     unanswered_candidates = [
         question
@@ -179,10 +217,10 @@ async def get_popup_question(student_id: str, lesson_id: str, current_time: floa
     if unanswered_candidates:
         unanswered_candidates.sort(
             key=lambda item: (
-                item["selectionScore"],
-                concept_scope.get(item["conceptId"], 0),
-                _difficulty_rank(item["difficultyLevel"]),
-                item["questionId"],
+                item.get("selectionScore", 1.0),
+                concept_scope.get(item.get("conceptId"), 0),
+                _difficulty_rank(item.get("difficultyLevel", "medium")),
+                item.get("questionId", ""),
             ),
             reverse=True,
         )
@@ -198,32 +236,37 @@ async def get_popup_question(student_id: str, lesson_id: str, current_time: floa
             review_candidates.append(question)
 
         if not review_candidates:
-            return {
-                "lessonId": lesson_timeline["lessonId"],
-                "requestedLessonId": lesson_id,
-                "currentConcept": _serialize_current_concept(current_concept),
-                "timelineWindow": timeline_window,
-                "question": None,
-                "weights": _weight_map(),
-                "selectionReason": "No popup questions are configured for the current graph neighborhood.",
-                "message": "No popup question is available for this lesson segment yet.",
-            }
-
-        review_candidates.sort(
-            key=lambda item: (
-                item["reviewPriority"],
-                item["selectionScore"],
-                concept_scope.get(item["conceptId"], 0),
-                _difficulty_rank(item["difficultyLevel"]),
-                item["questionId"],
-            ),
-            reverse=True,
-        )
-        selected_question = review_candidates[0]
-        selection_reason = _build_review_selection_reason(selected_question, concept_scope, answered_lookup[selected_question["questionId"]])
+            # If all were answered but we have candidates, pick the first
+            if all_scope_questions:
+                selected_question = all_scope_questions[0]
+                selection_reason = "Selected for concept reinforcement."
+            else:
+                return {
+                    "lessonId": lesson_timeline.get("lessonId", lesson_id),
+                    "requestedLessonId": lesson_id,
+                    "currentConcept": _serialize_current_concept(current_concept),
+                    "timelineWindow": timeline_window,
+                    "question": None,
+                    "weights": _weight_map(),
+                    "selectionReason": "No popup questions are configured for the current graph neighborhood.",
+                    "message": "No popup question is available for this lesson segment yet.",
+                }
+        else:
+            review_candidates.sort(
+                key=lambda item: (
+                    item["reviewPriority"],
+                    item.get("selectionScore", 1.0),
+                    concept_scope.get(item.get("conceptId"), 0),
+                    _difficulty_rank(item.get("difficultyLevel", "medium")),
+                    item.get("questionId", ""),
+                ),
+                reverse=True,
+            )
+            selected_question = review_candidates[0]
+            selection_reason = _build_review_selection_reason(selected_question, concept_scope, answered_lookup.get(selected_question["questionId"], {}))
 
     return {
-        "lessonId": lesson_timeline["lessonId"],
+        "lessonId": lesson_timeline.get("lessonId", lesson_id),
         "requestedLessonId": lesson_id,
         "currentConcept": _serialize_current_concept(current_concept),
         "timelineWindow": timeline_window,
@@ -288,20 +331,27 @@ async def get_student_popup_answers(student_id: str) -> list[dict[str, Any]]:
 
 
 async def _resolve_lesson_timeline(lesson_id: str) -> dict[str, Any] | None:
-    db = get_db()
-    timeline = await db[LESSON_TIMELINES_COLLECTION].find_one({"lessonId": lesson_id})
-    if timeline:
-        return _serialize_timeline(timeline)
+    try:
+        db = get_db()
+        timeline = await db[LESSON_TIMELINES_COLLECTION].find_one({"lessonId": lesson_id})
+        if timeline:
+            return _serialize_timeline(timeline)
 
-    timeline = await db[LESSON_TIMELINES_COLLECTION].find_one({"linkedVideoId": lesson_id})
-    if timeline:
-        return _serialize_timeline(timeline)
+        timeline = await db[LESSON_TIMELINES_COLLECTION].find_one({"linkedVideoId": lesson_id})
+        if timeline:
+            return _serialize_timeline(timeline)
 
-    timeline = await db[LESSON_TIMELINES_COLLECTION].find_one({"isDefault": True})
-    if timeline:
-        return _serialize_timeline(timeline)
+        timeline = await db[LESSON_TIMELINES_COLLECTION].find_one({"isDefault": True})
+        if timeline:
+            return _serialize_timeline(timeline)
+    except Exception as e:
+        print(f"[KnowledgeGraph] DB timeline lookup error: {e}")
 
-    return None
+    try:
+        sample_timeline = _read_json(LESSON_TIMELINE_DATASET)
+        return _serialize_timeline(sample_timeline)
+    except Exception:
+        return None
 
 
 async def _build_student_profile(student_id: str) -> dict[str, Any]:
