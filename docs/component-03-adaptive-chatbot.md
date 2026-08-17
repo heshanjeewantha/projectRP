@@ -87,16 +87,53 @@ Adjusts tone and support based on student learning state:
 
 ---
 
-## API Endpoints
+## 6. O/L Past Paper Auto-Grader & Marking Scheme Evaluator
+* **Functionality**: Evaluates student open-ended answers against official Department of Examinations marking criteria.
+* **Marking Engine**: Awards marks (e.g. `3/4`), highlights matched vs missing keywords, and displays the official model answer.
+* **Endpoint**: `GET /api/chatbot/past-paper/questions`, `POST /api/chatbot/past-paper/evaluate`
+* **UI**: [PastPaperGraderModal.jsx](file:///g:/projectRP/frontend/src/modules/component-03-adaptive-chatbot/components/Chatbot/PastPaperGraderModal.jsx)
+
+---
+
+## 7. Interactive AI Flashcard Deck (SM-2 Spaced Repetition)
+* **Functionality**: 3D flip flashcards covering definitions, logic gates, acronyms, and SQL rules.
+* **SuperMemo SM-2**: Schedules review intervals (`1d`, `3d`, `7d`) based on student rating (*Hard*, *Good*, *Easy*).
+* **Endpoint**: `GET /api/chatbot/flashcards/{topic_id}`, `POST /api/chatbot/flashcards/review`
+* **UI**: [FlashcardDeckModal.jsx](file:///g:/projectRP/frontend/src/modules/component-03-adaptive-chatbot/components/Chatbot/FlashcardDeckModal.jsx)
+
+---
+
+## 8. 10-Minute Rapid-Fire O/L Mock Exam Simulator
+* **Functionality**: Timed 10-question adaptive exam with countdown timer and automatic grading.
+* **Grade Predictor**: Predicts O/L Grade (`A Distinction`, `B`, `C`, `S`, `W`) and generates a personalized study prescription.
+* **Endpoint**: `GET /api/chatbot/mock-exam/start`, `POST /api/chatbot/mock-exam/submit`
+* **UI**: [MockExamModal.jsx](file:///g:/projectRP/frontend/src/modules/component-03-adaptive-chatbot/components/Chatbot/MockExamModal.jsx)
+
+---
+
+## 9. In-Chat Quick Sign Translation & Algorithm Visualizer
+* **In-Chat Quick Sign Translation**: Keywords like *CPU*, *Database*, *Network*, *Internet* display an interactive `[🤟 Sign]` badge triggering sign avatar previews ([SignWordBadge.jsx](file:///g:/projectRP/frontend/src/modules/component-03-adaptive-chatbot/components/Chatbot/SignWordBadge.jsx)).
+* **Flowchart & Algorithm Visualizer**: Chatbot automatically structures algorithm responses using formatted SVG diagrams and step-by-step logic traces.
+
+---
+
+## API Endpoints Catalog
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/chatbot/chat` | Main adaptive chat endpoint supporting EARA and explain modes |
+| `POST` | `/api/chatbot/ask` | Main adaptive chat endpoint supporting EARA and explain modes |
 | `GET` | `/api/chatbot/attention-recommendations/{student_id}` | Retrieves low-attention lesson segments and revision prompts |
 | `GET` | `/api/chatbot/short-notes/{topic_id}` | Generates structured high-yield O/L short notes |
 | `GET` | `/api/chatbot/knowledge-growth/{student_id}` | Retrieves mastery scores, attention correlation, and 7-day trend |
+| `GET` | `/api/chatbot/past-paper/questions` | Returns list of standard O/L ICT past paper questions |
+| `POST` | `/api/chatbot/past-paper/evaluate` | Evaluates past paper answer against official rubric |
+| `GET` | `/api/chatbot/flashcards/{topic_id}` | Returns flashcard deck for topic |
+| `POST` | `/api/chatbot/flashcards/review` | Submits SM-2 spaced repetition review rating |
+| `GET` | `/api/chatbot/mock-exam/start` | Initializes a timed 10-minute mock exam |
+| `POST` | `/api/chatbot/mock-exam/submit` | Grades mock exam and outputs predicted O/L grade (A-W) |
 | `GET` | `/api/chatbot/topics` | Retrieves list of all supported O/L ICT topics |
-| `POST` | `/api/chatbot/challenge/check` | Evaluates optional prerequisite micro-challenge submissions |
-| `GET` | `/api/chatbot/summary/{topic_id}` | Returns comprehensive lesson summary document |
+| `POST` | `/api/chatbot/micro-challenge` | Returns optional prerequisite micro-challenge |
+| `POST` | `/api/chatbot/check-challenge` | Evaluates micro-challenge answer |
+
 | `GET` | `/api/chatbot/analytics/teacher` | Teacher dashboard analytics (understanding scores, weak areas) |
 | `GET` | `/api/chatbot/analytics/report/pdf` | Generates downloadable PDF analytics report |

@@ -265,3 +265,114 @@ class KnowledgeGrowthResponse(BaseModel):
     topics: list[KnowledgeGrowthTopicModel] = Field(default_factory=list)
     growthHistory: list[dict] = Field(default_factory=list)
 
+
+# ── Feature 1: O/L Past Paper Auto-Grader Models ─────────────────────────────
+
+class PastPaperQuestionModel(BaseModel):
+    id: str
+    year: str
+    topicId: str
+    topicName: str
+    questionText: str
+    maxMarks: int
+    markingRubric: list[str] = Field(default_factory=list)
+    sampleModelAnswer: str
+
+
+class PastPaperEvaluationRequest(BaseModel):
+    studentId: str
+    questionId: str
+    studentAnswer: str
+
+
+class PastPaperEvaluationResponse(BaseModel):
+    questionId: str
+    awardedMarks: int
+    maxMarks: int
+    percentage: int
+    gradeBadge: str              # 'Full Marks' | 'Good Attempt' | 'Needs Improvement'
+    feedback: str
+    matchedKeyPoints: list[str] = Field(default_factory=list)
+    missingKeyPoints: list[str] = Field(default_factory=list)
+    modelAnswer: str
+
+
+# ── Feature 2: Flashcards & SM-2 Spaced Repetition Models ───────────────────
+
+class FlashcardItem(BaseModel):
+    id: str
+    topicId: str
+    front: str
+    back: str
+    category: str                # 'Definition' | 'Exam Rule' | 'Mnemonic' | 'Protocol'
+    mnemonic: str | None = None
+    easeFactor: float = 2.5
+    intervalDays: int = 1
+    repetitionCount: int = 0
+
+
+class FlashcardDeckResponse(BaseModel):
+    topicId: str
+    topicName: str
+    totalCards: int
+    cards: list[FlashcardItem] = Field(default_factory=list)
+
+
+class FlashcardReviewRequest(BaseModel):
+    studentId: str
+    cardId: str
+    rating: str                  # 'hard' | 'good' | 'easy'
+
+
+class FlashcardReviewResponse(BaseModel):
+    cardId: str
+    newIntervalDays: int
+    nextReviewDate: str
+    message: str
+
+
+# ── Feature 5: Rapid-Fire Mock Exam Simulator Models ─────────────────────────
+
+class MockExamQuestion(BaseModel):
+    id: str
+    questionText: str
+    options: list[str] = Field(default_factory=list)
+    topicId: str
+    topicName: str
+    difficulty: str
+
+
+class MockExamStartResponse(BaseModel):
+    examId: str
+    title: str
+    durationMinutes: int
+    totalQuestions: int
+    questions: list[MockExamQuestion] = Field(default_factory=list)
+
+
+class MockExamSubmission(BaseModel):
+    examId: str
+    studentId: str
+    answers: dict[str, str] = Field(default_factory=dict)
+    timeSpentSeconds: int = 0
+
+
+class MockExamTopicBreakdown(BaseModel):
+    topicName: str
+    correct: int
+    total: int
+    percentage: int
+
+
+class MockExamResultResponse(BaseModel):
+    examId: str
+    score: int
+    totalQuestions: int
+    percentage: int
+    predictedGrade: str          # 'A (Distinction)' | 'B (Very Good)' | 'C (Credit)' | 'S (Pass)' | 'W (Weak)'
+    feedback: str
+    topicBreakdown: list[MockExamTopicBreakdown] = Field(default_factory=list)
+    timeTakenFormatted: str
+    studyPrescription: list[str] = Field(default_factory=list)
+
+

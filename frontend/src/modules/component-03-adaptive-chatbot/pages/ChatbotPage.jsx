@@ -40,6 +40,10 @@ import Header from '../../../components/layout/Dashboard/Header';
 import AttentionSuggestionBanner from '../components/Chatbot/AttentionSuggestionBanner';
 import ShortNotesCard from '../components/Chatbot/ShortNotesCard';
 import KnowledgeGrowthGraph from '../components/Chatbot/KnowledgeGrowthGraph';
+import PastPaperGraderModal from '../components/Chatbot/PastPaperGraderModal';
+import FlashcardDeckModal from '../components/Chatbot/FlashcardDeckModal';
+import MockExamModal from '../components/Chatbot/MockExamModal';
+import { SignWordModal } from '../components/Chatbot/SignWordBadge';
 
 const MODE_OPTIONS = [
   { value: 'learning', label: 'Learning Mode', icon: BookOpen },
@@ -145,6 +149,12 @@ const ChatbotPage = () => {
   const [isShortNoteLoading, setIsShortNoteLoading] = useState(false);
   const [activeViewTab, setActiveViewTab] = useState('chat'); // 'chat' | 'growth' | 'notes'
   const [explainStyle, setExplainStyle] = useState('standard'); // 'standard' | 'simple' | 'analogy' | 'exam'
+
+  // Scope extension modal states
+  const [isPastPaperModalOpen, setIsPastPaperModalOpen] = useState(false);
+  const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
+  const [isMockExamModalOpen, setIsMockExamModalOpen] = useState(false);
+  const [activeSignModalInfo, setActiveSignModalInfo] = useState(null);
 
   const chatScrollRef = useRef(null);
   const learningState = manualLearningState || deriveStateFromAttention(attentionStatus);
@@ -414,50 +424,77 @@ const ChatbotPage = () => {
                 </span>
               </div>
 
-              {/* View Switcher Tabs */}
-              <div className="flex rounded-xl bg-black/40 p-1 border border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setActiveViewTab('chat')}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                    activeViewTab === 'chat'
-                      ? 'bg-primary text-[#032418] shadow-sm'
-                      : 'text-text-muted hover:text-white'
-                  }`}
-                >
-                  <MessageSquare size={13} />
-                  Chat
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveViewTab('growth')}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                    activeViewTab === 'growth'
-                      ? 'bg-primary text-[#032418] shadow-sm'
-                      : 'text-text-muted hover:text-white'
-                  }`}
-                >
-                  <TrendingUp size={13} />
-                  Growth Matrix ({growthData?.overallMastery || 74}%)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!activeShortNote) {
-                      handleOpenShortNote(selectedTopicId || 'computer_system');
-                    } else {
-                      setActiveViewTab('notes');
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                    activeViewTab === 'notes'
-                      ? 'bg-primary text-[#032418] shadow-sm'
-                      : 'text-text-muted hover:text-white'
-                  }`}
-                >
-                  <FileText size={13} />
-                  Short Notes
-                </button>
+              {/* View Switcher Tabs & Tools */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex rounded-xl bg-black/40 p-1 border border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setActiveViewTab('chat')}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                      activeViewTab === 'chat'
+                        ? 'bg-primary text-[#032418] shadow-sm'
+                        : 'text-text-muted hover:text-white'
+                    }`}
+                  >
+                    <MessageSquare size={13} />
+                    Chat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveViewTab('growth')}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                      activeViewTab === 'growth'
+                        ? 'bg-primary text-[#032418] shadow-sm'
+                        : 'text-text-muted hover:text-white'
+                    }`}
+                  >
+                    <TrendingUp size={13} />
+                    Growth Matrix ({growthData?.overallMastery || 74}%)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!activeShortNote) {
+                        handleOpenShortNote(selectedTopicId || 'computer_system');
+                      } else {
+                        setActiveViewTab('notes');
+                      }
+                    }}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                      activeViewTab === 'notes'
+                        ? 'bg-primary text-[#032418] shadow-sm'
+                        : 'text-text-muted hover:text-white'
+                    }`}
+                  >
+                    <FileText size={13} />
+                    Short Notes
+                  </button>
+                </div>
+
+                {/* Scope Tools Launcher Pills */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsPastPaperModalOpen(true)}
+                    className="flex items-center gap-1 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-all shadow-sm"
+                  >
+                    <span>📝 Past Paper Grader</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsFlashcardModalOpen(true)}
+                    className="flex items-center gap-1 rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-xs font-bold text-purple-300 hover:bg-purple-500/20 transition-all shadow-sm"
+                  >
+                    <span>🗂️ Flashcards (SM-2)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsMockExamModalOpen(true)}
+                    className="flex items-center gap-1 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition-all shadow-sm"
+                  >
+                    <span>⏱️ 10-Min Mock Exam</span>
+                  </button>
+                </div>
               </div>
             </div>
           </DashboardPanel>
@@ -791,7 +828,13 @@ const ChatbotPage = () => {
                 </div>
                 <select
                   value={selectedTopicId}
-                  onChange={(event) => setSelectedTopicId(event.target.value)}
+                  onChange={(event) => {
+                    const newTopic = event.target.value;
+                    setSelectedTopicId(newTopic);
+                    if (activeViewTab === 'notes') {
+                      handleOpenShortNote(newTopic);
+                    }
+                  }}
                   className="chatbot-topic-select"
                 >
                   {topicOptions.map((topic) => (
@@ -809,6 +852,22 @@ const ChatbotPage = () => {
                   >
                     <FileText size={13} />
                     Open Topic Short Note
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsPastPaperModalOpen(true)}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition-colors"
+                  >
+                    <span>📝 Past Papers ({selectedTopic?.name})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsFlashcardModalOpen(true)}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-purple-500/30 bg-purple-500/10 py-2 text-xs font-semibold text-purple-300 hover:bg-purple-500/20 transition-colors"
+                  >
+                    <span>🗂️ Flashcards ({selectedTopic?.name})</span>
                   </button>
 
                   <button
@@ -947,6 +1006,33 @@ const ChatbotPage = () => {
           </div>
         </div>
       ) : null}
+
+      {/* Scope Extension Modals */}
+      <PastPaperGraderModal
+        isOpen={isPastPaperModalOpen}
+        onClose={() => setIsPastPaperModalOpen(false)}
+        topicId={selectedTopicId || 'computer_system'}
+        studentId={userId}
+      />
+
+      <FlashcardDeckModal
+        isOpen={isFlashcardModalOpen}
+        onClose={() => setIsFlashcardModalOpen(false)}
+        topicId={selectedTopicId || 'computer_system'}
+        studentId={userId}
+      />
+
+      <MockExamModal
+        isOpen={isMockExamModalOpen}
+        onClose={() => setIsMockExamModalOpen(false)}
+        studentId={userId}
+      />
+
+      <SignWordModal
+        isOpen={Boolean(activeSignModalInfo)}
+        signInfo={activeSignModalInfo}
+        onClose={() => setActiveSignModalInfo(null)}
+      />
     </div>
   );
 };

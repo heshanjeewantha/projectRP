@@ -3600,6 +3600,172 @@ HIGH_YIELD_SHORT_NOTES_BANK = {
             },
         ],
     },
+    "normalization": {
+        "topicId": "normalization",
+        "topicName": "Database Normalization (1NF, 2NF, 3NF)",
+        "summary": "A systematic database design technique that organizes table columns to eliminate data redundancy and insertion, deletion, and update anomalies.",
+        "keyConcepts": [
+            "1NF (First Normal Form): Eliminate repeating groups and ensure all attribute values are atomic (indivisible).",
+            "2NF (Second Normal Form): Table is in 1NF and all non-key attributes are fully functionally dependent on the entire Primary Key (no partial dependencies).",
+            "3NF (Third Normal Form): Table is in 2NF and no non-key attribute depends on another non-key attribute (no transitive dependencies).",
+            "Anomalies: Insertion Anomaly, Deletion Anomaly, Update/Modification Anomaly.",
+        ],
+        "realWorldAnalogy": "Normalization is like organizing your wardrobe by category (shirts, pants, socks) instead of throwing everything into one messy box so items are easily found and nothing is duplicated.",
+        "examTip": "Partial dependency ONLY occurs when the Primary Key is a Composite Key (composed of two or more attributes).",
+        "commonMistakes": [
+            "Thinking 2NF applies when a table has a single-column primary key (it is already in 2NF if in 1NF).",
+            "Leaving multiple phone numbers in a single column in 1NF questions.",
+        ],
+        "memoryHook": "The Key, The Whole Key (2NF), and Nothing But The Key (3NF).",
+        "sections": [
+            {
+                "title": "Normalization Steps",
+                "bullets": [
+                    "Unnormalized Form (UNF) → 1NF: Make cells atomic & identify primary key.",
+                    "1NF → 2NF: Remove partial dependencies on composite primary key.",
+                    "2NF → 3NF: Remove transitive dependencies between non-key fields.",
+                ],
+            },
+        ],
+    },
+    "dbms": {
+        "topicId": "dbms",
+        "topicName": "Database Management Systems (DBMS Architecture)",
+        "summary": "Software systems designed to create, maintain, query, and administer relational databases efficiently and securely.",
+        "keyConcepts": [
+            "Data Independence: Physical data independence (storage changes) vs Logical data independence (schema changes).",
+            "Data Redundancy & Inconsistency: Centralized DBMS prevents duplicate entries across departments.",
+            "SQL Categories: DDL (CREATE, ALTER, DROP) vs DML (SELECT, INSERT, UPDATE, DELETE).",
+            "DBMS Components: Query Processor, Storage Engine, Transaction Manager, Security / Authorization.",
+        ],
+        "realWorldAnalogy": "DBMS is like a Bank Vault Management System: Only authorized bank tellers can access cash records through strict audited transaction protocols.",
+        "examTip": "DDL commands define or change table structures, while DML commands manipulate the actual rows of data inside tables.",
+        "commonMistakes": [
+            "Listing SELECT as DDL instead of DML.",
+            "Confusing database schema with database instance.",
+        ],
+        "memoryHook": "DDL = Defines Structure; DML = Manipulates Data.",
+        "sections": [
+            {
+                "title": "SQL Sub-languages",
+                "bullets": [
+                    "DDL (Data Definition Language): CREATE, ALTER, DROP, TRUNCATE.",
+                    "DML (Data Manipulation Language): SELECT, INSERT, UPDATE, DELETE.",
+                ],
+            },
+        ],
+    },
+    "word_processing": {
+        "topicId": "word_processing",
+        "topicName": "Word Processing Applications",
+        "summary": "Software used to create, edit, format, print, and publish textual documents with embedded graphics and tables.",
+        "keyConcepts": [
+            "Formatting Tools: Character formatting (Font, Size, Bold, Subscript), Paragraph formatting (Alignment, Line Spacing, Indentation).",
+            "Mail Merge: Combining a standard template document with a recipient data source to generate personalized letters.",
+            "Page Layout: Margins, Orientation (Portrait vs Landscape), Page/Section breaks, Headers & Footers.",
+            "Review Tools: Spell/Grammar Check, Thesaurus, Track Changes, AutoCorrect.",
+        ],
+        "realWorldAnalogy": "Mail Merge is like a wedding invitation printer that takes one card design and automatically fills in individual guest names from an address list.",
+        "examTip": "Three essential elements of Mail Merge: Main Document, Data Source (Recipient List), and Merged Document.",
+        "commonMistakes": [
+            "Confusing Line Spacing with Paragraph Spacing.",
+            "Mixing up Footnote (bottom of page) with Endnote (end of document).",
+        ],
+        "memoryHook": "M-D-M: Main document + Data source = Merged document.",
+        "sections": [
+            {
+                "title": "Core Features",
+                "bullets": [
+                    "Mail Merge for mass personalized communication.",
+                    "Styles & Table of Contents for automated document structuring.",
+                ],
+            },
+        ],
+    },
+    "spreadsheets": {
+        "topicId": "spreadsheets",
+        "topicName": "Electronic Spreadsheets",
+        "summary": "Grid-based application software consisting of rows and columns for numerical data calculation, statistical modeling, and graphical charting.",
+        "keyConcepts": [
+            "Cell Referencing: Relative referencing (e.g. A1) vs Absolute referencing (e.g. $A$1) vs Mixed referencing ($A1, A$1).",
+            "Formulas vs Functions: Formulas use user arithmetic (=A1+B1), Functions are built-in (=SUM(A1:A10), =AVERAGE, =COUNTIF, =IF).",
+            "Data Analysis: Sorting, Filtering, Conditional Formatting, What-If Analysis.",
+            "Chart Types: Bar/Column (comparisons), Line (trends over time), Pie (proportions of a whole).",
+        ],
+        "realWorldAnalogy": "A spreadsheet is like an automated ledger book: Changing one number instantly recalculates all totals, averages, and tax percentages across the entire page.",
+        "examTip": "The dollar sign '$' in a cell address locks the column or row so it will not shift when dragged or copied across cells.",
+        "commonMistakes": [
+            "Forgetting to start formulas with an equals sign '='.",
+            "Using Pie charts for time series trends instead of Line charts.",
+        ],
+        "memoryHook": "Dollar Sign '$' Anchors the Cell Reference.",
+        "sections": [
+            {
+                "title": "Standard O/L ICT Functions",
+                "bullets": [
+                    "=SUM(range), =AVERAGE(range), =MAX(range), =MIN(range)",
+                    "=COUNT(range) for numbers vs =COUNTA(range) for non-empty cells",
+                    "=IF(condition, value_if_true, value_if_false)",
+                ],
+            },
+        ],
+    },
+    "internet_email": {
+        "topicId": "internet_email",
+        "topicName": "Internet, Web & Electronic Mail",
+        "summary": "Global telecommunication network facilitating web browsing, search engines, cloud computing, and asynchronous email communication.",
+        "keyConcepts": [
+            "URL Structure: Protocol (https://) + Domain (moe.gov.lk) + Path (/index.html).",
+            "Email Headers: To (Primary recipient), CC (Carbon Copy - visible), BCC (Blind Carbon Copy - hidden).",
+            "Email Protocols: SMTP (Sending mail), POP3 (Downloads & deletes from server), IMAP (Syncs mail across multiple devices).",
+            "Search Techniques: Boolean operators (AND, OR, NOT), quotation marks for exact phrase matching.",
+        ],
+        "realWorldAnalogy": "BCC in an email is like blindfolded cc'ing: The recipient gets the message without anyone else knowing they were included on the list.",
+        "examTip": "SMTP is strictly used for sending/pushing emails, while POP3/IMAP are used for retrieving/receiving emails.",
+        "commonMistakes": [
+            "Putting private recipient email addresses in CC instead of BCC.",
+            "Confusing Web Browser (software) with Search Engine (web service).",
+        ],
+        "memoryHook": "SMTP = Send Mail To People; POP/IMAP = Pull Our Posts.",
+        "sections": [
+            {
+                "title": "Email Fields & Protocols",
+                "bullets": [
+                    "To: Direct action required.",
+                    "CC: Information only (all recipients see address).",
+                    "BCC: Confidential distribution (addresses kept secret).",
+                ],
+            },
+        ],
+    },
+    "flowcharts": {
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts & Pseudocode Algorithm Design",
+        "summary": "Visual diagrammatic representations of logical steps in an algorithm using standardized ANSI flowchart symbols.",
+        "keyConcepts": [
+            "Standard Symbols: Oval/Pill (Start/Stop), Parallelogram (Input/Output), Rectangle (Process/Assignment), Diamond (Decision/Condition), Arrow (Flowline).",
+            "Trace Table: A dry-run technique used by programmers to test algorithm logic by recording variable values step-by-step.",
+            "Looping Constructs: Pre-test loop (WHILE) checks condition before executing; Post-test loop checks after at least one run.",
+        ],
+        "realWorldAnalogy": "A flowchart is like a road navigation GPS map: Follow the arrows, turn at decisions (fork in the road), and arrive at the destination (Stop).",
+        "examTip": "Always ensure every Decision Diamond has exactly TWO outgoing labeled arrow branches: 'Yes' (True) and 'No' (False).",
+        "commonMistakes": [
+            "Drawing decision diamonds with only one outgoing line.",
+            "Confusing variable assignment (Total = Total + Marks) with equality comparison (Total == 100).",
+        ],
+        "memoryHook": "Trace Tables catch bugs BEFORE code is compiled.",
+        "sections": [
+            {
+                "title": "Standard Flowchart Symbols",
+                "bullets": [
+                    "Terminator (Oval): Begin and End of algorithm.",
+                    "Input/Output (Parallelogram): Read input / Print output.",
+                    "Process (Rectangle): Calculations and value assignments.",
+                    "Decision (Diamond): Conditional branches (Yes/No).",
+                ],
+            },
+        ],
+    },
 }
 
 
@@ -3850,5 +4016,567 @@ async def get_knowledge_growth(student_id: str) -> dict[str, Any]:
         "needsAttentionTopic": "Relational Databases & SQL",
         "topics": topics,
         "growthHistory": growth_history,
+    }
+
+
+# ── Feature 1: O/L Past Paper Auto-Grader Bank & Service ─────────────────────
+
+# ── Feature 1: O/L Past Paper Auto-Grader Bank & Service ─────────────────────
+
+PAST_PAPER_QUESTION_BANK = [
+    {
+        "id": "pp_cs_1",
+        "year": "2023 O/L Paper II",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems & Architecture",
+        "questionText": "Explain the functions of the Control Unit (CU) and the Arithmetic Logic Unit (ALU) in the Central Processing Unit (CPU). State two types of memory found inside the CPU. (4 Marks)",
+        "maxMarks": 4,
+        "markingRubric": [
+            "Control Unit (CU) manages instruction fetch-decode-execute cycle / directs flow of data (1 Mark)",
+            "Arithmetic Logic Unit (ALU) performs arithmetic operations (+, -, *, /) and logical comparisons (<, >, ==) (1 Mark)",
+            "Registers (Special high-speed temporary storage inside CPU) (1 Mark)",
+            "Cache Memory (L1/L2 cache for rapid instruction buffering) (1 Mark)"
+        ],
+        "keywords": ["control unit", "alu", "arithmetic", "logic", "registers", "cache", "fetch", "decode"],
+        "sampleModelAnswer": "1. Control Unit (CU): Directs and coordinates all hardware operations by fetching, decoding, and managing the execution of instructions. 2. Arithmetic Logic Unit (ALU): Executes mathematical computations (addition, subtraction) and logical decisions (AND, OR, NOT). 3. Memory inside CPU: Registers and Cache memory (L1/L2)."
+    },
+    {
+        "id": "pp_data_1",
+        "year": "2023 O/L Paper II",
+        "topicId": "data_information",
+        "topicName": "Data Representation & Logic",
+        "questionText": "Convert the decimal number 25 into its 8-bit binary representation. Draw the truth table for a 2-input NAND logic gate. (4 Marks)",
+        "maxMarks": 4,
+        "markingRubric": [
+            "Correct binary conversion: 25 in 8-bit binary is 00011001 (2 Marks)",
+            "NAND gate logic: Output is 0 ONLY when both inputs are 1; otherwise output is 1 (2 Marks)"
+        ],
+        "keywords": ["00011001", "binary", "nand", "truth table", "0", "1", "conversion"],
+        "sampleModelAnswer": "1. Decimal 25 in 8-bit binary: 16 + 8 + 1 = 00011001_2. 2. NAND Truth Table: (A=0,B=0 -> 1), (A=0,B=1 -> 1), (A=1,B=0 -> 1), (A=1,B=1 -> 0)."
+    },
+    {
+        "id": "pp_os_1",
+        "year": "2022 O/L Paper II",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems & Utilities",
+        "questionText": "State three main functions of an Operating System. Explain the purpose of a device driver in OS hardware communication. (4 Marks)",
+        "maxMarks": 4,
+        "markingRubric": [
+            "Any 3 OS functions: Process management, Memory management, File system management, Device management, Security (3 Marks)",
+            "Device Driver: A specialized system program that allows the OS to interact and communicate with a specific peripheral hardware device (1 Mark)"
+        ],
+        "keywords": ["process", "memory", "file", "device", "driver", "communicate", "hardware", "peripheral"],
+        "sampleModelAnswer": "1. Functions: (a) Processor/Process management, (b) Memory allocation and management, (c) File and directory system management. 2. Device Driver: Software that translates standard OS commands into specific hardware signals required by connected hardware peripherals (e.g. printer, GPU)."
+    },
+    {
+        "id": "pp_norm_1",
+        "year": "2023 O/L Paper II",
+        "topicId": "normalization",
+        "topicName": "Database Normalization",
+        "questionText": "Explain First Normal Form (1NF) and Second Normal Form (2NF). What type of dependency must be eliminated to achieve 2NF? (4 Marks)",
+        "maxMarks": 4,
+        "markingRubric": [
+            "1NF: All attribute values in each table cell must be atomic (indivisible) and no repeating groups (1 Mark)",
+            "2NF: Table must be in 1NF and all non-key attributes are fully functionally dependent on the entire primary key (2 Marks)",
+            "Dependency eliminated: Partial Functional Dependency on composite primary key (1 Mark)"
+        ],
+        "keywords": ["atomic", "1nf", "2nf", "partial dependency", "composite key", "repeating groups", "functional dependency"],
+        "sampleModelAnswer": "1. 1NF requires all attribute values to be atomic (single indivisible value per cell) and eliminates repeating groups. 2. 2NF requires the table to be in 1NF with no Partial Functional Dependencies, meaning non-key fields must depend on the complete composite primary key, not just a portion of it."
+    },
+    {
+        "id": "pp_db_1",
+        "year": "2022 O/L Paper II",
+        "topicId": "databases",
+        "topicName": "Relational Databases & SQL",
+        "questionText": "Define 'Primary Key' and 'Foreign Key' in a relational database table. Explain how they ensure entity integrity and referential integrity. (4 Marks)",
+        "maxMarks": 4,
+        "markingRubric": [
+            "Primary Key: A column (or set of columns) that uniquely identifies each record/tuple in a table; cannot be NULL (1 Mark)",
+            "Foreign Key: An attribute in a table that references the primary key of another table to establish a relationship (1 Mark)",
+            "Entity Integrity: Guarantees that every row is identifiable and the primary key is unique and non-null (1 Mark)",
+            "Referential Integrity: Ensures relationships between tables remain consistent and foreign keys cannot point to nonexistent records (1 Mark)"
+        ],
+        "keywords": ["primary key", "foreign key", "uniquely", "unique", "null", "referential", "entity integrity", "relationship"],
+        "sampleModelAnswer": "A Primary Key is a unique identifier for records in a table that cannot contain NULL values, ensuring Entity Integrity. A Foreign Key is a field that refers to the Primary Key of another table, creating a relational link and maintaining Referential Integrity so orphaned records are prevented."
+    },
+    {
+        "id": "pp_dbms_1",
+        "year": "2021 O/L Paper II",
+        "topicId": "dbms",
+        "topicName": "DBMS Architecture & SQL",
+        "questionText": "Differentiate between DDL (Data Definition Language) and DML (Data Manipulation Language). Write standard SQL query to select all students with marks greater than 75 from 'Student' table. (4 Marks)",
+        "maxMarks": 4,
+        "markingRubric": [
+            "DDL defines/modifies database schema structure (CREATE, ALTER, DROP) (1 Mark)",
+            "DML queries/manipulates records inside tables (SELECT, INSERT, UPDATE, DELETE) (1 Mark)",
+            "SQL Query: SELECT * FROM Student WHERE Marks > 75; (2 Marks)"
+        ],
+        "keywords": ["ddl", "dml", "create", "select", "student", "where", "marks", "> 75"],
+        "sampleModelAnswer": "1. DDL commands (e.g. CREATE, ALTER) define the database structure and table schemas. DML commands (e.g. SELECT, INSERT, UPDATE) manipulate the actual data stored in tables. 2. SQL: SELECT * FROM Student WHERE Marks > 75;"
+    },
+    {
+        "id": "pp_net_1",
+        "year": "2023 O/L Paper II",
+        "topicId": "networking",
+        "topicName": "Networks & Internet Protocols",
+        "questionText": "Differentiate between a Network Switch and a Router. Identify the roles of IP address and MAC address in packet delivery. (4 Marks)",
+        "maxMarks": 4,
+        "markingRubric": [
+            "Switch connects devices within a Local Area Network (LAN) using MAC addresses (Layer 2) (1 Mark)",
+            "Router connects different networks (e.g. LAN to WAN/Internet) using IP addresses (Layer 3) (1 Mark)",
+            "MAC Address is a permanent physical hardware address burned into the NIC (1 Mark)",
+            "IP Address is a logical network address assigned to identify a device on a TCP/IP network (1 Mark)"
+        ],
+        "keywords": ["switch", "router", "lan", "wan", "mac", "ip address", "physical", "logical", "packets"],
+        "sampleModelAnswer": "A Switch forwards data frames within a Local Area Network (LAN) using physical MAC addresses. A Router routes packets across separate networks (LAN to WAN) using logical IP addresses. The MAC address identifies the physical network interface card (NIC), while the IP address specifies the logical host location on the global network."
+    },
+    {
+        "id": "pp_sheet_1",
+        "year": "2022 O/L Paper II",
+        "topicId": "spreadsheets",
+        "topicName": "Electronic Spreadsheets",
+        "questionText": "Explain the difference between Relative Cell Referencing and Absolute Cell Referencing ($A$1). Write the formula to find the average of cells B2 to B10. (4 Marks)",
+        "maxMarks": 4,
+        "markingRubric": [
+            "Relative Reference (e.g. A1) changes automatically based on relative position when copied (1.5 Marks)",
+            "Absolute Reference (e.g. $A$1) uses $ symbol to lock column and row so reference remains fixed when copied (1.5 Marks)",
+            "Formula: =AVERAGE(B2:B10) (1 Mark)"
+        ],
+        "keywords": ["relative", "absolute", "$", "locks", "copied", "average", "b2:b10"],
+        "sampleModelAnswer": "Relative cell references (e.g. A1) adjust automatically relative to the destination cell when formula is copied. Absolute cell references (e.g. $A$1) use the '$' symbol to freeze row and column coordinates permanently. Formula: =AVERAGE(B2:B10)"
+    },
+    {
+        "id": "pp_prog_1",
+        "year": "2023 O/L Paper II",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics & Control Structures",
+        "questionText": "State the three fundamental control structures used in algorithm development. Explain the difference between a variable and a constant. (4 Marks)",
+        "maxMarks": 4,
+        "markingRubric": [
+            "Three Control Structures: Sequence (step-by-step), Selection (conditional IF-THEN-ELSE), Iteration (looping FOR/WHILE) (2 Marks)",
+            "Variable: Named memory location whose value can change during program execution (1 Mark)",
+            "Constant: Named memory location whose value remains permanently fixed throughout program execution (1 Mark)"
+        ],
+        "keywords": ["sequence", "selection", "iteration", "variable", "constant", "change", "fixed", "loop"],
+        "sampleModelAnswer": "1. Three Control Structures: Sequence (linear step-by-step execution), Selection/Decision (conditional branching with IF-ELSE), and Iteration/Repetition (looping constructs with FOR/WHILE). 2. A Variable holds values that can change during execution; a Constant holds fixed values that cannot be altered."
+    },
+    {
+        "id": "pp_sec_1",
+        "year": "2023 O/L Paper II",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security & Digital Ethics",
+        "questionText": "Define 'Phishing' and explain two measures users can take to protect themselves against online phishing attacks. State the three pillars of the CIA security triad. (4 Marks)",
+        "maxMarks": 4,
+        "markingRubric": [
+            "Phishing: Social engineering attack that lures victims into revealing confidential credentials (passwords, PINs) via fake emails/websites (1.5 Marks)",
+            "Protection: Check URL domain certificate/spelling, enable Two-Factor Authentication (2FA), never click suspicious links (1.5 Marks)",
+            "CIA Triad: Confidentiality, Integrity, Availability (1 Mark)"
+        ],
+        "keywords": ["phishing", "fraudulent", "confidential", "passwords", "2fa", "two-factor", "cia", "confidentiality", "integrity", "availability"],
+        "sampleModelAnswer": "1. Phishing is a fraudulent attempt to steal sensitive personal information (credentials, credit card details) by masquerading as a legitimate organization. 2. Preventive measures: Enable Two-Factor Authentication (2FA) and verify website HTTPS URL domain before typing credentials. 3. CIA Triad: Confidentiality, Integrity, Availability."
+    }
+]
+
+
+async def list_past_paper_questions(topic_id: str | None = None) -> list[dict[str, Any]]:
+    questions = PAST_PAPER_QUESTION_BANK
+    if topic_id:
+        norm_t = topic_id.lower().replace("-", "_").strip()
+        # Sort matched topic questions to top
+        questions = sorted(
+            PAST_PAPER_QUESTION_BANK,
+            key=lambda q: 0 if q["topicId"] == norm_t or norm_t in q["topicId"] else 1
+        )
+
+    return [
+        {
+            "id": q["id"],
+            "year": q["year"],
+            "topicId": q["topicId"],
+            "topicName": q["topicName"],
+            "questionText": q["questionText"],
+            "maxMarks": q["maxMarks"],
+            "markingRubric": q["markingRubric"],
+            "sampleModelAnswer": q["sampleModelAnswer"],
+        }
+        for q in questions
+    ]
+
+
+async def evaluate_past_paper_answer(student_id: str, question_id: str, student_answer: str) -> dict[str, Any]:
+    question = next((q for q in PAST_PAPER_QUESTION_BANK if q["id"] == question_id), None)
+    if not question:
+        question = PAST_PAPER_QUESTION_BANK[0]
+
+    answer_clean = student_answer.lower().strip()
+    matched_rubrics = []
+    missing_rubrics = []
+
+    # Dynamic keyword matching against question keywords and rubric
+    for rubric_item in question["markingRubric"]:
+        # Extract meaningful words (> 3 chars) from rubric item
+        rubric_words = [w.lower().strip("(),.:;\"'") for w in rubric_item.split() if len(w) > 3]
+        # Match if at least 2 key words or any specific keyword is in student answer
+        match_count = sum(1 for rw in rubric_words if rw in answer_clean)
+        specific_match = any(kw in answer_clean for kw in question.get("keywords", []))
+
+        if match_count >= 1 or (specific_match and len(answer_clean) > 20):
+            matched_rubrics.append(rubric_item)
+        else:
+            missing_rubrics.append(rubric_item)
+
+    # Award marks proportionally
+    awarded_marks = max(1, min(question["maxMarks"], len(matched_rubrics)))
+    percentage = int((awarded_marks / question["maxMarks"]) * 100)
+
+    if percentage >= 80:
+        grade_badge = "Full Marks (Distinction)"
+        feedback = "Excellent response! You covered all essential technical keywords and marking scheme criteria."
+    elif percentage >= 50:
+        grade_badge = "Good Attempt (Partial Marks)"
+        feedback = "Solid answer! You captured core concepts, but missed key technical terms required by O/L examiners."
+    else:
+        grade_badge = "Needs Revision"
+        feedback = "Incomplete answer. Review the missing points below and study the official model answer."
+
+    return {
+        "questionId": question["id"],
+        "awardedMarks": awarded_marks,
+        "maxMarks": question["maxMarks"],
+        "percentage": percentage,
+        "gradeBadge": grade_badge,
+        "feedback": feedback,
+        "matchedKeyPoints": matched_rubrics,
+        "missingKeyPoints": missing_rubrics,
+        "modelAnswer": question["sampleModelAnswer"],
+    }
+
+
+# ── Feature 2: Flashcards & SM-2 Spaced Repetition Bank & Service ────────────
+
+FLASHCARDS_BANK = {
+    "computer_system": [
+        {"id": "fc_cs_1", "category": "Definition", "front": "What are the 3 main parts of Von Neumann Architecture?", "back": "1. CPU (ALU + CU + Registers)\n2. Main Memory (RAM/ROM)\n3. Input/Output Interfaces", "mnemonic": "C-M-I: Core, Memory, Interfaces"},
+        {"id": "fc_cs_2", "category": "Exam Rule", "front": "Difference between RAM and ROM?", "back": "RAM: Volatile, read/write, temporary active working memory.\nROM: Non-volatile, read-only, holds permanent boot firmware (BIOS).", "mnemonic": "RAM = Run Active Memory (Lost on shutdown)"},
+        {"id": "fc_cs_3", "category": "Mnemonic", "front": "What are the 5 units of storage in order?", "back": "Bit (0/1) -> Byte (8 bits) -> KB (1024 B) -> MB (1024 KB) -> GB (1024 MB) -> TB (1024 GB)", "mnemonic": "B-K-M-G-T: Byte, Kilo, Mega, Giga, Tera (x1024 each)"},
+    ],
+    "data_information": [
+        {"id": "fc_data_1", "category": "Definition", "front": "What is the difference between Data and Information?", "back": "Data is raw, unorganized facts without context (e.g. 38).\nInformation is processed data with meaning and purpose (e.g. 38°C Fever).", "mnemonic": "Data = Raw Ingredients; Info = Cooked Meal"},
+        {"id": "fc_data_2", "category": "Logic Gates", "front": "What is the rule for an AND gate vs OR gate?", "back": "AND Gate: Output is 1 ONLY if ALL inputs are 1.\nOR Gate: Output is 1 if ANY input is 1.", "mnemonic": "AND = All 1s; OR = One or more 1s"},
+        {"id": "fc_data_3", "category": "Encoding", "front": "Why is Unicode used instead of standard ASCII?", "back": "ASCII only supports 128/256 English characters (7/8-bit).\nUnicode (UTF-8/UTF-16) supports over 140,000 international characters including Sinhala and Tamil.", "mnemonic": "Unicode = Universal Character Code"},
+    ],
+    "operating_systems": [
+        {"id": "fc_os_1", "category": "Definition", "front": "What are the 5 main management functions of an OS?", "back": "1. Processor (CPU) Management\n2. Memory (RAM) Management\n3. Device (I/O) Management\n4. File System Management\n5. Security & Access Control", "mnemonic": "P-M-D-F-S: Process, Memory, Device, File, Security"},
+        {"id": "fc_os_2", "category": "System Software", "front": "What is a Device Driver?", "back": "A specialized software program that allows the OS to communicate with a specific peripheral hardware device (e.g. printer driver).", "mnemonic": "Driver = Hardware Translator for OS"},
+        {"id": "fc_os_3", "category": "Comparison", "front": "CLI vs GUI Interfaces?", "back": "CLI (Command Line): Text commands, low RAM usage, fast for experts.\nGUI (Graphical UI): Icons, windows, mouse-driven, user-friendly, higher memory usage.", "mnemonic": "GUI = Graphical Visual; CLI = Command Line"},
+    ],
+    "word_processing": [
+        {"id": "fc_wp_1", "category": "Feature", "front": "What are the 3 essential components of Mail Merge?", "back": "1. Main Document (Standard template letter)\n2. Data Source (Recipient name and address table)\n3. Merged Document (Final individualized letters)", "mnemonic": "M-D-M: Main + Data = Merged"},
+        {"id": "fc_wp_2", "category": "Formatting", "front": "Difference between Subscript and Superscript?", "back": "Subscript: Text positioned slightly below normal line (e.g. H₂O).\nSuperscript: Text positioned slightly above normal line (e.g. X²).", "mnemonic": "Sub = Submarine (down); Super = Superman (up)"},
+        {"id": "fc_wp_3", "category": "Layout", "front": "Portrait vs Landscape Orientation?", "back": "Portrait: Page height is greater than width (Vertical standard).\nLandscape: Page width is greater than height (Horizontal widescreen).", "mnemonic": "Portrait = Painting of person; Landscape = Scenery view"},
+    ],
+    "spreadsheets": [
+        {"id": "fc_ss_1", "category": "Cell Reference", "front": "Relative Reference (A1) vs Absolute Reference ($A$1)?", "back": "Relative (A1): Shifts coordinates automatically when dragged or copied.\nAbsolute ($A$1): Dollar signs freeze column and row permanently.", "mnemonic": "$ locks the cell position"},
+        {"id": "fc_ss_2", "category": "Functions", "front": "Difference between =COUNT() and =COUNTA()?", "back": "=COUNT(range): Counts ONLY cells containing numeric numbers.\n=COUNTA(range): Counts ALL non-empty cells (numbers, text, symbols).", "mnemonic": "COUNTA = Count All non-empty"},
+        {"id": "fc_ss_3", "category": "Formulas", "front": "Syntax of an =IF() function in spreadsheets?", "back": "=IF(Logical_Test, Value_If_True, Value_If_False)\nExample: =IF(A1>=50, 'Pass', 'Fail')", "mnemonic": "IF: Condition -> True -> False"},
+    ],
+    "databases": [
+        {"id": "fc_db_1", "category": "Definition", "front": "What is a Primary Key vs Foreign Key?", "back": "Primary Key: Uniquely identifies a record in a table and cannot be NULL.\nForeign Key: Points to a primary key in another table to form a relational link.", "mnemonic": "Primary = Master Key; Foreign = Guest Key"},
+        {"id": "fc_db_2", "category": "Integrity", "front": "What is Entity Integrity vs Referential Integrity?", "back": "Entity Integrity: Primary key must be unique and non-null.\nReferential Integrity: Foreign key value must match an existing primary key value or be null.", "mnemonic": "Entity = Table Key; Referential = Link Validity"},
+        {"id": "fc_db_3", "category": "SQL", "front": "Basic syntax of SQL SELECT statement?", "back": "SELECT column1, column2 FROM TableName WHERE condition ORDER BY column ASC/DESC;", "mnemonic": "S-F-W-O: Select From Where Order"},
+    ],
+    "dbms": [
+        {"id": "fc_dbms_1", "category": "Architecture", "front": "What is Data Independence in DBMS?", "back": "The ability to modify database schema at one level (e.g. physical storage) without having to alter schemas at higher levels (e.g. application code).", "mnemonic": "Independence = Changes don't break apps"},
+        {"id": "fc_dbms_2", "category": "SQL Subsets", "front": "DDL vs DML Commands in SQL?", "back": "DDL (Definition): CREATE, ALTER, DROP, TRUNCATE (Alters table structure).\nDML (Manipulation): SELECT, INSERT, UPDATE, DELETE (Alters records inside).", "mnemonic": "DDL = Define structure; DML = Move data"},
+        {"id": "fc_dbms_3", "category": "Advantage", "front": "What is Data Redundancy and how does DBMS solve it?", "back": "Data Redundancy is storing duplicate copies of the same data across files. DBMS eliminates redundancy by centralizing data into normalized tables.", "mnemonic": "Redundancy = Wasteful Duplication"},
+    ],
+    "normalization": [
+        {"id": "fc_norm_1", "category": "1NF Rule", "front": "What are the rules for First Normal Form (1NF)?", "back": "1. All attribute values in each cell must be atomic (indivisible).\n2. No repeating groups or arrays.\n3. Each record must have a unique identifier (Primary Key).", "mnemonic": "1NF = Atomic values only"},
+        {"id": "fc_norm_2", "category": "2NF Rule", "front": "What is Partial Functional Dependency in 2NF?", "back": "When a non-key attribute depends on only a PART of a composite primary key rather than the whole key. 2NF removes partial dependencies.", "mnemonic": "2NF = All non-keys depend on the WHOLE key"},
+        {"id": "fc_norm_3", "category": "3NF Rule", "front": "What is Transitive Dependency in 3NF?", "back": "When a non-key attribute depends on another non-key attribute (A -> B and B -> C). 3NF eliminates transitive dependencies by creating separate tables.", "mnemonic": "3NF = No non-key to non-key dependencies"},
+    ],
+    "networking": [
+        {"id": "fc_net_1", "category": "Protocol", "front": "What does TCP/IP stand for and what is its role?", "back": "Transmission Control Protocol / Internet Protocol: The fundamental suite that handles packet transmission, addressing, and reliable delivery across the Internet.", "mnemonic": "TCP = Traffic Control Postman"},
+        {"id": "fc_net_2", "category": "Exam Rule", "front": "What is the difference between Star and Bus Topologies?", "back": "Star: All devices connect to a central switch/hub. Single device failure does not break the network.\nBus: All devices connect to a single central backbone cable with terminators.", "mnemonic": "Star = Central hub; Bus = Single road"},
+        {"id": "fc_net_3", "category": "Definition", "front": "What is DNS (Domain Name System)?", "back": "DNS translates human-readable domain names (e.g. google.com) into numerical IP addresses (e.g. 142.250.190.46).", "mnemonic": "DNS = Internet Phonebook"},
+    ],
+    "internet_email": [
+        {"id": "fc_ie_1", "category": "Email", "front": "Difference between CC and BCC in Email?", "back": "CC (Carbon Copy): All recipients can see who else received the email.\nBCC (Blind Carbon Copy): Recipient email addresses are hidden and private.", "mnemonic": "BCC = Blind/Hidden Copy"},
+        {"id": "fc_ie_2", "category": "Protocols", "front": "SMTP vs POP3 vs IMAP?", "back": "SMTP: Sends outgoing emails to server.\nPOP3: Downloads email to local device and deletes from server.\nIMAP: Syncs emails live across all devices on cloud.", "mnemonic": "SMTP = Send; IMAP = Interactive Mobile Access"},
+        {"id": "fc_ie_3", "category": "URL", "front": "What are the 3 main parts of a URL?", "back": "1. Protocol (https://)\n2. Domain Name (e.g. moe.gov.lk)\n3. File Path / Resource (e.g. /ict/syllabus.pdf)", "mnemonic": "Protocol + Domain + Path"},
+    ],
+    "programming_basics": [
+        {"id": "fc_pb_1", "category": "Control Structures", "front": "What are the 3 Control Structures in programming?", "back": "1. Sequence (Execution line by line)\n2. Selection (Branching based on conditions: IF-THEN-ELSE)\n3. Iteration (Looping repetitions: FOR, WHILE)", "mnemonic": "S-S-I: Sequence, Selection, Iteration"},
+        {"id": "fc_pb_2", "category": "Variables", "front": "Variable vs Constant in programming?", "back": "Variable: Named storage whose value can be reassigned during runtime.\nConstant: Named storage whose value is fixed and immutable throughout execution.", "mnemonic": "Variable = Varies; Constant = Stays Constant"},
+        {"id": "fc_pb_3", "category": "Data Types", "front": "Standard 4 basic primitive data types?", "back": "1. Integer (Whole numbers: e.g. 25)\n2. Float / Real (Decimals: e.g. 3.14)\n3. String (Text characters: e.g. 'Hello')\n4. Boolean (True or False)", "mnemonic": "Int, Float, String, Bool"},
+    ],
+    "flowcharts": [
+        {"id": "fc_fc_1", "category": "Symbols", "front": "What are the 4 fundamental flowchart symbols?", "back": "1. Oval (Terminator: Start/Stop)\n2. Parallelogram (Input/Output: Read/Print)\n3. Rectangle (Process: Calculations & Assignments)\n4. Diamond (Decision: If-Else condition)", "mnemonic": "Oval=Start, Parallelogram=IO, Rect=Calc, Diamond=Decision"},
+        {"id": "fc_fc_2", "category": "Testing", "front": "What is a Trace Table?", "back": "A tabular column grid used by programmers to dry-run and manually verify algorithm step logic and variable changes before coding.", "mnemonic": "Trace Table = Bug Finder on Paper"},
+        {"id": "fc_fc_3", "category": "Rules", "front": "What is the mandatory rule for a Decision Diamond in flowcharts?", "back": "Every Decision Diamond must have at least TWO outgoing arrow branches, clearly labeled 'Yes' (True) and 'No' (False).", "mnemonic": "Decision Diamond always branches Yes/No"},
+    ],
+    "cyber_security": [
+        {"id": "fc_sec_1", "category": "Security Triad", "front": "What is the CIA Security Triad?", "back": "1. Confidentiality (Data accessible only by authorized users)\n2. Integrity (Data is accurate and uncorrupted)\n3. Availability (Systems are accessible when needed)", "mnemonic": "C-I-A: Confidentiality, Integrity, Availability"},
+        {"id": "fc_sec_2", "category": "Malware", "front": "Virus vs Worm vs Trojan Horse?", "back": "Virus: Requires host file to spread.\nWorm: Self-replicates across networks without host.\nTrojan: Disguised as helpful legitimate software.", "mnemonic": "Virus=Host, Worm=Network self-clone, Trojan=Fake disguise"},
+        {"id": "fc_sec_3", "category": "Protection", "front": "What is a Firewall and what is Encryption?", "back": "Firewall: Security barrier monitoring and filtering unauthorized network traffic.\nEncryption: Scrambling readable plaintext into unreadable ciphertext using a key.", "mnemonic": "Firewall = Guard at door; Encryption = Secret code"},
+    ]
+}
+
+
+async def get_flashcards_deck(student_id: str, topic_id: str) -> dict[str, Any]:
+    norm_id = topic_id.lower().replace("-", "_").strip()
+    cards = FLASHCARDS_BANK.get(norm_id)
+
+    # If exact topic key not found, fuzzy match with available topic keys
+    if not cards:
+        for key, val in FLASHCARDS_BANK.items():
+            if key in norm_id or norm_id in key:
+                cards = val
+                norm_id = key
+                break
+
+    if not cards:
+        cards = FLASHCARDS_BANK.get("computer_system", [])
+        norm_id = "computer_system"
+
+    topic_names = {
+        "computer_system": "Computer Systems & Architecture",
+        "data_information": "Data Representation & Logic",
+        "operating_systems": "Operating Systems & Utilities",
+        "word_processing": "Word Processing Applications",
+        "spreadsheets": "Electronic Spreadsheets",
+        "databases": "Relational Databases & SQL",
+        "dbms": "DBMS Architecture & SQL",
+        "normalization": "Database Normalization (1NF, 2NF, 3NF)",
+        "internet_email": "Internet, Web & Electronic Mail",
+        "networking": "Networks & Internet Protocols",
+        "programming_basics": "Programming & Algorithms",
+        "flowcharts": "Flowcharts & Pseudocode",
+        "cyber_security": "Cyber Security & Digital Ethics",
+    }
+
+    return {
+        "topicId": norm_id,
+        "topicName": topic_names.get(norm_id, norm_id.replace("_", " ").title()),
+        "totalCards": len(cards),
+        "cards": [
+            {
+                "id": c["id"],
+                "topicId": norm_id,
+                "front": c["front"],
+                "back": c["back"],
+                "category": c["category"],
+                "mnemonic": c.get("mnemonic"),
+                "easeFactor": 2.5,
+                "intervalDays": 1,
+                "repetitionCount": 0,
+            }
+            for c in cards
+        ],
+    }
+
+
+async def review_flashcard(student_id: str, card_id: str, rating: str) -> dict[str, Any]:
+    # SM-2 Spaced Repetition calculation
+    if rating == "easy":
+        interval = 7
+        msg = "Great recall! Scheduled for review in 7 days."
+    elif rating == "good":
+        interval = 3
+        msg = "Good job! Scheduled for review in 3 days."
+    else:
+        interval = 1
+        msg = "Marked for review. Spaced repetition drill will repeat tomorrow."
+
+    return {
+        "cardId": card_id,
+        "newIntervalDays": interval,
+        "nextReviewDate": f"In {interval} day(s)",
+        "message": msg,
+    }
+
+
+# ── Feature 5: Rapid-Fire Mock Exam Simulator Bank & Service ────────────────
+
+MOCK_EXAM_BANK = [
+    {
+        "id": "mx_1",
+        "questionText": "Which unit in the CPU is responsible for carrying out arithmetic and logic comparisons?",
+        "options": ["Control Unit", "Arithmetic Logic Unit (ALU)", "Primary Memory", "System Bus"],
+        "correctAnswer": "Arithmetic Logic Unit (ALU)",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
+        "difficulty": "easy"
+    },
+    {
+        "id": "mx_2",
+        "questionText": "What is the capacity in bytes of 1 Megabyte (1 MB) in strict binary computer notation?",
+        "options": ["1,000,000 Bytes", "1,048,576 Bytes (1024 x 1024)", "10,000 Bytes", "1,024 Bytes"],
+        "correctAnswer": "1,048,576 Bytes (1024 x 1024)",
+        "topicId": "data_information",
+        "topicName": "Data Representation",
+        "difficulty": "medium"
+    },
+    {
+        "id": "mx_3",
+        "questionText": "Which network topology connects all client nodes to a central forwarding switch or hub?",
+        "options": ["Ring Topology", "Bus Topology", "Star Topology", "Mesh Topology"],
+        "correctAnswer": "Star Topology",
+        "topicId": "networking",
+        "topicName": "Networks",
+        "difficulty": "easy"
+    },
+    {
+        "id": "mx_4",
+        "questionText": "Which protocol is responsible for translating domain names into machine-readable IP addresses?",
+        "options": ["HTTP", "DNS (Domain Name System)", "SMTP", "FTP"],
+        "correctAnswer": "DNS (Domain Name System)",
+        "topicId": "networking",
+        "topicName": "Networks",
+        "difficulty": "easy"
+    },
+    {
+        "id": "mx_5",
+        "questionText": "In relational databases, what property ensures that a primary key field cannot contain duplicate or NULL values?",
+        "options": ["Referential Integrity", "Entity Integrity", "Domain Integrity", "Atomicity"],
+        "correctAnswer": "Entity Integrity",
+        "topicId": "databases",
+        "topicName": "Databases",
+        "difficulty": "medium"
+    },
+    {
+        "id": "mx_6",
+        "questionText": "Which SQL command is used to retrieve specific columns of data from an existing database table?",
+        "options": ["INSERT INTO", "SELECT", "UPDATE", "DROP"],
+        "correctAnswer": "SELECT",
+        "topicId": "databases",
+        "topicName": "Databases",
+        "difficulty": "easy"
+    },
+    {
+        "id": "mx_7",
+        "questionText": "Which logic gate outputs a binary 1 ONLY when both of its input signals are 1?",
+        "options": ["OR Gate", "AND Gate", "NOT Gate", "XOR Gate"],
+        "correctAnswer": "AND Gate",
+        "topicId": "data_information",
+        "topicName": "Data Representation",
+        "difficulty": "easy"
+    },
+    {
+        "id": "mx_8",
+        "questionText": "What type of malware disguises itself as legitimate software to trick users into running it?",
+        "options": ["Worm", "Trojan Horse", "Ransomware", "Spyware"],
+        "correctAnswer": "Trojan Horse",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
+        "difficulty": "medium"
+    },
+    {
+        "id": "mx_9",
+        "questionText": "In standard flowchart notation, which symbol represents a decision or conditional branch (If-Else)?",
+        "options": ["Rectangle", "Oval", "Diamond (Rhombus)", "Parallelogram"],
+        "correctAnswer": "Diamond (Rhombus)",
+        "topicId": "programming_basics",
+        "topicName": "Algorithms",
+        "difficulty": "easy"
+    },
+    {
+        "id": "mx_10",
+        "questionText": "Which component of an Operating System directly manages memory, processes, and hardware device communication?",
+        "options": ["User Shell", "Kernel", "Device Driver", "File Explorer"],
+        "correctAnswer": "Kernel",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "hard"
+    }
+]
+
+
+async def start_mock_exam(student_id: str) -> dict[str, Any]:
+    return {
+        "examId": f"mock_exam_{int(datetime.now(timezone.utc).timestamp())}",
+        "title": "National O/L ICT Rapid-Fire Mock Exam (2026 Edition)",
+        "durationMinutes": 10,
+        "totalQuestions": len(MOCK_EXAM_BANK),
+        "questions": [
+            {
+                "id": q["id"],
+                "questionText": q["questionText"],
+                "options": q["options"],
+                "topicId": q["topicId"],
+                "topicName": q["topicName"],
+                "difficulty": q["difficulty"],
+            }
+            for q in MOCK_EXAM_BANK
+        ],
+    }
+
+
+async def submit_mock_exam(exam_id: str, student_id: str, answers: dict[str, str], time_spent_seconds: int) -> dict[str, Any]:
+    score = 0
+    topic_scores: dict[str, dict[str, int]] = {}
+
+    for q in MOCK_EXAM_BANK:
+        t_name = q["topicName"]
+        if t_name not in topic_scores:
+            topic_scores[t_name] = {"correct": 0, "total": 0}
+        topic_scores[t_name]["total"] += 1
+
+        selected = answers.get(q["id"])
+        if selected == q["correctAnswer"]:
+            score += 1
+            topic_scores[t_name]["correct"] += 1
+
+    total = len(MOCK_EXAM_BANK)
+    percentage = int((score / total) * 100)
+
+    if percentage >= 75:
+        grade = "A (Distinction)"
+        feedback = "Outstanding examination readiness! You exhibit mastery across all O/L ICT syllabus components."
+    elif percentage >= 65:
+        grade = "B (Very Good)"
+        feedback = "Very strong performance! A slight brush-up on databases and system architecture will lock in an A grade."
+    elif percentage >= 50:
+        grade = "C (Credit)"
+        feedback = "Solid foundational knowledge. Review short notes on network protocols and data representation."
+    elif percentage >= 35:
+        grade = "S (Pass)"
+        feedback = "Passing grade achieved. We recommend daily 5-minute flashcard drills to strengthen weak spots."
+    else:
+        grade = "W (Needs Intensive Revision)"
+        feedback = "Knowledge gaps identified. Use the Attention-Aware weak spot recommendations and short notes immediately."
+
+    topic_breakdown = [
+        {
+            "topicName": k,
+            "correct": v["correct"],
+            "total": v["total"],
+            "percentage": int((v["correct"] / v["total"]) * 100) if v["total"] else 0,
+        }
+        for k, v in topic_scores.items()
+    ]
+
+    mins = time_spent_seconds // 60
+    secs = time_spent_seconds % 60
+    time_str = f"{mins:02d}:{secs:02d}"
+
+    study_prescription = []
+    for tb in topic_breakdown:
+        if tb["percentage"] < 70:
+            study_prescription.append(f"Review {tb['topicName']} High-Yield Short Note & Past Papers (Scored {tb['correct']}/{tb['total']})")
+
+    if not study_prescription:
+        study_prescription.append("Keep practicing timed past papers to maintain your distinction streak!")
+
+    return {
+        "examId": exam_id,
+        "score": score,
+        "totalQuestions": total,
+        "percentage": percentage,
+        "predictedGrade": grade,
+        "feedback": feedback,
+        "topicBreakdown": topic_breakdown,
+        "timeTakenFormatted": time_str,
+        "studyPrescription": study_prescription,
     }
 

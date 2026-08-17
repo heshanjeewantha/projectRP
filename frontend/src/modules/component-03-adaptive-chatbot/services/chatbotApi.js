@@ -116,3 +116,38 @@ export const getKnowledgeGrowth = async (studentId) => {
   return response.data;
 };
 
+// ── Feature 1: Past Paper Grader ──
+export const getPastPaperQuestions = async (topicId) => {
+  const url = topicId ? `${API_BASE}/past-paper/questions?topicId=${encodeURIComponent(topicId)}` : `${API_BASE}/past-paper/questions`;
+  const response = await axios.get(url);
+  return response.data;
+};
+
+export const evaluatePastPaperAnswer = async (payload) => {
+  const response = await axios.post(`${API_BASE}/past-paper/evaluate`, payload);
+  return response.data;
+};
+
+// ── Feature 2: Flashcards SM-2 ──
+export const getFlashcards = async (topicId, studentId = 'student_demo_123') => {
+  const response = await axios.get(`${API_BASE}/flashcards/${topicId}?studentId=${studentId}`);
+  return response.data;
+};
+
+export const reviewFlashcard = async (payload) => {
+  const response = await axios.post(`${API_BASE}/flashcards/review`, payload);
+  return response.data;
+};
+
+// ── Feature 5: Mock Exam Simulator ──
+export const startMockExam = async (studentId = 'student_demo_123') => {
+  const response = await axios.get(`${API_BASE}/mock-exam/start?studentId=${studentId}`);
+  return response.data;
+};
+
+export const submitMockExam = async (payload) => {
+  const response = await axios.post(`${API_BASE}/mock-exam/submit`, payload);
+  return response.data;
+};
+
+
