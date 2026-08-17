@@ -13,6 +13,7 @@ import {
   FileText,
   Flame,
   GraduationCap,
+  Hand,
   Lightbulb,
   MessageSquare,
   Send,
@@ -43,7 +44,7 @@ import KnowledgeGrowthGraph from '../components/Chatbot/KnowledgeGrowthGraph';
 import PastPaperGraderModal from '../components/Chatbot/PastPaperGraderModal';
 import FlashcardDeckModal from '../components/Chatbot/FlashcardDeckModal';
 import MockExamModal from '../components/Chatbot/MockExamModal';
-import { SignWordModal } from '../components/Chatbot/SignWordBadge';
+import { SignWordBadge, SignWordModal, getDetectedSignWords, SIGN_DICTIONARY } from '../components/Chatbot/SignWordBadge';
 
 const MODE_OPTIONS = [
   { value: 'learning', label: 'Learning Mode', icon: BookOpen },
@@ -494,6 +495,13 @@ const ChatbotPage = () => {
                   >
                     <span>⏱️ 10-Min Mock Exam</span>
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSignModalInfo(SIGN_DICTIONARY.cpu)}
+                    className="flex items-center gap-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition-all shadow-sm"
+                  >
+                    <span>🤟 Sign Demo</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -590,6 +598,23 @@ const ChatbotPage = () => {
                             <p className="chatbot-source-note">
                               Answered using local lesson dataset.
                             </p>
+                          ) : null}
+
+                          {/* In-Chat ICT Term Sign Language Badges */}
+                          {getDetectedSignWords(item.answer).length > 0 ? (
+                            <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/5">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1">
+                                <Hand size={11} />
+                                Sign Language:
+                              </span>
+                              {getDetectedSignWords(item.answer).map((term) => (
+                                <SignWordBadge
+                                  key={`${item.id}-${term}`}
+                                  word={term}
+                                  onOpenSignModal={setActiveSignModalInfo}
+                                />
+                              ))}
+                            </div>
                           ) : null}
 
                           {item.prerequisiteTopics?.length > 0 ? (
