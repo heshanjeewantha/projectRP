@@ -233,20 +233,20 @@ const VirtualWristbandModal = ({
             </button>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2.5">
           <button
             onClick={() => testTrigger('WRONG SIGN', 'Repeated Pulse')}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-red-500/30 bg-red-500/10 py-2 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all active:scale-95 shadow-sm"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all active:scale-95 shadow-sm min-h-[40px]"
           >
-            <Vibrate size={14} />
-            Test Error Buzz
+            <Vibrate size={15} />
+            <span>Test Error Buzz</span>
           </button>
           <button
             onClick={() => testTrigger('SIGN PASSED', 'Short Pulse')}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 py-2 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 transition-all active:scale-95 shadow-sm"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 transition-all active:scale-95 shadow-sm min-h-[40px]"
           >
-            <Sparkles size={14} />
-            Test Pass Pulse
+            <Sparkles size={15} />
+            <span>Test Pass Pulse</span>
           </button>
         </div>
       </div>

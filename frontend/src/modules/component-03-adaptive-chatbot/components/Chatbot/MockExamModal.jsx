@@ -213,11 +213,11 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
                 )}
 
                 {/* Footer Navigation Buttons */}
-                <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-5 border-t border-white/10">
                   <button
                     onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
                     disabled={currentQuestionIndex === 0}
-                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 min-h-[40px] transition-all"
                   >
                     Previous
                   </button>
@@ -225,7 +225,7 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
                   {currentQuestionIndex < totalQuestions - 1 ? (
                     <button
                       onClick={() => setCurrentQuestionIndex((prev) => Math.min(totalQuestions - 1, prev + 1))}
-                      className="rounded-xl bg-white/10 px-5 py-2 text-xs font-bold text-white hover:bg-white/20 transition-all"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 border border-white/10 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-white/20 min-h-[40px] transition-all"
                     >
                       Next Question
                     </button>
@@ -233,10 +233,10 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
                     <button
                       onClick={handleSubmit}
                       disabled={isSubmitting}
-                      className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-xs font-bold text-[#032418] shadow-lg shadow-primary/30 hover:brightness-105"
+                      className="inline-flex items-center justify-center gap-2.5 rounded-xl bg-primary px-6 py-2.5 text-xs sm:text-sm font-bold text-[#032418] shadow-lg shadow-primary/30 hover:brightness-105 min-h-[40px] transition-all"
                     >
-                      <Award size={15} />
-                      Submit &amp; Predict Grade
+                      <Award size={16} />
+                      <span>Submit &amp; Predict Grade</span>
                     </button>
                   )}
                 </div>

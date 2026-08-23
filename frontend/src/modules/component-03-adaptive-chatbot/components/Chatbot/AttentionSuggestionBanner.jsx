@@ -25,23 +25,23 @@ const AttentionSuggestionBanner = ({
   }
 
   return (
-    <div className="mb-4 overflow-hidden rounded-2xl border border-amber-500/25 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/15 via-black/40 to-black/60 p-4 shadow-xl backdrop-blur-md">
+    <div className="mb-6 overflow-hidden rounded-2xl border border-amber-500/30 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/15 via-black/50 to-black/70 p-4 sm:p-5 shadow-xl backdrop-blur-md">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)]">
-            <Zap size={16} />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400 shadow-[0_0_14px_rgba(245,158,11,0.35)]">
+            <Zap size={18} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300">
                 Attention-Aware Revision Suggestions
               </h4>
-              <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+              <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-bold text-amber-300 border border-amber-500/30">
                 {recommendations.length} Weak Spots Detected
               </span>
             </div>
-            <p className="text-xs text-text-muted">
+            <p className="text-xs text-text-muted mt-0.5">
               Based on your live webcam attention drop & gaze telemetry from recent lessons.
             </p>
           </div>
@@ -49,10 +49,10 @@ const AttentionSuggestionBanner = ({
 
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-white/10 hover:text-white"
+          className="rounded-xl p-2 text-text-muted transition-colors hover:bg-white/10 hover:text-white shrink-0 min-h-[36px] flex items-center justify-center"
           title={isExpanded ? 'Collapse' : 'Expand'}
         >
-          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
       </div>
 
@@ -63,45 +63,45 @@ const AttentionSuggestionBanner = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="mt-3.5 space-y-2.5 pt-2"
+            className="mt-4 space-y-3 pt-2"
           >
             {recommendations.map((rec, index) => (
               <div
                 key={index}
-                className="flex flex-col gap-2.5 rounded-xl border border-white/5 bg-black/30 p-3 transition-all hover:border-amber-500/30 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-xl border border-white/10 bg-black/40 p-4 transition-all hover:border-amber-500/40 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-white text-xs">
+                <div className="space-y-1.5 min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span className="font-bold text-white text-xs sm:text-sm">
                       {rec.conceptName}
                     </span>
-                    <span className="rounded bg-black/40 px-2 py-0.5 text-[10px] text-amber-400 border border-amber-500/20 font-mono">
+                    <span className="rounded-md bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-300 border border-amber-500/25 font-mono">
                       {rec.averageAttention}% Avg Attention
                     </span>
-                    <span className="text-[10px] text-text-muted">
+                    <span className="text-xs text-text-muted">
                       ({rec.distractionReason})
                     </span>
                   </div>
                   <p className="text-xs text-text-muted">
-                    Lesson: <span className="text-white/80">{rec.lessonTitle}</span>
+                    Lesson: <span className="text-white/90 font-medium">{rec.lessonTitle}</span>
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0 pt-1 sm:pt-0">
                   <button
                     onClick={() => onOpenShortNote && onOpenShortNote(rec.conceptId)}
-                    className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3.5 py-2 text-xs font-semibold text-primary transition-all hover:bg-primary/20 hover:border-primary/60 min-h-[38px] active:scale-95"
                   >
-                    <FileText size={12} />
-                    Short Note
+                    <FileText size={15} />
+                    <span>Short Note</span>
                   </button>
 
                   <button
                     onClick={() => onSelectPrompt && onSelectPrompt(rec.suggestedPrompt, rec.conceptId)}
-                    className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-[#032418] transition-colors hover:bg-primary-hover shadow-sm"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-[#032418] transition-all hover:bg-primary-hover shadow-md shadow-primary/20 min-h-[38px] active:scale-95"
                   >
-                    <MessageSquare size={12} />
-                    Review in Chat
+                    <MessageSquare size={15} />
+                    <span>Review in Chat</span>
                   </button>
                 </div>
               </div>

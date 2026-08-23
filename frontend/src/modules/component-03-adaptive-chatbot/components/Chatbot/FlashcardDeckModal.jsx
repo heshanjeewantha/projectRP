@@ -185,27 +185,27 @@ const FlashcardDeckModal = ({ isOpen, onClose, topicId = 'computer_system', stud
             )}
 
             {/* SM-2 Recall Rating Actions */}
-            <div className="grid grid-cols-3 gap-3 w-full pt-1">
+            <div className="grid grid-cols-3 gap-3.5 w-full pt-2">
               <button
                 onClick={() => handleRating('hard')}
-                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-300 transition-all text-xs font-bold"
+                className="flex flex-col items-center justify-center p-3 sm:p-3.5 rounded-2xl border border-red-500/25 bg-red-500/10 hover:bg-red-500/20 text-red-300 transition-all text-xs font-bold min-h-[52px] active:scale-95 shadow-sm"
               >
                 <span>🔴 Hard</span>
-                <span className="text-[10px] text-text-muted mt-0.5">Review 1d</span>
+                <span className="text-[10px] text-text-muted mt-1 font-mono">Review 1d</span>
               </button>
               <button
                 onClick={() => handleRating('good')}
-                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 text-amber-300 transition-all text-xs font-bold"
+                className="flex flex-col items-center justify-center p-3 sm:p-3.5 rounded-2xl border border-amber-500/25 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-all text-xs font-bold min-h-[52px] active:scale-95 shadow-sm"
               >
                 <span>🟡 Good</span>
-                <span className="text-[10px] text-text-muted mt-0.5">Review 3d</span>
+                <span className="text-[10px] text-text-muted mt-1 font-mono">Review 3d</span>
               </button>
               <button
                 onClick={() => handleRating('easy')}
-                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-300 transition-all text-xs font-bold"
+                className="flex flex-col items-center justify-center p-3 sm:p-3.5 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition-all text-xs font-bold min-h-[52px] active:scale-95 shadow-sm"
               >
                 <span>🟢 Easy</span>
-                <span className="text-[10px] text-text-muted mt-0.5">Review 7d</span>
+                <span className="text-[10px] text-text-muted mt-1 font-mono">Review 7d</span>
               </button>
             </div>
           </div>
