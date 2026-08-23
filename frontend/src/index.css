@@ -118,31 +118,31 @@ button:active, a:active {
 }
 
 @utility dashboard-shell {
-  width: min(1440px, calc(100% - 1.5rem));
+  width: min(1520px, 100%);
   margin-inline: auto;
-  padding-inline: 0;
+  padding-inline: clamp(14px, 2.5vw, 28px);
   padding-top: clamp(0.75rem, 2vw, 1.5rem);
   padding-bottom: clamp(2.5rem, 5vw, 5rem);
 }
 
 @utility dashboard-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.68fr) minmax(320px, 0.88fr);
-  gap: clamp(16px, 2.5vw, 24px);
+  grid-template-columns: minmax(0, 1.62fr) minmax(320px, 0.92fr);
+  gap: clamp(18px, 2vw, 28px);
   align-items: start;
 }
 
 @utility dashboard-stack {
   display: grid;
-  gap: clamp(16px, 2.5vw, 24px);
+  gap: clamp(18px, 2vw, 28px);
   align-content: start;
 }
 
 @utility dashboard-panel {
   background: linear-gradient(180deg, rgba(10, 15, 12, 0.94), rgba(8, 12, 10, 0.96));
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: clamp(18px, 2vw, 26px);
-  padding: clamp(16px, 2.5vw, 28px);
+  border-radius: clamp(20px, 2vw, 28px);
+  padding: clamp(18px, 2.5vw, 30px);
   min-width: 0;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
@@ -2493,27 +2493,29 @@ button:active, a:active {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  height: 560px;
+  min-height: 480px;
+  max-height: clamp(520px, 64vh, 760px);
+  height: auto;
   overflow-y: auto;
-  padding-right: 6px;
+  padding-right: 8px;
 }
 
 .chatbot-empty-state {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  min-height: 340px;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.04);
   background: rgba(255, 255, 255, 0.02);
-  padding: 0 24px;
+  padding: 32px 24px;
   text-align: center;
   color: var(--color-text-muted);
 }
 
 .chatbot-thread-group {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .chatbot-user-row,
@@ -2532,23 +2534,24 @@ button:active, a:active {
 .chatbot-user-bubble,
 .chatbot-bot-bubble,
 .chatbot-loading-bubble {
-  max-width: min(90%, 780px);
+  max-width: min(88%, 760px);
   border-radius: 22px;
-  padding: 16px 18px;
+  padding: 16px 20px;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.1);
+  line-height: 1.68;
 }
 
 .chatbot-user-bubble {
-  max-width: min(32%, 260px);
-  border: 1px solid rgba(107, 194, 156, 0.1);
-  background: rgba(107, 194, 156, 0.07);
+  max-width: min(85%, 660px);
+  border: 1px solid rgba(107, 194, 156, 0.15);
+  background: linear-gradient(135deg, rgba(107, 194, 156, 0.12), rgba(107, 194, 156, 0.06));
   border-top-right-radius: 14px;
 }
 
 .chatbot-bot-bubble,
 .chatbot-loading-bubble {
-  border: 1px solid rgba(255, 255, 255, 0.045);
-  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
   border-top-left-radius: 14px;
 }
 
@@ -2847,9 +2850,12 @@ button:active, a:active {
   font-size: 0.88rem;
 }
 
-@media (max-width: 1024px) {
-  .dashboard-layout {
+@media (max-width: 1140px) {
+  .dashboard-layout,
+  .chatbot-page-shell .dashboard-layout,
+  .lesson-dashboard-shell .dashboard-layout {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
 
   .dashboard-stat-grid {

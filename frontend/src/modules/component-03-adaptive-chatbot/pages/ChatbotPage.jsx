@@ -2,32 +2,49 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   ArrowRight,
+  Award,
+  BarChart3,
   BookOpen,
   Bot,
   BrainCircuit,
   CheckCircle2,
   CircleAlert,
   Eraser,
+  FileText,
+  Flame,
   GraduationCap,
+  Hand,
   Lightbulb,
   MessageSquare,
   Send,
   Sparkles,
+  TrendingUp,
   XCircle,
+  Zap,
 } from 'lucide-react';
 
 import {
   askChatbot,
   checkMicroChallenge,
   clearChatbotHistory,
+  getAttentionRecommendations,
   getChatbotHistory,
   getChatbotTopics,
+  getKnowledgeGrowth,
   getLessonSummary,
   getMicroChallenge,
+  getShortNotes,
 } from '../services/chatbotApi';
 import useStore from '../../shared-app/utils/useStore';
 import DashboardPanel from '../../../components/layout/Dashboard/DashboardPanel';
 import Header from '../../../components/layout/Dashboard/Header';
+import AttentionSuggestionBanner from '../components/Chatbot/AttentionSuggestionBanner';
+import ShortNotesCard from '../components/Chatbot/ShortNotesCard';
+import KnowledgeGrowthGraph from '../components/Chatbot/KnowledgeGrowthGraph';
+import PastPaperGraderModal from '../components/Chatbot/PastPaperGraderModal';
+import FlashcardDeckModal from '../components/Chatbot/FlashcardDeckModal';
+import MockExamModal from '../components/Chatbot/MockExamModal';
+import { SignWordBadge, SignWordModal, getDetectedSignWords, SIGN_DICTIONARY } from '../components/Chatbot/SignWordBadge';
 
 const MODE_OPTIONS = [
   { value: 'learning', label: 'Learning Mode', icon: BookOpen },
@@ -126,23 +143,51 @@ const ChatbotPage = () => {
   const [summaryPreview, setSummaryPreview] = useState(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
+  // New states: Attention recommendations, Short notes & Knowledge growth
+  const [recommendations, setRecommendations] = useState([]);
+  const [growthData, setGrowthData] = useState(null);
+  const [activeShortNote, setActiveShortNote] = useState(null);
+  const [isShortNoteLoading, setIsShortNoteLoading] = useState(false);
+  const [activeViewTab, setActiveViewTab] = useState('chat'); // 'chat' | 'growth' | 'notes'
+  const [explainStyle, setExplainStyle] = useState('standard'); // 'standard' | 'simple' | 'analogy' | 'exam'
+
+  // Scope extension modal states
+  const [isPastPaperModalOpen, setIsPastPaperModalOpen] = useState(false);
+  const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
+  const [isMockExamModalOpen, setIsMockExamModalOpen] = useState(false);
+  const [activeSignModalInfo, setActiveSignModalInfo] = useState(null);
+
   const chatScrollRef = useRef(null);
   const learningState = manualLearningState || deriveStateFromAttention(attentionStatus);
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadHistory = async () => {
+    const loadHistoryAndAnalytics = async () => {
       try {
-        const historyResponse = await getChatbotHistory(userId);
+        const [historyResponse, recsResponse, growthResponse] = await Promise.allSettled([
+          getChatbotHistory(userId),
+          getAttentionRecommendations(userId),
+          getKnowledgeGrowth(userId),
+        ]);
+
         if (!isMounted) return;
-        setChatHistory(historyResponse || []);
+
+        if (historyResponse.status === 'fulfilled') {
+          setChatHistory(historyResponse.value || []);
+        }
+        if (recsResponse.status === 'fulfilled' && recsResponse.value?.recommendations) {
+          setRecommendations(recsResponse.value.recommendations);
+        }
+        if (growthResponse.status === 'fulfilled') {
+          setGrowthData(growthResponse.value);
+        }
       } catch (error) {
-        console.error('Failed to load chatbot history', error);
+        console.error('Failed to load chatbot analytics & history', error);
       }
     };
 
-    loadHistory();
+    loadHistoryAndAnalytics();
     return () => {
       isMounted = false;
     };
@@ -250,14 +295,47 @@ const ChatbotPage = () => {
     }
   };
 
-  const handleSend = async () => {
-    const trimmedQuestion = question.trim();
+  const handleOpenShortNote = async (topicId) => {
+    if (!topicId) return;
+    setIsShortNoteLoading(true);
+    try {
+      const note = await getShortNotes(topicId);
+      setActiveShortNote(note);
+      setActiveViewTab('notes');
+    } catch (err) {
+      console.error('Failed to load short notes', err);
+    } finally {
+      setIsShortNoteLoading(false);
+    }
+  };
+
+  const handleSelectSuggestedPrompt = (promptText, topicId) => {
+    if (topicId) {
+      const matched = topicOptions.find((t) => t.id === topicId);
+      if (matched) setSelectedTopicId(topicId);
+    }
+    setQuestion(promptText);
+    setActiveViewTab('chat');
+  };
+
+  const handleSend = async (overrideQuestion) => {
+    const rawQuestion = overrideQuestion || question;
+    const trimmedQuestion = rawQuestion.trim();
     if (!trimmedQuestion || isSending) return;
     const latestBotMessage = chatHistory[chatHistory.length - 1];
 
+    let finalQuestion = trimmedQuestion;
+    if (explainStyle === 'simple' && !trimmedQuestion.toLowerCase().includes('simple')) {
+      finalQuestion = `${trimmedQuestion} (Please explain in very simple terms with a real-world analogy).`;
+    } else if (explainStyle === 'analogy' && !trimmedQuestion.toLowerCase().includes('analogy')) {
+      finalQuestion = `${trimmedQuestion} (Please include a relatable real-world analogy).`;
+    } else if (explainStyle === 'exam' && !trimmedQuestion.toLowerCase().includes('exam')) {
+      finalQuestion = `${trimmedQuestion} (Please focus on O/L examination points and common marks allocation).`;
+    }
+
     const payload = {
       studentId: userId,
-      question: trimmedQuestion,
+      question: finalQuestion,
       selectedMode,
       currentLearningState: learningState,
       currentTopic: selectedTopic?.id || '',
@@ -328,229 +406,405 @@ const ChatbotPage = () => {
               label="Chatbot"
               icon={MessageSquare}
               title="Advanced adaptive learning chatbot"
-              description="Ask O/L ICT questions in learning or exam mode. The chatbot can offer an optional prerequisite challenge, detect repeated difficulty, and guide you to topic summaries when needed."
+              description="Ask O/L ICT questions in learning or exam mode. The chatbot suggests weak-concept revisions from your lesson attention, provides instant short notes, and tracks knowledge mastery."
             />
 
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <span className="dashboard-chip text-primary">
-                <Sparkles size={16} className="text-primary" />
-                {selectedMode === 'learning' ? 'Learning mode' : 'Exam mode'}
-              </span>
-              <span className="dashboard-chip">
-                <BrainCircuit size={16} className="text-primary" />
-                State: {STATE_OPTIONS.find((item) => item.value === learningState)?.label}
-              </span>
-              <span className="dashboard-chip">
-                <Lightbulb size={16} className="text-primary" />
-                Topic: {selectedTopic?.name}
-              </span>
-            </div>
-          </DashboardPanel>
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="dashboard-chip text-primary">
+                  <Sparkles size={16} className="text-primary" />
+                  {selectedMode === 'learning' ? 'Learning mode' : 'Exam mode'}
+                </span>
+                <span className="dashboard-chip">
+                  <BrainCircuit size={16} className="text-primary" />
+                  State: {STATE_OPTIONS.find((item) => item.value === learningState)?.label}
+                </span>
+                <span className="dashboard-chip">
+                  <Lightbulb size={16} className="text-primary" />
+                  Topic: {selectedTopic?.name}
+                </span>
+              </div>
 
-          <DashboardPanel className="min-h-[760px]">
-            <div ref={chatScrollRef} className="chatbot-scroll-area custom-scrollbar">
-              {chatHistory.length === 0 ? (
-                <div className="chatbot-empty-state">
-                  Ask your first O/L ICT question to start the adaptive learning conversation.
+              {/* View Switcher Tabs & Tools */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex rounded-xl bg-black/40 p-1 border border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setActiveViewTab('chat')}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                      activeViewTab === 'chat'
+                        ? 'bg-primary text-[#032418] shadow-sm'
+                        : 'text-text-muted hover:text-white'
+                    }`}
+                  >
+                    <MessageSquare size={13} />
+                    Chat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveViewTab('growth')}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                      activeViewTab === 'growth'
+                        ? 'bg-primary text-[#032418] shadow-sm'
+                        : 'text-text-muted hover:text-white'
+                    }`}
+                  >
+                    <TrendingUp size={13} />
+                    Growth Matrix ({growthData?.overallMastery || 74}%)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!activeShortNote) {
+                        handleOpenShortNote(selectedTopicId || 'computer_system');
+                      } else {
+                        setActiveViewTab('notes');
+                      }
+                    }}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                      activeViewTab === 'notes'
+                        ? 'bg-primary text-[#032418] shadow-sm'
+                        : 'text-text-muted hover:text-white'
+                    }`}
+                  >
+                    <FileText size={13} />
+                    Short Notes
+                  </button>
                 </div>
-              ) : (
-                chatHistory.map((item) => (
-                  <div key={item.id} className="chatbot-thread-group">
-                    <div className="chatbot-user-row">
-                      <div className="chatbot-user-bubble">
-                        <div className="chatbot-user-meta">Student</div>
-                        <p className="dashboard-text-wrap text-sm text-white">{item.question}</p>
-                      </div>
-                    </div>
 
-                    <div className="chatbot-bot-row">
-                      <div className="chatbot-bot-bubble">
-                        <div className="chatbot-bot-meta">
-                          <Bot size={12} />
-                          Chatbot
-                          <span className="chatbot-meta-tag">{item.modeBadge || item.mode}</span>
-                          <span className="chatbot-meta-tag">{item.learningStateBadge || item.learningState?.replaceAll('_', ' ')}</span>
-                          <span className="chatbot-meta-tag">{getSourceLabel(item.sourceType)}</span>
-                          {item.compressedAnswer ? (
-                            <span className="chatbot-meta-tag is-exam">Compressed answer</span>
-                          ) : null}
-                        </div>
-
-                        {item.conceptReEntry && item.conceptRefreshPoints?.length > 0 ? (
-                          <div className="chatbot-refresh-card">
-                            <div className="chatbot-refresh-title">
-                              <Lightbulb size={15} />
-                              Let&apos;s do a quick refresh before continuing
-                            </div>
-                            <ul className="chatbot-refresh-list">
-                              {item.conceptRefreshPoints.map((point) => (
-                                <li key={`${item.id}-${point}`}>{point}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
-
-                        <p className="dashboard-text-wrap whitespace-pre-line text-sm text-white/95">
-                          {item.answer}
-                        </p>
-                        {item.sourceType === 'LOCAL_DATASET' ? (
-                          <p className="chatbot-source-note">
-                            Answered using local lesson dataset.
-                          </p>
-                        ) : null}
-
-                        {item.prerequisiteTopics?.length > 0 ? (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {item.prerequisiteTopics.map((topic) => (
-                              <span key={`${item.id}-${topic}`} className="chatbot-topic-tag">
-                                {topic}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
-
-                        {item.nextDifficultyPrompt ? (
-                          <div className="chatbot-followup-card">
-                            <div className="chatbot-followup-label">Difficulty escalation</div>
-                            <p className="dashboard-text-wrap text-sm text-white/90">{item.nextDifficultyPrompt}</p>
-                          </div>
-                        ) : null}
-
-                        {item.summaryTopicId ? (
-                          <div className="chatbot-summary-card">
-                            <div className="chatbot-summary-copy">
-                              {item.summaryRecommendation || 'A quick summary is available for this topic.'}
-                            </div>
-                            <div className="chatbot-summary-actions">
-                              <button
-                                type="button"
-                                onClick={() => openSummaryPreview(item.summaryTopicId)}
-                                className="chatbot-inline-button"
-                              >
-                                Preview Summary
-                              </button>
-                              <Link to={`/lesson-summary/${item.summaryTopicId}`} className="chatbot-inline-button is-primary">
-                                Open Summary
-                                <ArrowRight size={14} />
-                              </Link>
-                            </div>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-
-              {challengeOffer?.challenge ? (
-                <div className="chatbot-challenge-card">
-                  <div className="chatbot-challenge-kicker">Optional micro-challenge</div>
-                  <h3 className="chatbot-challenge-title">{challengeOffer.prompt}</h3>
-                  {pendingQuestionText ? (
-                    <p className="chatbot-challenge-copy">Pending question: {pendingQuestionText}</p>
-                  ) : null}
-
-                  {!challengeResult ? (
-                    <>
-                      <div className="chatbot-challenge-question">
-                        {challengeOffer.challenge.questionText}
-                      </div>
-                      <div className="chatbot-challenge-options">
-                        {challengeOffer.challenge.options.map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => setChallengeSelection(option)}
-                            className={`chatbot-challenge-option ${challengeSelection === option ? 'is-active' : ''}`}
-                          >
-                            {option}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="chatbot-challenge-actions">
-                        <button
-                          type="button"
-                          onClick={() => sendChatRequest(pendingPayload)}
-                          className="chatbot-inline-button"
-                        >
-                          Skip &amp; Show Answer
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleChallengeCheck}
-                          disabled={!challengeSelection}
-                          className="chatbot-inline-button is-primary"
-                        >
-                          Try Challenge
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className={`chatbot-challenge-result ${challengeResult.isCorrect ? 'is-correct' : 'is-wrong'}`}>
-                      <div className="chatbot-challenge-result-title">
-                        {challengeResult.isCorrect ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
-                        {challengeResult.feedback}
-                      </div>
-                      <p className="dashboard-text-wrap text-sm text-white/90">{challengeResult.explanation}</p>
-                      <div className="chatbot-challenge-actions">
-                        {challengeResult.summaryTopicId ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => openSummaryPreview(challengeResult.summaryTopicId)}
-                              className="chatbot-inline-button"
-                            >
-                              View Summary
-                            </button>
-                            <Link to={`/lesson-summary/${challengeResult.summaryTopicId}`} className="chatbot-inline-button">
-                              Open Summary Page
-                            </Link>
-                          </>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() => sendChatRequest(pendingPayload)}
-                          className="chatbot-inline-button is-primary"
-                        >
-                          Continue to answer
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                {/* Scope Tools Launcher Pills */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsPastPaperModalOpen(true)}
+                    className="flex items-center gap-1 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-all shadow-sm"
+                  >
+                    <span>📝 Past Paper Grader</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsFlashcardModalOpen(true)}
+                    className="flex items-center gap-1 rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-xs font-bold text-purple-300 hover:bg-purple-500/20 transition-all shadow-sm"
+                  >
+                    <span>🗂️ Flashcards (SM-2)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsMockExamModalOpen(true)}
+                    className="flex items-center gap-1 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition-all shadow-sm"
+                  >
+                    <span>⏱️ 10-Min Mock Exam</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSignModalInfo(SIGN_DICTIONARY.cpu)}
+                    className="flex items-center gap-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition-all shadow-sm"
+                  >
+                    <span>🤟 Sign Demo</span>
+                  </button>
                 </div>
-              ) : null}
-
-              {isSending ? (
-                <div className="chatbot-bot-row">
-                  <div className="chatbot-loading-bubble">Generating adaptive answer...</div>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="chatbot-compose">
-              <textarea
-                value={question}
-                onChange={(event) => setQuestion(event.target.value)}
-                placeholder="Ask an O/L ICT question..."
-                rows={4}
-                className="chatbot-textarea"
-              />
-
-              <div className="chatbot-compose-row">
-                <div className="chatbot-topic-line">
-                  Topic: <span className="text-white">{selectedTopic?.name || 'General ICT'}</span>
-                </div>
-                <button
-                  onClick={handleSend}
-                  disabled={isSending || !question.trim()}
-                  className="chatbot-send-button"
-                >
-                  <Send size={16} />
-                  Send
-                </button>
               </div>
             </div>
           </DashboardPanel>
+
+          {/* Attention-Aware Suggestion Banner */}
+          {recommendations.length > 0 && activeViewTab === 'chat' && (
+            <AttentionSuggestionBanner
+              recommendations={recommendations}
+              onSelectPrompt={handleSelectSuggestedPrompt}
+              onOpenShortNote={handleOpenShortNote}
+            />
+          )}
+
+          {/* View Tab 1: Knowledge Growth Graph */}
+          {activeViewTab === 'growth' && (
+            <DashboardPanel className="min-h-[600px]">
+              <KnowledgeGrowthGraph
+                growthData={growthData}
+                onSelectTopic={(tId) => handleOpenShortNote(tId)}
+              />
+            </DashboardPanel>
+          )}
+
+          {/* View Tab 2: Short Notes Card */}
+          {activeViewTab === 'notes' && (
+            <DashboardPanel className="min-h-[600px]">
+              {isShortNoteLoading ? (
+                <div className="flex h-64 items-center justify-center text-text-muted text-sm">
+                  <Sparkles size={18} className="animate-spin text-primary mr-2" />
+                  Generating high-yield short notes...
+                </div>
+              ) : (
+                <ShortNotesCard
+                  shortNote={activeShortNote}
+                  onClose={() => setActiveViewTab('chat')}
+                  onAskChatbot={(tId, tName) => {
+                    handleSelectSuggestedPrompt(`Please quiz me with an O/L past paper question on ${tName}.`, tId);
+                  }}
+                />
+              )}
+            </DashboardPanel>
+          )}
+
+          {/* View Tab 3: Main Chatbot Conversation */}
+          {activeViewTab === 'chat' && (
+            <DashboardPanel className="min-h-[760px]">
+              <div ref={chatScrollRef} className="chatbot-scroll-area custom-scrollbar">
+                {chatHistory.length === 0 ? (
+                  <div className="chatbot-empty-state">
+                    Ask your first O/L ICT question to start the adaptive learning conversation.
+                  </div>
+                ) : (
+                  chatHistory.map((item) => (
+                    <div key={item.id} className="chatbot-thread-group">
+                      <div className="chatbot-user-row">
+                        <div className="chatbot-user-bubble">
+                          <div className="chatbot-user-meta">Student</div>
+                          <p className="dashboard-text-wrap text-sm text-white">{item.question}</p>
+                        </div>
+                      </div>
+
+                      <div className="chatbot-bot-row">
+                        <div className="chatbot-bot-bubble">
+                          <div className="chatbot-bot-meta">
+                            <Bot size={12} />
+                            Chatbot
+                            <span className="chatbot-meta-tag">{item.modeBadge || item.mode}</span>
+                            <span className="chatbot-meta-tag">{item.learningStateBadge || item.learningState?.replaceAll('_', ' ')}</span>
+                            <span className="chatbot-meta-tag">{getSourceLabel(item.sourceType)}</span>
+                            {item.compressedAnswer ? (
+                              <span className="chatbot-meta-tag is-exam">Compressed answer</span>
+                            ) : null}
+                          </div>
+
+                          {item.conceptReEntry && item.conceptRefreshPoints?.length > 0 ? (
+                            <div className="chatbot-refresh-card">
+                              <div className="chatbot-refresh-title">
+                                <Lightbulb size={15} />
+                                Let&apos;s do a quick refresh before continuing
+                              </div>
+                              <ul className="chatbot-refresh-list">
+                                {item.conceptRefreshPoints.map((point) => (
+                                  <li key={`${item.id}-${point}`}>{point}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+
+                          <p className="dashboard-text-wrap whitespace-pre-line text-sm text-white/95">
+                            {item.answer}
+                          </p>
+                          {item.sourceType === 'LOCAL_DATASET' ? (
+                            <p className="chatbot-source-note">
+                              Answered using local lesson dataset.
+                            </p>
+                          ) : null}
+
+                          {/* In-Chat ICT Term Sign Language Badges */}
+                          {getDetectedSignWords(item.answer).length > 0 ? (
+                            <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/5">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1">
+                                <Hand size={11} />
+                                Sign Language:
+                              </span>
+                              {getDetectedSignWords(item.answer).map((term) => (
+                                <SignWordBadge
+                                  key={`${item.id}-${term}`}
+                                  word={term}
+                                  onOpenSignModal={setActiveSignModalInfo}
+                                />
+                              ))}
+                            </div>
+                          ) : null}
+
+                          {item.prerequisiteTopics?.length > 0 ? (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {item.prerequisiteTopics.map((topic) => (
+                                <span key={`${item.id}-${topic}`} className="chatbot-topic-tag">
+                                  {topic}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
+
+                          {item.nextDifficultyPrompt ? (
+                            <div className="chatbot-followup-card">
+                              <div className="chatbot-followup-label">Difficulty escalation</div>
+                              <p className="dashboard-text-wrap text-sm text-white/90">{item.nextDifficultyPrompt}</p>
+                            </div>
+                          ) : null}
+
+                          {item.summaryTopicId ? (
+                            <div className="chatbot-summary-card">
+                              <div className="chatbot-summary-copy">
+                                {item.summaryRecommendation || 'A quick summary is available for this topic.'}
+                              </div>
+                              <div className="chatbot-summary-actions">
+                                <button
+                                  type="button"
+                                  onClick={() => openSummaryPreview(item.summaryTopicId)}
+                                  className="chatbot-inline-button"
+                                >
+                                  Preview Summary
+                                </button>
+                                <Link to={`/lesson-summary/${item.summaryTopicId}`} className="chatbot-inline-button is-primary">
+                                  Open Summary
+                                  <ArrowRight size={14} />
+                                </Link>
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+
+                {challengeOffer?.challenge ? (
+                  <div className="chatbot-challenge-card">
+                    <div className="chatbot-challenge-kicker">Optional micro-challenge</div>
+                    <h3 className="chatbot-challenge-title">{challengeOffer.prompt}</h3>
+                    {pendingQuestionText ? (
+                      <p className="chatbot-challenge-copy">Pending question: {pendingQuestionText}</p>
+                    ) : null}
+
+                    {!challengeResult ? (
+                      <>
+                        <div className="chatbot-challenge-question">
+                          {challengeOffer.challenge.questionText}
+                        </div>
+                        <div className="chatbot-challenge-options">
+                          {challengeOffer.challenge.options.map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() => setChallengeSelection(option)}
+                              className={`chatbot-challenge-option ${challengeSelection === option ? 'is-active' : ''}`}
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="chatbot-challenge-actions">
+                          <button
+                            type="button"
+                            onClick={() => sendChatRequest(pendingPayload)}
+                            className="chatbot-inline-button"
+                          >
+                            Skip &amp; Show Answer
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleChallengeCheck}
+                            disabled={!challengeSelection}
+                            className="chatbot-inline-button is-primary"
+                          >
+                            Try Challenge
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className={`chatbot-challenge-result ${challengeResult.isCorrect ? 'is-correct' : 'is-wrong'}`}>
+                        <div className="chatbot-challenge-result-title">
+                          {challengeResult.isCorrect ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
+                          {challengeResult.feedback}
+                        </div>
+                        <p className="dashboard-text-wrap text-sm text-white/90">{challengeResult.explanation}</p>
+                        <div className="chatbot-challenge-actions">
+                          {challengeResult.summaryTopicId ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => openSummaryPreview(challengeResult.summaryTopicId)}
+                                className="chatbot-inline-button"
+                              >
+                                View Summary
+                              </button>
+                              <Link to={`/lesson-summary/${challengeResult.summaryTopicId}`} className="chatbot-inline-button">
+                                Open Summary Page
+                              </Link>
+                            </>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => sendChatRequest(pendingPayload)}
+                            className="chatbot-inline-button is-primary"
+                          >
+                            Continue to answer
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+
+                {isSending ? (
+                  <div className="chatbot-bot-row">
+                    <div className="chatbot-loading-bubble">Generating adaptive answer...</div>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Explain Mode Style Selector */}
+              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                  Explain Mode:
+                </span>
+                {[
+                  { id: 'standard', label: '✨ Standard', desc: 'Balanced syllabus explanation' },
+                  { id: 'simple', label: '🧒 Simple (ELI10)', desc: 'Simplified terms' },
+                  { id: 'analogy', label: '💡 Real-World Analogy', desc: 'Relatable analogy' },
+                  { id: 'exam', label: '🎯 O/L Exam Focus', desc: 'Marking points & traps' },
+                ].map((style) => (
+                  <button
+                    key={style.id}
+                    type="button"
+                    onClick={() => setExplainStyle(style.id)}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+                      explainStyle === style.id
+                        ? 'border border-primary/40 bg-primary/20 text-primary shadow-sm'
+                        : 'border border-white/5 bg-white/5 text-text-muted hover:text-white'
+                    }`}
+                    title={style.desc}
+                  >
+                    {style.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="chatbot-compose mt-3">
+                <textarea
+                  value={question}
+                  onChange={(event) => setQuestion(event.target.value)}
+                  placeholder={`Ask an O/L ICT question on ${selectedTopic?.name || 'ICT'}...`}
+                  rows={3}
+                  className="chatbot-textarea"
+                />
+
+                <div className="chatbot-compose-row">
+                  <div className="chatbot-topic-line flex items-center gap-2">
+                    <span>Topic: <strong className="text-white">{selectedTopic?.name || 'General ICT'}</strong></span>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenShortNote(selectedTopicId)}
+                      className="ml-2 flex items-center gap-1 rounded bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-primary hover:bg-white/10"
+                    >
+                      <FileText size={11} />
+                      View Note
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => handleSend()}
+                    disabled={isSending || !question.trim()}
+                    className="chatbot-send-button"
+                  >
+                    <Send size={16} />
+                    Send
+                  </button>
+                </div>
+              </div>
+            </DashboardPanel>
+          )}
         </div>
 
         <div className="dashboard-stack">
@@ -599,7 +853,13 @@ const ChatbotPage = () => {
                 </div>
                 <select
                   value={selectedTopicId}
-                  onChange={(event) => setSelectedTopicId(event.target.value)}
+                  onChange={(event) => {
+                    const newTopic = event.target.value;
+                    setSelectedTopicId(newTopic);
+                    if (activeViewTab === 'notes') {
+                      handleOpenShortNote(newTopic);
+                    }
+                  }}
                   className="chatbot-topic-select"
                 >
                   {topicOptions.map((topic) => (
@@ -608,6 +868,42 @@ const ChatbotPage = () => {
                     </option>
                   ))}
                 </select>
+
+                <div className="mt-3 flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenShortNote(selectedTopicId)}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+                  >
+                    <FileText size={13} />
+                    Open Topic Short Note
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsPastPaperModalOpen(true)}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition-colors"
+                  >
+                    <span>📝 Past Papers ({selectedTopic?.name})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsFlashcardModalOpen(true)}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-purple-500/30 bg-purple-500/10 py-2 text-xs font-semibold text-purple-300 hover:bg-purple-500/20 transition-colors"
+                  >
+                    <span>🗂️ Flashcards ({selectedTopic?.name})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveViewTab('growth')}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 py-2 text-xs font-semibold text-white/90 hover:bg-white/10 transition-colors"
+                  >
+                    <TrendingUp size={13} />
+                    View Growth Matrix ({growthData?.overallMastery || 74}%)
+                  </button>
+                </div>
               </div>
             </div>
           </DashboardPanel>
@@ -735,6 +1031,33 @@ const ChatbotPage = () => {
           </div>
         </div>
       ) : null}
+
+      {/* Scope Extension Modals */}
+      <PastPaperGraderModal
+        isOpen={isPastPaperModalOpen}
+        onClose={() => setIsPastPaperModalOpen(false)}
+        topicId={selectedTopicId || 'computer_system'}
+        studentId={userId}
+      />
+
+      <FlashcardDeckModal
+        isOpen={isFlashcardModalOpen}
+        onClose={() => setIsFlashcardModalOpen(false)}
+        topicId={selectedTopicId || 'computer_system'}
+        studentId={userId}
+      />
+
+      <MockExamModal
+        isOpen={isMockExamModalOpen}
+        onClose={() => setIsMockExamModalOpen(false)}
+        studentId={userId}
+      />
+
+      <SignWordModal
+        isOpen={Boolean(activeSignModalInfo)}
+        signInfo={activeSignModalInfo}
+        onClose={() => setActiveSignModalInfo(null)}
+      />
     </div>
   );
 };

@@ -14,8 +14,11 @@ def get_client() -> AsyncIOMotorClient:
     if client is None:
         client = AsyncIOMotorClient(
             settings.MONGODB_URI,
-            serverSelectionTimeoutMS=10000,
-            connectTimeoutMS=10000,
+            serverSelectionTimeoutMS=8000,
+            connectTimeoutMS=8000,
+            readPreference="primaryPreferred",
+            retryWrites=True,
+            retryReads=True,
         )
     return client
 

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import {
-  Eye, Moon, Smartphone, Activity, Hand, Navigation,
+  Eye, Moon, Smartphone, Activity, Navigation,
   TrendingUp, AlertTriangle, CheckCircle,
 } from 'lucide-react';
 import useStore from '../../../shared-app/utils/useStore';
@@ -72,16 +72,6 @@ const StatusBadge = ({ status, reason }) => {
   );
 };
 
-const SignHistoryItem = ({ text, timestamp }) => (
-  <div className="flex items-center justify-between gap-2 rounded-xl bg-black/20 px-3 py-2">
-    <div className="flex items-center gap-2">
-      <Hand size={12} className="shrink-0 text-primary" />
-      <span className="text-sm font-medium text-white">{text}</span>
-    </div>
-    <span className="text-[10px] text-text-muted">{timestamp}s</span>
-  </div>
-);
-
 // ── Main Component ────────────────────────────────────────────────────────────
 
 const AttentionStatsPanel = () => {
@@ -96,9 +86,6 @@ const AttentionStatsPanel = () => {
     gazeDirection,
     blinkRate,
     engagementScore,
-    liveSignText,
-    liveSignConfidence,
-    liveSignExplanation,
     attentionEvents,
     isWebcamActive,
   } = useStore();
@@ -106,11 +93,6 @@ const AttentionStatsPanel = () => {
   const reason = attentionDetail?.reason ?? 'unknown';
   const ear    = attentionDetail?.ear    ?? 0;
   const mar    = attentionDetail?.mar    ?? 0;
-
-  // Last 5 sign events from session log
-  const signEvents = attentionEvents
-    .filter((e) => /* no sign field in event — show placeholder */ false)
-    .slice(-5);
 
   // Distraction breakdown from session events
   const totalEvents    = attentionEvents.length || 1;
@@ -198,15 +180,6 @@ const AttentionStatsPanel = () => {
           value={yawning ? 'Detected' : 'None'}
           color={yawning ? '#fb923c' : '#5fbf97'}
         />
-        {liveSignText && (
-          <MetricRow
-            icon={Hand}
-            label="Live Sign"
-            value={liveSignText}
-            sub={liveSignExplanation || `${Math.round(liveSignConfidence * 100)}% confidence`}
-            color="#818cf8"
-          />
-        )}
       </div>
 
       {/* EAR / MAR debug metrics */}
