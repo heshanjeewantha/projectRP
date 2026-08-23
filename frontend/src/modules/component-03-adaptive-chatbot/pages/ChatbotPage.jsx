@@ -9,15 +9,18 @@ import {
   BrainCircuit,
   CheckCircle2,
   CircleAlert,
+  ClipboardCheck,
   Eraser,
   FileText,
   Flame,
   GraduationCap,
   Hand,
+  Layers,
   Lightbulb,
   MessageSquare,
   Send,
   Sparkles,
+  Timer,
   TrendingUp,
   XCircle,
   Zap,
@@ -426,31 +429,23 @@ const ChatbotPage = () => {
               </div>
 
               {/* View Switcher Tabs & Tools */}
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex rounded-xl bg-black/40 p-1 border border-white/10">
+              <div className="chatbot-tool-row">
+                <div className="chatbot-tab-group">
                   <button
                     type="button"
                     onClick={() => setActiveViewTab('chat')}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                      activeViewTab === 'chat'
-                        ? 'bg-primary text-[#032418] shadow-sm'
-                        : 'text-text-muted hover:text-white'
-                    }`}
+                    className={`chatbot-tab-button ${activeViewTab === 'chat' ? 'is-active' : ''}`}
                   >
                     <MessageSquare size={13} />
-                    Chat
+                    <span>Chat</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveViewTab('growth')}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                      activeViewTab === 'growth'
-                        ? 'bg-primary text-[#032418] shadow-sm'
-                        : 'text-text-muted hover:text-white'
-                    }`}
+                    className={`chatbot-tab-button ${activeViewTab === 'growth' ? 'is-active' : ''}`}
                   >
                     <TrendingUp size={13} />
-                    Growth Matrix ({growthData?.overallMastery || 74}%)
+                    <span>Growth Matrix ({growthData?.overallMastery || 74}%)</span>
                   </button>
                   <button
                     type="button"
@@ -461,46 +456,46 @@ const ChatbotPage = () => {
                         setActiveViewTab('notes');
                       }
                     }}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                      activeViewTab === 'notes'
-                        ? 'bg-primary text-[#032418] shadow-sm'
-                        : 'text-text-muted hover:text-white'
-                    }`}
+                    className={`chatbot-tab-button ${activeViewTab === 'notes' ? 'is-active' : ''}`}
                   >
                     <FileText size={13} />
-                    Short Notes
+                    <span>Short Notes</span>
                   </button>
                 </div>
 
                 {/* Scope Tools Launcher Pills */}
-                <div className="flex items-center gap-1.5">
+                <div className="chatbot-scope-tools">
                   <button
                     type="button"
                     onClick={() => setIsPastPaperModalOpen(true)}
-                    className="flex items-center gap-1 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-all shadow-sm"
+                    className="chatbot-tool-button is-amber"
                   >
-                    <span>📝 Past Paper Grader</span>
+                    <ClipboardCheck size={13} />
+                    <span>Past Paper Grader</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsFlashcardModalOpen(true)}
-                    className="flex items-center gap-1 rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-xs font-bold text-purple-300 hover:bg-purple-500/20 transition-all shadow-sm"
+                    className="chatbot-tool-button is-purple"
                   >
-                    <span>🗂️ Flashcards (SM-2)</span>
+                    <Layers size={13} />
+                    <span>Flashcards (SM-2)</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsMockExamModalOpen(true)}
-                    className="flex items-center gap-1 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition-all shadow-sm"
+                    className="chatbot-tool-button is-cyan"
                   >
-                    <span>⏱️ 10-Min Mock Exam</span>
+                    <Timer size={13} />
+                    <span>10-Min Mock Exam</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveSignModalInfo(SIGN_DICTIONARY.cpu)}
-                    className="flex items-center gap-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition-all shadow-sm"
+                    className="chatbot-tool-button is-emerald"
                   >
-                    <span>🤟 Sign Demo</span>
+                    <Hand size={13} />
+                    <span>Sign Demo</span>
                   </button>
                 </div>
               </div>
@@ -787,10 +782,10 @@ const ChatbotPage = () => {
                     <button
                       type="button"
                       onClick={() => handleOpenShortNote(selectedTopicId)}
-                      className="ml-2 flex items-center gap-1 rounded bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-primary hover:bg-white/10"
+                    className="chatbot-note-mini-button"
                     >
                       <FileText size={11} />
-                      View Note
+                      <span>View Note</span>
                     </button>
                   </div>
                   <button
@@ -873,35 +868,37 @@ const ChatbotPage = () => {
                   <button
                     type="button"
                     onClick={() => handleOpenShortNote(selectedTopicId)}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+                    className="chatbot-tool-button is-primary is-full"
                   >
                     <FileText size={13} />
-                    Open Topic Short Note
+                    <span>Open Topic Short Note</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setIsPastPaperModalOpen(true)}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition-colors"
+                    className="chatbot-tool-button is-amber is-full"
                   >
-                    <span>📝 Past Papers ({selectedTopic?.name})</span>
+                    <ClipboardCheck size={13} />
+                    <span>Past Papers ({selectedTopic?.name})</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setIsFlashcardModalOpen(true)}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-purple-500/30 bg-purple-500/10 py-2 text-xs font-semibold text-purple-300 hover:bg-purple-500/20 transition-colors"
+                    className="chatbot-tool-button is-purple is-full"
                   >
-                    <span>🗂️ Flashcards ({selectedTopic?.name})</span>
+                    <Layers size={13} />
+                    <span>Flashcards ({selectedTopic?.name})</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setActiveViewTab('growth')}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 py-2 text-xs font-semibold text-white/90 hover:bg-white/10 transition-colors"
+                    className="chatbot-tool-button is-neutral is-full"
                   >
                     <TrendingUp size={13} />
-                    View Growth Matrix ({growthData?.overallMastery || 74}%)
+                    <span>View Growth Matrix ({growthData?.overallMastery || 74}%)</span>
                   </button>
                 </div>
               </div>
