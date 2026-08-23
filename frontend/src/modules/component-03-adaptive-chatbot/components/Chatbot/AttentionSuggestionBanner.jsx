@@ -87,20 +87,20 @@ const AttentionSuggestionBanner = ({
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5 shrink-0 pt-1 sm:pt-0">
+                <div className="flex flex-wrap items-center gap-3 shrink-0 mt-2 sm:mt-0">
                   <button
                     onClick={() => onOpenShortNote && onOpenShortNote(rec.conceptId)}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3.5 py-2 text-xs font-semibold text-primary transition-all hover:bg-primary/20 hover:border-primary/60 min-h-[38px] active:scale-95"
+                    className="inline-flex items-center justify-center gap-2.5 rounded-xl border border-primary/40 bg-primary/10 px-5 py-2.5 text-[13px] font-semibold text-primary whitespace-nowrap transition-all hover:bg-primary/20 hover:border-primary/60 min-h-[42px] min-w-[130px] active:scale-[0.97]"
                   >
-                    <FileText size={15} />
+                    <FileText size={16} className="shrink-0" />
                     <span>Short Note</span>
                   </button>
 
                   <button
                     onClick={() => onSelectPrompt && onSelectPrompt(rec.suggestedPrompt, rec.conceptId)}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-[#032418] transition-all hover:bg-primary-hover shadow-md shadow-primary/20 min-h-[38px] active:scale-95"
+                    className="inline-flex items-center justify-center gap-2.5 rounded-xl bg-primary px-5 py-2.5 text-[13px] font-bold text-[#032418] whitespace-nowrap transition-all hover:bg-primary-hover shadow-lg shadow-primary/25 min-h-[42px] min-w-[155px] active:scale-[0.97]"
                   >
-                    <MessageSquare size={15} />
+                    <MessageSquare size={16} className="shrink-0" />
                     <span>Review in Chat</span>
                   </button>
                 </div>

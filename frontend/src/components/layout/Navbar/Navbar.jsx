@@ -93,14 +93,14 @@ const Navbar = () => {
 
         {/* Navigation Items - Smooth swipe on mobile, clean row on desktop */}
         <div className="flex min-w-0 items-center overflow-x-auto no-scrollbar scroll-smooth">
-          <div className="flex w-full min-w-max items-center gap-1.5 rounded-[18px] bg-white/[0.02] p-1.5 sm:gap-2">
+          <div className="flex w-full min-w-max items-center gap-1 rounded-[18px] bg-white/[0.02] p-1.5 sm:gap-1.5 lg:gap-2">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.to === '/'}
                 className={({ isActive }) =>
-                  `relative flex items-center justify-center gap-2 rounded-[14px] px-3 py-2 text-xs font-medium transition sm:px-3.5 sm:py-2.5 sm:text-sm ${
+                  `relative flex items-center justify-center gap-2.5 rounded-[14px] px-4 py-2.5 text-xs font-medium transition-all min-h-[40px] sm:px-5 sm:py-2.5 sm:text-[13px] ${
                     isActive ? 'text-white font-semibold' : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
                   }`
                 }
@@ -125,7 +125,7 @@ const Navbar = () => {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="relative flex items-center justify-center gap-2 rounded-[14px] px-3 py-2 text-xs font-medium text-text-muted transition hover:bg-red-500/10 hover:text-red-300 sm:px-3.5 sm:py-2.5 sm:text-sm"
+                className="relative flex items-center justify-center gap-2.5 rounded-[14px] px-4 py-2.5 text-xs font-medium text-text-muted transition-all min-h-[40px] hover:bg-red-500/10 hover:text-red-300 sm:px-5 sm:py-2.5 sm:text-[13px]"
               >
                 <LogOut size={16} className="shrink-0" />
                 <span className="whitespace-nowrap">Logout</span>
