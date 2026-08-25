@@ -48,60 +48,63 @@ const SignPracticeArena = ({
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-4 w-full">
       {/* Top Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/90 p-5 shadow-xl backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onBackToModules}
-            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-xs font-bold text-slate-300 hover:bg-white/10 transition-colors shrink-0"
-          >
-            <ArrowLeft size={16} />
-            All Modules
-          </button>
-          <div>
-            <span className="text-xs font-mono font-semibold text-primary uppercase tracking-wider">
-              Unit {activeModule?.moduleNumber}: {activeModule?.title}
-            </span>
-            <h3 className="text-lg font-black text-white mt-0.5">
-              Keyword: <span className="text-cyan-400 uppercase">{activeKeyword?.keyword}</span> —{' '}
-              <span className="text-slate-300 font-medium text-base">{activeKeyword?.englishMeaning}</span>
-            </h3>
+      <div className="rounded-2xl border border-white/10 bg-slate-900/90 p-4 shadow-xl backdrop-blur-md">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <button
+              onClick={onBackToModules}
+              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 transition-colors"
+            >
+              <ArrowLeft size={14} />
+              <span className="hidden sm:inline">All Modules</span>
+            </button>
+            <div className="min-w-0">
+              <span className="block text-[10px] font-mono font-semibold text-primary uppercase tracking-wider truncate">
+                Unit {activeModule?.moduleNumber}: {activeModule?.title}
+              </span>
+              <h3 className="text-sm sm:text-base font-black text-white mt-0.5 leading-tight overflow-wrap-anywhere">
+                <span className="text-cyan-400 uppercase">{activeKeyword?.keyword}</span>
+                {activeKeyword?.englishMeaning && (
+                  <span className="text-slate-400 font-medium text-xs sm:text-sm ml-1.5">— {activeKeyword.englishMeaning}</span>
+                )}
+              </h3>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          {/* Mode Switcher */}
           <button
             onClick={() => setExamMode(!examMode)}
-            className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all shadow-sm ${examMode
+            className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all ${
+              examMode
                 ? 'border border-purple-500/40 bg-purple-500/20 text-purple-300'
                 : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-              }`}
+            }`}
           >
-            {examMode ? <EyeOff size={15} /> : <Eye size={15} />}
-            {examMode ? 'Exam Mode (No Avatar)' : 'Practice Mode (With Avatar)'}
+            {examMode ? <EyeOff size={13} /> : <Eye size={13} />}
+            <span className="hidden sm:inline">{examMode ? 'Exam Mode' : 'Practice Mode'}</span>
+            <span className="sm:hidden">{examMode ? 'Exam' : 'Practice'}</span>
           </button>
         </div>
       </div>
 
       {/* Main Split Grid: Left = Avatar & Instructions, Right = Camera Evaluator */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 items-start">
         {/* Left Column: Avatar Demonstration & Sign Breakdown */}
         <div className="flex flex-col gap-4">
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-950 p-5 sm:p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-primary">
-                  <Hand size={19} />
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950 p-4 sm:p-5 shadow-2xl">
+            <div className="flex flex-wrap items-start justify-between gap-2 border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
+                  <Hand size={16} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h4 className="text-sm font-bold text-white">Avatar Sign Demonstration</h4>
-                  <p className="text-xs text-slate-400">Watch the precise finger movements and hand orientation.</p>
+                  <p className="text-xs text-slate-400 hidden sm:block">Watch precise finger movements and orientation.</p>
                 </div>
               </div>
 
-              <span className="rounded-lg bg-white/5 px-2.5 py-1 text-xs font-mono text-slate-300 border border-white/10">
+              <span className="shrink-0 rounded-lg bg-white/5 px-2 py-1 text-xs font-mono text-slate-300 border border-white/10">
                 {activeKeyword?.difficulty}
               </span>
             </div>
@@ -150,22 +153,22 @@ const SignPracticeArena = ({
             )}
 
             {/* Keyword Details & Instructions Card */}
-            <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
-              <div className="flex items-center justify-between mb-2">
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3 sm:p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <h5 className="text-xs font-bold uppercase tracking-wider text-primary">Gesture Instructions</h5>
-                <span className="text-xs font-semibold text-slate-300">{activeKeyword?.englishMeaning}</span>
+                <span className="text-xs font-semibold text-slate-300 truncate max-w-[120px]">{activeKeyword?.englishMeaning}</span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">{activeKeyword?.gestureDescription}</p>
+              <p className="text-xs text-slate-300 leading-relaxed overflow-wrap-anywhere">{activeKeyword?.gestureDescription}</p>
 
               {/* Handshape & Movement Tips */}
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5 border-t border-white/10 pt-3.5 text-xs">
-                <div className="rounded-xl bg-black/40 p-3 border border-white/5">
-                  <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Handshape Tip:</span>
-                  <p className="text-xs text-slate-300 mt-1">{activeKeyword?.handShapeTip}</p>
+              <div className="mt-3 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
+                <div className="rounded-xl bg-black/40 p-2.5 border border-white/5">
+                  <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Handshape:</span>
+                  <p className="text-xs text-slate-300 mt-1 leading-relaxed overflow-wrap-anywhere">{activeKeyword?.handShapeTip}</p>
                 </div>
-                <div className="rounded-xl bg-black/40 p-3 border border-white/5">
-                  <span className="text-[10px] uppercase font-bold text-cyan-400 tracking-wider">Movement Tip:</span>
-                  <p className="text-xs text-slate-300 mt-1">{activeKeyword?.movementTip}</p>
+                <div className="rounded-xl bg-black/40 p-2.5 border border-white/5">
+                  <span className="text-[10px] uppercase font-bold text-cyan-400 tracking-wider">Movement:</span>
+                  <p className="text-xs text-slate-300 mt-1 leading-relaxed overflow-wrap-anywhere">{activeKeyword?.movementTip}</p>
                 </div>
               </div>
             </div>
@@ -183,27 +186,27 @@ const SignPracticeArena = ({
           />
 
           {/* Keyword Module Navigation Strip */}
-          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/90 p-4 shadow-lg backdrop-blur">
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-900/90 p-3 shadow-lg backdrop-blur">
             <button
               onClick={handlePrev}
               disabled={currentIndex <= 0}
-              className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
-              <ArrowLeft size={15} />
-              Previous Sign
+              <ArrowLeft size={14} />
+              <span className="hidden sm:inline">Previous</span>
             </button>
 
-            <span className="text-xs font-mono font-bold text-slate-300">
-              Sign {currentIndex + 1} of {keywords.length}
+            <span className="text-xs font-mono font-bold text-slate-300 shrink-0">
+              {currentIndex + 1} / {keywords.length}
             </span>
 
             <button
               onClick={handleNext}
               disabled={currentIndex >= keywords.length - 1}
-              className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
-              Next Sign
-              <ArrowRight size={15} />
+              <span className="hidden sm:inline">Next</span>
+              <ArrowRight size={14} />
             </button>
           </div>
         </div>

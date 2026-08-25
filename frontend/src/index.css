@@ -1592,14 +1592,9 @@ button:active, a:active {
 }
 
 .sign-avatar-page-shell {
-  width: min(1440px, calc(100% - 2rem));
+  width: min(1440px, 100%);
+  margin-inline: auto;
   padding-top: 1.5rem;
-}
-
-.sign-avatar-page-shell .dashboard-layout {
-  grid-template-columns: minmax(0, 1.64fr) minmax(340px, 0.92fr);
-  gap: 24px;
-  align-items: start;
 }
 
 .sign-avatar-page-shell .dashboard-stack {
@@ -4521,7 +4516,13 @@ button:active, a:active {
 .sign-lecture-player__grid {
   display: grid;
   gap: 20px;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.25fr);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1080px) {
+  .sign-lecture-player__grid {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.25fr);
+  }
 }
 
 .sign-lecture-player__panel {
@@ -4631,9 +4632,20 @@ button:active, a:active {
 
 .sign-lecture-player__note,
 .sign-lecture-player__simplified p,
-.sign-avatar-controller__subtitle,
+.sign-avatar-controller__subtitle {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
 .sign-lecture-player__timeline-meta {
   color: var(--color-text-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 
 .sign-lecture-player__stats {
@@ -4951,17 +4963,19 @@ button:active, a:active {
 .sign-lecture-player__timeline {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
 .sign-lecture-player__timeline-item {
   display: grid;
-  gap: 6px;
+  gap: 5px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.03);
-  padding: 14px;
+  padding: 14px 16px;
   text-align: left;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .sign-lecture-player__timeline-item.is-active {
@@ -4975,16 +4989,15 @@ button:active, a:active {
 
 .sign-lecture-player__timeline-word {
   color: var(--color-text-main);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 700;
   text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-@media (max-width: 1080px) {
-  .sign-lecture-player__grid {
-    grid-template-columns: 1fr;
-  }
-}
+
 
 @media (max-width: 720px) {
   .sign-lecture-player__stats {
@@ -5304,5 +5317,352 @@ button:active, a:active {
   width: 100% !important;
   height: 100% !important;
   object-fit: contain;
+}
+
+/* ── Sign Course Page: scoped overrides ──────────────────────── */
+
+.sign-course-module-desc {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.6;
+}
+
+/* Hero title — responsive clamp */
+.sign-course-hero-title {
+  margin-top: 0.5rem;
+  color: var(--color-text-main);
+  font-size: clamp(1.35rem, 3.5vw, 2rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+/* Hero description */
+.sign-course-hero-desc {
+  margin-top: 0.5rem;
+  color: var(--color-text-muted);
+  font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+  line-height: 1.65;
+  max-width: 60ch;
+  overflow-wrap: anywhere;
+}
+
+/* ── Global: tighter padding on small screens ─────────────────── */
+@media (max-width: 480px) {
+  .dashboard-shell {
+    padding-inline: 12px;
+    padding-top: 0.5rem;
+  }
+
+  .dashboard-panel {
+    border-radius: 18px;
+    padding: 14px;
+  }
+
+  .dashboard-title {
+    font-size: 1.4rem;
+  }
+
+  .dashboard-subtitle {
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ADMIN / TEACHER SHARED CLASSES
+   Used by: AdminDashboardPage, TeacherAnalyticsDashboard,
+            RepeatedQueryAlertsPage, AdminAttentionReportsPage
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Inline Action Buttons ─────────────────────────────────── */
+.chatbot-inline-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-main);
+}
+
+.chatbot-inline-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.chatbot-inline-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.chatbot-inline-button.is-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #032418;
+  box-shadow: 0 4px 14px rgba(107, 194, 156, 0.25);
+}
+
+.chatbot-inline-button.is-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 88%, white);
+  box-shadow: 0 6px 20px rgba(107, 194, 156, 0.35);
+}
+
+/* ── Topic / Label Tags ─────────────────────────────────────── */
+.chatbot-topic-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(107, 194, 156, 0.12);
+  border: 1px solid rgba(107, 194, 156, 0.25);
+  color: var(--color-primary);
+  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+
+/* ── Analytics Bar Chart ────────────────────────────────────── */
+.analytics-bar-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.analytics-bar-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 48px;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.analytics-bar-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.analytics-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.analytics-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #38bdf8));
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.analytics-bar-value {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: right;
+}
+
+/* ── Progress Line / Column Chart ───────────────────────────── */
+.analytics-line-grid {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem;
+  height: 140px;
+  margin-top: 1.25rem;
+  padding-bottom: 1.75rem;
+  position: relative;
+}
+
+.analytics-line-point {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.analytics-line-bar-wrap {
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100px;
+}
+
+.analytics-line-bar {
+  width: 60%;
+  min-height: 8px;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 50%, transparent));
+  transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.analytics-line-value {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.analytics-line-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* ── Pie / State Distribution List ─────────────────────────── */
+.analytics-pie-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.analytics-pie-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.analytics-pie-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.analytics-pie-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  flex-shrink: 0;
+}
+
+/* ── Alert Cards ────────────────────────────────────────────── */
+.analytics-alert-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.analytics-alert-card {
+  border-radius: 14px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.05);
+  padding: 0.875rem 1rem;
+  transition: background 0.18s ease;
+}
+
+.analytics-alert-card:hover {
+  background: rgba(245, 158, 11, 0.09);
+}
+
+.analytics-alert-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fcd34d;
+  margin-bottom: 0.25rem;
+}
+
+.analytics-alert-copy {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Data Table ─────────────────────────────────────────────── */
+.analytics-table-wrap {
+  overflow-x: auto;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 1rem;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  color: var(--color-text-main);
+}
+
+.analytics-table thead tr {
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.analytics-table th {
+  padding: 0.65rem 1rem;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.analytics-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: top;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.analytics-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.analytics-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+/* ── Responsive: admin stat grid stacks on mobile ───────────── */
+@media (max-width: 768px) {
+  .dashboard-stat-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px;
+  }
+
+  .analytics-bar-row {
+    grid-template-columns: 90px 1fr 36px;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-stat-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .analytics-line-grid {
+    height: 100px;
+  }
 }
 

@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
+  Activity,
   BookOpen,
   BrainCircuit,
   ChartColumnBig,
@@ -29,6 +30,7 @@ const studentNavItems = [
 const adminNavItems = [
   { to: '/admin', icon: ShieldCheck, label: 'Dashboard' },
   { to: '/admin/analytics', icon: ChartColumnBig, label: 'Analytics' },
+  { to: '/admin/attention-reports', icon: Activity, label: 'Reports' },
   { to: '/admin/repeated-alerts', icon: History, label: 'Alerts' },
   { to: '/upload', icon: Upload, label: 'Upload' },
 ];

@@ -134,7 +134,7 @@ const TeacherAnalyticsDashboard = () => {
               ))}
             </div>
 
-            <div className="dashboard-layout">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <div className="dashboard-stack">
                 <DashboardPanel>
                   <Header
@@ -216,7 +216,7 @@ const TeacherAnalyticsDashboard = () => {
               </div>
             </div>
 
-            <div className="dashboard-layout">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <DashboardPanel>
                 <Header
                   label="Weak Students"

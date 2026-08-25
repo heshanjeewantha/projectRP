@@ -102,7 +102,7 @@ const AppShell = () => {
   return (
     <div className="flex min-h-screen flex-col bg-bg-dark selection:bg-primary/30">
       {!hideNav && <Navbar />}
-      <main className="flex w-full flex-1 justify-center pb-16">
+      <main className="flex w-full flex-1 justify-center min-w-0">
         <AnimatedRoutes />
       </main>
       {!hideFooter && <Footer />}

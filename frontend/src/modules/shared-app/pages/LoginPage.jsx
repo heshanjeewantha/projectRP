@@ -65,7 +65,7 @@ const LoginPage = () => {
           <label className="auth-field">
             <span>Email</span>
             <div className="auth-input-wrap">
-              <Mail size={17} className="text-primary" />
+              <Mail size={17} className="shrink-0 text-primary" />
               <input
                 type="email"
                 value={email}
@@ -80,7 +80,7 @@ const LoginPage = () => {
           <label className="auth-field">
             <span>Password</span>
             <div className="auth-input-wrap">
-              <LockKeyhole size={17} className="text-primary" />
+              <LockKeyhole size={17} className="shrink-0 text-primary" />
               <input
                 type="password"
                 value={password}

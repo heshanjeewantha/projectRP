@@ -15,40 +15,38 @@ const SignAvatarPage = () => {
 
   return (
     <div className="dashboard-shell sign-avatar-page-shell">
-      <div className="dashboard-layout">
-        <div className="dashboard-stack">
-          <DashboardPanel className="dashboard-panel-hero">
-            <Header
-              label="Sign Avatar"
-              icon={Hand}
-              title="Keyword-based sign avatar player"
-              description="Paste O/L ICT lesson notes, extract the important keywords, and let the avatar sign them one by one using direct gestures or fallback hand animations."
-            />
+      <div className="dashboard-stack">
+        <DashboardPanel className="dashboard-panel-hero">
+          <Header
+            label="Sign Avatar"
+            icon={Hand}
+            title="Keyword-based sign avatar player"
+            description="Paste O/L ICT lesson notes, extract the important keywords, and let the avatar sign them one by one using direct gestures or fallback hand animations."
+          />
 
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <span className="dashboard-chip text-primary">
-                <Sparkles size={16} className="text-primary" />
-                Both-hand sign playback
-              </span>
-              <span className="dashboard-chip">
-                <BrainCircuit size={16} className="text-primary" />
-                State: {learningState.replaceAll('_', ' ')}
-              </span>
-              <span className="dashboard-chip">
-                <Hand size={16} className="text-primary" />
-                Topic: {currentTopic}
-              </span>
-            </div>
-          </DashboardPanel>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <span className="dashboard-chip text-primary">
+              <Sparkles size={16} className="text-primary" />
+              Both-hand sign playback
+            </span>
+            <span className="dashboard-chip">
+              <BrainCircuit size={16} className="text-primary" />
+              State: {learningState.replaceAll('_', ' ')}
+            </span>
+            <span className="dashboard-chip">
+              <Hand size={16} className="text-primary" />
+              Topic: {currentTopic}
+            </span>
+          </div>
+        </DashboardPanel>
 
-          <DashboardPanel className="sign-avatar-player-shell">
-            <SignLecturePlayer
-              userId={userId}
-              currentTopic={currentTopic}
-              learningState={learningState}
-            />
-          </DashboardPanel>
-        </div>
+        <DashboardPanel className="sign-avatar-player-shell">
+          <SignLecturePlayer
+            userId={userId}
+            currentTopic={currentTopic}
+            learningState={learningState}
+          />
+        </DashboardPanel>
       </div>
     </div>
   );
