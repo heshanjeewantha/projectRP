@@ -115,60 +115,59 @@ const SignPracticeArena = ({
                 <SignAvatarDemo
                   keyword={activeKeyword?.keyword}
                   playbackSpeed={playbackSpeed}
+                  onSpeedChange={setPlaybackSpeed}
                 />
-
-                {/* Speed Controls */}
-                <div className="flex items-center justify-between px-2 text-xs text-slate-400">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-300">Speed:</span>
-                    {[0.5, 1, 1.5].map((speed) => (
-                      <button
-                        key={speed}
-                        onClick={() => setPlaybackSpeed(speed)}
-                        className={`rounded-lg px-2.5 py-1 text-xs font-mono font-bold transition-all ${playbackSpeed === speed
-                            ? 'bg-primary text-white shadow-md'
-                            : 'bg-white/5 text-slate-400 hover:bg-white/10'
-                          }`}
-                      >
-                        {speed}x
-                      </button>
-                    ))}
-                  </div>
-
-                  <span className="font-mono text-xs text-slate-400">
-                    Gloss: <strong className="text-cyan-400">{activeKeyword?.sourceGloss}</strong>
-                  </span>
-                </div>
               </div>
             ) : (
-              <div className="mt-4 flex h-60 flex-col items-center justify-center rounded-2xl border border-dashed border-purple-500/30 bg-purple-950/10 p-6 text-center">
+              <div className="mt-4 flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-purple-500/30 bg-purple-950/10 p-6 text-center">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-500/20 text-purple-400 mb-3 shadow-lg">
                   <EyeOff size={24} />
                 </div>
                 <h4 className="text-sm font-bold text-white">Exam Recall Mode Active</h4>
                 <p className="mt-1.5 text-xs text-slate-400 max-w-xs leading-relaxed">
-                  Avatar is hidden. Perform the sign from memory in front of the camera. The smart wristband will vibrate if you make a mistake.
+                  Avatar demonstration is hidden. Perform the sign from memory in front of the camera. The smart wristband will deliver real-time haptic corrections if hand position deviates.
                 </p>
               </div>
             )}
 
             {/* Keyword Details & Instructions Card */}
-            <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3 sm:p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                <h5 className="text-xs font-bold uppercase tracking-wider text-primary">Gesture Instructions</h5>
-                <span className="text-xs font-semibold text-slate-300 truncate max-w-[120px]">{activeKeyword?.englishMeaning}</span>
+            <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/80 p-4 sm:p-5 shadow-lg">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/20 text-primary text-xs font-black">
+                    1
+                  </span>
+                  <h5 className="text-xs font-bold uppercase tracking-wider text-primary">
+                    Gesture Instructions
+                  </h5>
+                </div>
+                <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[11px] font-semibold text-slate-300">
+                  {activeKeyword?.englishMeaning}
+                </span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed overflow-wrap-anywhere">{activeKeyword?.gestureDescription}</p>
+              <p className="text-xs text-slate-200 leading-relaxed break-words">
+                {activeKeyword?.gestureDescription}
+              </p>
 
               {/* Handshape & Movement Tips */}
-              <div className="mt-3 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
-                <div className="rounded-xl bg-black/40 p-2.5 border border-white/5">
-                  <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Handshape:</span>
-                  <p className="text-xs text-slate-300 mt-1 leading-relaxed overflow-wrap-anywhere">{activeKeyword?.handShapeTip}</p>
+              <div className="mt-3.5 grid grid-cols-1 sm:grid-cols-2 gap-2.5 border-t border-white/10 pt-3.5">
+                <div className="rounded-xl bg-black/40 p-3 border border-amber-500/20 shadow-inner">
+                  <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1">
+                    <Sparkles size={11} />
+                    Handshape Tip:
+                  </span>
+                  <p className="text-xs text-slate-300 mt-1 leading-relaxed break-words">
+                    {activeKeyword?.handShapeTip}
+                  </p>
                 </div>
-                <div className="rounded-xl bg-black/40 p-2.5 border border-white/5">
-                  <span className="text-[10px] uppercase font-bold text-cyan-400 tracking-wider">Movement:</span>
-                  <p className="text-xs text-slate-300 mt-1 leading-relaxed overflow-wrap-anywhere">{activeKeyword?.movementTip}</p>
+                <div className="rounded-xl bg-black/40 p-3 border border-cyan-500/20 shadow-inner">
+                  <span className="text-[10px] uppercase font-bold text-cyan-400 tracking-wider flex items-center gap-1">
+                    <Sparkles size={11} />
+                    Movement Tip:
+                  </span>
+                  <p className="text-xs text-slate-300 mt-1 leading-relaxed break-words">
+                    {activeKeyword?.movementTip}
+                  </p>
                 </div>
               </div>
             </div>

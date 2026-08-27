@@ -20,71 +20,71 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 
 // Authentic ASL Dual-Hand Specifications (Mirrored User Perspective)
-// - Screen Left Box = User's Physical RIGHT Hand
-// - Screen Right Box = User's Physical LEFT Hand
+// - Screen Left Box = User's Physical LEFT Hand
+// - Screen Right Box = User's Physical RIGHT Hand
 // `count` is the number of extended fingers required (0 = fist, 5 = open palm, etc.)
 const DUAL_HAND_SPECS = {
   computer: {
     name: 'Open 5-Finger Typing',
     icon: '⌨️',
-    rightHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
     leftHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
+    rightHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
     description: 'Raise both hands with 5 fingers open and flutter in typing motion.',
     action: 'Place hands in Left and Right boxes and move fingers.',
   },
   hardware: {
     name: 'Fist Strike on Palm',
     icon: '🔨',
-    rightHandReq: { count: 0, label: 'Closed Fist ✊' },
     leftHandReq: { count: 5, label: 'Flat Palm 🖐️' },
-    description: 'Right hand closed solid fist, Left hand flat receiving palm.',
-    action: 'Right hand (Screen Left) fist, Left hand (Screen Right) flat palm.',
+    rightHandReq: { count: 0, label: 'Closed Fist ✊' },
+    description: 'Left hand flat receiving palm, Right hand closed solid fist.',
+    action: 'Left hand (Screen Left) flat palm, Right hand (Screen Right) fist.',
   },
   software: {
     name: 'V-Glide Across Palm',
     icon: '📜',
-    rightHandReq: { count: 2, label: '2-Finger (V) ✌️' },
     leftHandReq: { count: 5, label: 'Flat Palm 🖐️' },
-    description: 'Right hand 2-finger V-glide across Left flat palm.',
-    action: 'Right hand (Screen Left) V-sign, Left hand (Screen Right) flat palm.',
+    rightHandReq: { count: 2, label: '2-Finger (V) ✌️' },
+    description: 'Left hand flat palm, Right hand 2-finger V-glide across palm.',
+    action: 'Left hand (Screen Left) flat palm, Right hand (Screen Right) V-sign.',
   },
   database: {
     name: 'Tiered C-Shapes',
     icon: '🗄️',
-    rightHandReq: { count: 3, label: 'C-Shape 🗄️' },
     leftHandReq: { count: 3, label: 'C-Shape 🗄️' },
+    rightHandReq: { count: 3, label: 'C-Shape 🗄️' },
     description: 'Both hands curved into C-shapes showing layered tiers.',
     action: 'Show curved C-handshape in both Left and Right boxes.',
   },
   network: {
     name: 'Linked Middle Nodes',
     icon: '🌐',
-    rightHandReq: { count: 3, label: 'Middle Touch 🤞' },
     leftHandReq: { count: 3, label: 'Middle Touch 🤞' },
+    rightHandReq: { count: 3, label: 'Middle Touch 🤞' },
     description: 'Both hands extended with middle fingers prominent.',
     action: 'Extend fingers in Left and Right boxes.',
   },
   internet: {
     name: 'Open 5 Orbital Hands',
     icon: '🌍',
-    rightHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
     leftHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
+    rightHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
     description: 'Both hands open with 5 fingers spread in circular orbits.',
     action: 'Show 5 open fingers in both Left and Right boxes.',
   },
   email: {
     name: 'Envelope Slot Pass',
     icon: '✉️',
-    rightHandReq: { count: 2, label: 'Flat Sender ✌️' },
     leftHandReq: { count: 3, label: 'Envelope Slot ✉️' },
-    description: 'Right hand 2 flat fingers entering Left hand envelope slot.',
-    action: 'Right hand (Screen Left) sender, Left hand (Screen Right) slot.',
+    rightHandReq: { count: 2, label: 'Flat Sender ✌️' },
+    description: 'Left hand envelope slot, Right hand flat sender entering slot.',
+    action: 'Left hand (Screen Left) slot, Right hand (Screen Right) sender.',
   },
   security: {
     name: 'Dual Closed S-Fists',
     icon: '🛡️',
-    rightHandReq: { count: 0, label: 'Closed S-Fist ✊' },
     leftHandReq: { count: 0, label: 'Closed S-Fist ✊' },
+    rightHandReq: { count: 0, label: 'Closed S-Fist ✊' },
     description: 'Both hands closed tightly into S-fists across chest.',
     action: 'Show closed fists in both Left and Right boxes.',
   },
@@ -109,7 +109,6 @@ const FINGER_BONES = [
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 // Count extended fingers from 21 landmark points (already in pixel space).
-// Thumb uses distance-from-wrist since its bend axis differs from the other four.
 const countExtendedFingers = (pts) => {
   let count = 0;
   const wrist = pts[0];
@@ -118,45 +117,42 @@ const countExtendedFingers = (pts) => {
   if (dist(thumbTip, wrist) > dist(thumbMcp, wrist) * 1.15) count += 1;
 
   FINGER_DEFS.forEach(({ tip, pip }) => {
-    if (pts[tip].y < pts[pip].y) count += 1; // tip above pip (in pixel coords, up = smaller y) = extended
+    if (pts[tip].y < pts[pip].y) count += 1; // tip above pip = extended
   });
   return count;
 };
 
-// Convert MediaPipe's raw (unmirrored, normalized) landmarks into mirrored pixel
-// coordinates matching our mirrored canvas.
-//
-// Hand identity is assigned from MediaPipe's own handedness classification, NOT
-// from which side of the screen the hand happens to be on. MediaPipe's handedness
-// labels assume the frame fed to it was already selfie-mirrored — we feed it the
-// RAW, unmirrored video (we only mirror on the canvas for display), so its label
-// is backwards relative to the user's actual hand and must be inverted here.
-//
-// "YOUR RIGHT HAND" is the screen-left box and "YOUR LEFT HAND" is the screen-right
-// box (signer-facing-you convention, matching the avatar demo) — so the user's
-// physical right hand should register in the left box, and physical left hand in
-// the right box.
+// Screen-Spatial Hand Classifier:
+// Converts raw landmarks to mirrored pixel coordinates and binds:
+// - Left half of screen (Screen Left box) -> Left Hand (`leftRes`)
+// - Right half of screen (Screen Right box) -> Right Hand (`rightRes`)
 const classifyHands = (result, w, h) => {
   let rightRes = { detected: false, count: -1, landmarks: null };
   let leftRes = { detected: false, count: -1, landmarks: null };
 
   if (!result?.landmarks?.length) return { rightRes, leftRes };
 
-  result.landmarks.forEach((lms, i) => {
+  // Convert all detected hands to mirrored pixel coordinates
+  const detectedHands = result.landmarks.map((lms) => {
     const pts = lms.map((p) => ({ x: w - p.x * w, y: p.y * h }));
     const count = countExtendedFingers(pts);
-
-    const rawLabel = result.handedness?.[i]?.[0]?.categoryName; // 'Left' | 'Right' (mirrored assumption)
-    const actualHand = rawLabel === 'Left' ? 'Right' : rawLabel === 'Right' ? 'Left' : null;
-
-    const entry = { detected: true, count, landmarks: pts };
-
-    if (actualHand === 'Right') {
-      rightRes = entry;
-    } else if (actualHand === 'Left') {
-      leftRes = entry;
-    }
+    const avgX = pts.reduce((sum, p) => sum + p.x, 0) / pts.length;
+    return { detected: true, count, landmarks: pts, avgX };
   });
+
+  if (detectedHands.length === 1) {
+    const hand = detectedHands[0];
+    if (hand.avgX < w * 0.5) {
+      leftRes = { detected: true, count: hand.count, landmarks: hand.landmarks };
+    } else {
+      rightRes = { detected: true, count: hand.count, landmarks: hand.landmarks };
+    }
+  } else if (detectedHands.length >= 2) {
+    // Sort horizontally: leftmost is Screen Left (Left Hand), rightmost is Screen Right (Right Hand)
+    detectedHands.sort((a, b) => a.avgX - b.avgX);
+    leftRes = { detected: true, count: detectedHands[0].count, landmarks: detectedHands[0].landmarks };
+    rightRes = { detected: true, count: detectedHands[detectedHands.length - 1].count, landmarks: detectedHands[detectedHands.length - 1].landmarks };
+  }
 
   return { rightRes, leftRes };
 };
@@ -373,8 +369,8 @@ const CameraSignEvaluator = ({
       const boxH = Math.floor(h * 0.68);
       const boxY = Math.floor(h * 0.22);
 
-      const screenLeftBox = { x: Math.floor(w * 0.05), y: boxY, w: boxW, h: boxH, title: 'YOUR RIGHT HAND' };
-      const screenRightBox = { x: Math.floor(w * 0.55), y: boxY, w: boxW, h: boxH, title: 'YOUR LEFT HAND' };
+      const screenLeftBox = { x: Math.floor(w * 0.05), y: boxY, w: boxW, h: boxH, title: 'YOUR LEFT HAND' };
+      const screenRightBox = { x: Math.floor(w * 0.55), y: boxY, w: boxW, h: boxH, title: 'YOUR RIGHT HAND' };
 
       let rightRes = { detected: false, count: -1, landmarks: null };
       let leftRes = { detected: false, count: -1, landmarks: null };
@@ -453,8 +449,8 @@ const CameraSignEvaluator = ({
         ctx.fillText(label, box.x + 10, box.y + 20);
       };
 
-      drawBox(screenLeftBox, rightRes, spec.rightHandReq);
-      drawBox(screenRightBox, leftRes, spec.leftHandReq);
+      drawBox(screenLeftBox, leftRes, spec.leftHandReq);
+      drawBox(screenRightBox, rightRes, spec.rightHandReq);
 
       // Draw the real 21-point skeleton, confined to wherever the hand actually is.
       const drawSkeleton = (res) => {
@@ -503,10 +499,10 @@ const CameraSignEvaluator = ({
         lastStateSyncRef.current = now;
 
         if (videoValid) {
-          rightInZoneRef.current = rightRes.detected;
           leftInZoneRef.current = leftRes.detected;
-          setRightInZone(rightRes.detected);
+          rightInZoneRef.current = rightRes.detected;
           setLeftInZone(leftRes.detected);
+          setRightInZone(rightRes.detected);
         }
 
         const rightOk = matchesRequirement(rightRes, spec.rightHandReq);
@@ -732,26 +728,6 @@ const CameraSignEvaluator = ({
       <div className="mt-4 grid grid-cols-2 gap-3">
         <button
           onClick={() => {
-            const next = !rightInZone;
-            rightInZoneRef.current = next;
-            setRightInZone(next);
-          }}
-          className={`rounded-2xl border p-3.5 transition-all text-left ${rightInZone
-              ? 'border-emerald-500/50 bg-emerald-950/30'
-              : 'border-white/10 bg-slate-900/80 hover:border-primary/40'
-            }`}
-        >
-          <div className="flex items-center justify-between text-xs font-mono font-bold mb-1">
-            <span className="text-primary">YOUR RIGHT HAND (Screen Left):</span>
-            <span className={rightInZone ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
-              {rightInZone ? '✓ IN ZONE' : 'EMPTY'}
-            </span>
-          </div>
-          <p className="text-xs font-bold text-white">{spec.rightHandReq.label}</p>
-        </button>
-
-        <button
-          onClick={() => {
             const next = !leftInZone;
             leftInZoneRef.current = next;
             setLeftInZone(next);
@@ -762,12 +738,32 @@ const CameraSignEvaluator = ({
             }`}
         >
           <div className="flex items-center justify-between text-xs font-mono font-bold mb-1">
-            <span className="text-cyan-400">YOUR LEFT HAND (Screen Right):</span>
+            <span className="text-primary">YOUR LEFT HAND (Screen Left):</span>
             <span className={leftInZone ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
               {leftInZone ? '✓ IN ZONE' : 'EMPTY'}
             </span>
           </div>
           <p className="text-xs font-bold text-white">{spec.leftHandReq.label}</p>
+        </button>
+
+        <button
+          onClick={() => {
+            const next = !rightInZone;
+            rightInZoneRef.current = next;
+            setRightInZone(next);
+          }}
+          className={`rounded-2xl border p-3.5 transition-all text-left ${rightInZone
+              ? 'border-emerald-500/50 bg-emerald-950/30'
+              : 'border-white/10 bg-slate-900/80 hover:border-primary/40'
+            }`}
+        >
+          <div className="flex items-center justify-between text-xs font-mono font-bold mb-1">
+            <span className="text-cyan-400">YOUR RIGHT HAND (Screen Right):</span>
+            <span className={rightInZone ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
+              {rightInZone ? '✓ IN ZONE' : 'EMPTY'}
+            </span>
+          </div>
+          <p className="text-xs font-bold text-white">{spec.rightHandReq.label}</p>
         </button>
       </div>
 
