@@ -221,9 +221,11 @@ const SignCoursePage = () => {
             </h2>
             <p className="sign-course-hero-desc">
               Learn O/L ICT sign language terms step-by-step. Practice gestures with real-time AI evaluation and wristband haptic feedback.
+              <br></br>
+              
             </p>
           </div>
-
+                 <br></br>
           <button
             onClick={() => setShowVirtualBand(!showVirtualBand)}
             className={`shrink-0 flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-all shadow-md whitespace-nowrap ${
@@ -237,9 +239,9 @@ const SignCoursePage = () => {
             <span className="sm:hidden">{showVirtualBand ? 'Hide' : 'Show'}</span>
           </button>
         </div>
-
+        <br></br>
         {/* Metrics Grid: 2-col mobile → 4-col md+ */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5 pt-2">
           <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/20 text-primary">
               <Flame size={18} />
@@ -282,7 +284,7 @@ const SignCoursePage = () => {
             </div>
           </div>
         </div>
-
+          <br></br>
         {/* Tab Nav — scrollable on mobile */}
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar border-t border-white/10 pt-4 -mx-1 px-1">
           <button
@@ -331,8 +333,9 @@ const SignCoursePage = () => {
             </button>
           )}
         </div>
+        <br></br>
       </div>
-
+      
       {/* Main Content Workspace Layout */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-12 items-start">
         {/* Primary Content (Curriculum or Practice or Settings) */}
