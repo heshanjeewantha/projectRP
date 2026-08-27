@@ -9,8 +9,10 @@ import {
   House,
   LogOut,
   MessageSquare,
+  Moon,
   ShieldCheck,
   Sparkles,
+  Sun,
   Upload,
   Watch,
 } from 'lucide-react';
@@ -37,7 +39,7 @@ const adminNavItems = [
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { currentUser, userRole, logout } = useStore();
+  const { currentUser, userRole, logout, theme, toggleTheme } = useStore();
 
   const navItems = userRole === 'admin' ? adminNavItems : studentNavItems;
 
@@ -53,7 +55,7 @@ const Navbar = () => {
       transition={{ duration: 0.32 }}
       className="sticky top-0 z-50 flex w-full justify-center px-2 pt-2 sm:px-4 sm:pt-4"
     >
-      <div className="flex w-[min(1460px,100%)] flex-col gap-2.5 rounded-[24px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(9,14,11,0.96),rgba(6,10,8,0.96))] p-3 shadow-[0_14px_34px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:rounded-[28px] sm:p-4 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+      <div className="flex w-[min(1460px,100%)] flex-col gap-2.5 rounded-[24px] border border-[var(--nav-border)] bg-[var(--nav-bg)] p-3 shadow-[0_14px_34px_rgba(0,0,0,0.15)] backdrop-blur-xl sm:rounded-[28px] sm:p-4 lg:flex-row lg:items-center lg:justify-between lg:gap-4 transition-colors duration-300">
         {/* Brand Logo & Mode Badge */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -61,7 +63,7 @@ const Navbar = () => {
               <BrainCircuit size={22} />
             </div>
             <div className="min-w-0">
-              <h1 className="text-[1.3rem] font-black tracking-tight text-white sm:text-[1.6rem] md:text-[1.8rem]">
+              <h1 className="text-[1.3rem] font-black tracking-tight text-text-main sm:text-[1.6rem] md:text-[1.8rem]">
                 SignLearn AI
               </h1>
               <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-primary sm:text-[10px]">
@@ -73,29 +75,46 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* System Mode Pill for Small Screens */}
-          <div className="flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1 text-xs text-text-muted sm:hidden">
-            <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
-            <span className="text-[10px] font-semibold text-white">
-              {userRole === 'admin' ? 'Admin' : 'Active'}
-            </span>
+          <div className="flex items-center gap-2 sm:hidden">
+            {/* Theme Toggle Button Mobile */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+              aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)] bg-bg-card/80 text-text-main transition-all hover:bg-primary/10 hover:text-primary"
+            >
+              {theme === 'dark' ? (
+                <Sun size={17} className="text-amber-400" />
+              ) : (
+                <Moon size={17} className="text-primary" />
+              )}
+            </button>
+
+            {/* System Mode Pill for Small Screens */}
+            <div className="flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-bg-card/50 px-3 py-1 text-xs text-text-muted">
+              <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+              <span className="text-[10px] font-semibold text-text-main">
+                {userRole === 'admin' ? 'Admin' : 'Active'}
+              </span>
+            </div>
           </div>
         </div>
 
         {/* System Mode Pill for Desktop */}
-        <div className="hidden xl:flex items-center gap-2.5 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-2">
+        <div className="hidden xl:flex items-center gap-2.5 rounded-2xl border border-[var(--color-border)] bg-bg-card/40 px-4 py-2">
           <span className="h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(52,211,153,0.6)] animate-pulse" />
           <div className="text-left">
             <div className="text-[10px] font-bold uppercase tracking-wider text-primary">System Mode</div>
-            <div className="text-xs font-semibold text-white">
+            <div className="text-xs font-semibold text-text-main">
               {userRole === 'admin' ? 'Admin Content Pipeline' : 'Live Concept Checkpoints'}
             </div>
           </div>
         </div>
 
-        {/* Navigation Items - Smooth swipe on mobile, clean row on desktop */}
-        <div className="flex min-w-0 items-center overflow-x-auto no-scrollbar scroll-smooth">
-          <div className="flex w-full min-w-max items-center gap-1 rounded-[18px] bg-white/[0.02] p-1.5 sm:gap-1.5 lg:gap-2">
+        {/* Navigation Items & Theme Toggle */}
+        <div className="flex min-w-0 items-center justify-between gap-2 overflow-x-auto no-scrollbar scroll-smooth">
+          <div className="flex w-full min-w-max items-center gap-1 rounded-[18px] bg-bg-card/30 p-1.5 sm:gap-1.5 lg:gap-2">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -103,7 +122,7 @@ const Navbar = () => {
                 end={item.to === '/'}
                 className={({ isActive }) =>
                   `relative flex items-center justify-center gap-2.5 rounded-[14px] px-4 py-2.5 text-xs font-medium transition-all min-h-[40px] sm:px-5 sm:py-2.5 sm:text-[13px] ${
-                    isActive ? 'text-white font-semibold' : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
+                    isActive ? 'text-white font-semibold' : 'text-text-muted hover:text-text-main hover:bg-primary/5'
                   }`
                 }
               >
@@ -123,11 +142,32 @@ const Navbar = () => {
               </NavLink>
             ))}
 
+            {/* Theme Toggle Desktop */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+              aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+              className="hidden sm:flex relative items-center justify-center gap-2 rounded-[14px] px-3 py-2 text-xs font-semibold text-text-main border border-[var(--color-border)] bg-bg-card/60 transition-all min-h-[40px] hover:bg-primary/10 hover:border-primary/30 hover:text-primary"
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun size={16} className="text-amber-400" />
+                  <span className="whitespace-nowrap">Light</span>
+                </>
+              ) : (
+                <>
+                  <Moon size={16} className="text-primary" />
+                  <span className="whitespace-nowrap">Dark</span>
+                </>
+              )}
+            </button>
+
             {currentUser && (
               <button
                 type="button"
                 onClick={handleLogout}
-                className="relative flex items-center justify-center gap-2.5 rounded-[14px] px-4 py-2.5 text-xs font-medium text-text-muted transition-all min-h-[40px] hover:bg-red-500/10 hover:text-red-300 sm:px-5 sm:py-2.5 sm:text-[13px]"
+                className="relative flex items-center justify-center gap-2.5 rounded-[14px] px-4 py-2.5 text-xs font-medium text-text-muted transition-all min-h-[40px] hover:bg-red-500/10 hover:text-red-500 sm:px-5 sm:py-2.5 sm:text-[13px]"
               >
                 <LogOut size={16} className="shrink-0" />
                 <span className="whitespace-nowrap">Logout</span>
@@ -141,3 +181,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

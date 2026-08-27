@@ -131,9 +131,9 @@ async def review_flashcard_item(payload: FlashcardReviewRequest):
 # ── Feature 5: Mock Exam Simulator Routes ────────────────────────────────────
 
 @router.get("/mock-exam/start", response_model=MockExamStartResponse)
-async def start_mock_exam(studentId: str = "student_demo_123"):
-    """Initialize a 10-minute rapid fire O/L ICT mock exam."""
-    return await chatbot_service.start_mock_exam(studentId)
+async def start_mock_exam(studentId: str = "student_demo_123", topicId: str | None = None):
+    """Initialize a 10-minute rapid fire O/L ICT mock exam for a specific topic or full syllabus."""
+    return await chatbot_service.start_mock_exam(studentId, topic_id=topicId)
 
 
 @router.post("/mock-exam/submit", response_model=MockExamResultResponse)

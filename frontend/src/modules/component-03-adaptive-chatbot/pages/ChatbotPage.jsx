@@ -124,7 +124,7 @@ const shouldSkipMicroChallenge = (text, latestBotMessage) => {
 };
 
 const getSourceLabel = (sourceType) =>
-  sourceType === 'LLM' ? 'LLM Answer' : 'Dataset Fallback Answer';
+  sourceType === 'LLM' ? 'Answer' : 'Dataset Fallback Answer';
 
 const ChatbotPage = () => {
   const { userId, attentionStatus } = useStore();
@@ -450,17 +450,14 @@ const ChatbotPage = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      if (!activeShortNote) {
-                        handleOpenShortNote(selectedTopicId || 'computer_system');
-                      } else {
-                        setActiveViewTab('notes');
-                      }
+                      handleOpenShortNote(selectedTopicId || 'computer_system');
                     }}
                     className={`chatbot-tab-button ${activeViewTab === 'notes' ? 'is-active' : ''}`}
                   >
                     <FileText size={13} />
                     <span>Short Notes</span>
                   </button>
+
                 </div>
 
                 {/* Scope Tools Launcher Pills */}
@@ -1048,7 +1045,10 @@ const ChatbotPage = () => {
         isOpen={isMockExamModalOpen}
         onClose={() => setIsMockExamModalOpen(false)}
         studentId={userId}
+        topicId={selectedTopicId || 'computer_system'}
+        topicName={selectedTopic?.name || 'Computer System'}
       />
+
 
       <SignWordModal
         isOpen={Boolean(activeSignModalInfo)}

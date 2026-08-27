@@ -100,7 +100,7 @@ const AppShell = () => {
     location.pathname === '/admin/repeated-alerts';
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg-dark selection:bg-primary/30">
+    <div className="flex min-h-screen flex-col bg-bg-dark text-text-main selection:bg-primary/30 transition-colors duration-300">
       {!hideNav && <Navbar />}
       <main className="flex w-full flex-1 justify-center min-w-0">
         <AnimatedRoutes />

@@ -4399,45 +4399,341 @@ async def review_flashcard(student_id: str, card_id: str, rating: str) -> dict[s
 # ── Feature 5: Rapid-Fire Mock Exam Simulator Bank & Service ────────────────
 
 MOCK_EXAM_BANK = [
+    # ── Computer Systems & Architecture ──
     {
-        "id": "mx_1",
-        "questionText": "Which unit in the CPU is responsible for carrying out arithmetic and logic comparisons?",
-        "options": ["Control Unit", "Arithmetic Logic Unit (ALU)", "Primary Memory", "System Bus"],
+        "id": "cs_1",
+        "questionText": "Which unit in the CPU is responsible for carrying out arithmetic computations and logical comparisons?",
+        "options": ["Control Unit (CU)", "Arithmetic Logic Unit (ALU)", "Primary Memory (RAM)", "System Bus"],
         "correctAnswer": "Arithmetic Logic Unit (ALU)",
         "topicId": "computer_system",
         "topicName": "Computer Systems",
         "difficulty": "easy"
     },
     {
-        "id": "mx_2",
-        "questionText": "What is the capacity in bytes of 1 Megabyte (1 MB) in strict binary computer notation?",
-        "options": ["1,000,000 Bytes", "1,048,576 Bytes (1024 x 1024)", "10,000 Bytes", "1,024 Bytes"],
-        "correctAnswer": "1,048,576 Bytes (1024 x 1024)",
-        "topicId": "data_information",
-        "topicName": "Data Representation",
+        "id": "cs_2",
+        "questionText": "In Von Neumann architecture, which CPU register holds the memory address of the next instruction to be fetched?",
+        "options": ["Memory Data Register (MDR)", "Accumulator (ACC)", "Program Counter (PC)", "Instruction Register (IR)"],
+        "correctAnswer": "Program Counter (PC)",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
         "difficulty": "medium"
     },
     {
-        "id": "mx_3",
-        "questionText": "Which network topology connects all client nodes to a central forwarding switch or hub?",
+        "id": "cs_3",
+        "questionText": "Why is RAM considered 'volatile' memory in computer systems?",
+        "options": [
+            "It can only be read, not written to",
+            "It loses all stored data when electrical power is turned off",
+            "It is permanently etched onto the motherboard",
+            "It has the slowest data transfer speed in the memory hierarchy"
+        ],
+        "correctAnswer": "It loses all stored data when electrical power is turned off",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
+        "difficulty": "easy"
+    },
+    {
+        "id": "cs_4",
+        "questionText": "Which bus in the system bus architecture is strictly unidirectional from the CPU to memory?",
+        "options": ["Data Bus", "Address Bus", "Control Bus", "PCIe Bus"],
+        "correctAnswer": "Address Bus",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
+        "difficulty": "medium"
+    },
+    {
+        "id": "cs_5",
+        "questionText": "What is the primary function of Cache memory located between the CPU and Main RAM?",
+        "options": [
+            "To store long-term backup files",
+            "To provide ultra-fast access to frequently used instructions and reduce CPU wait time",
+            "To convert digital signals into analog signals",
+            "To manage external peripheral device drivers"
+        ],
+        "correctAnswer": "To provide ultra-fast access to frequently used instructions and reduce CPU wait time",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
+        "difficulty": "hard"
+    },
+    {
+        "id": "cs_6",
+        "questionText": "Which high-speed port standard is commonly used for connecting external displays, peripherals, and high-speed data transfer simultaneously?",
+        "options": ["VGA", "PS/2", "Thunderbolt / USB-C", "Parallel Port"],
+        "correctAnswer": "Thunderbolt / USB-C",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
+        "difficulty": "easy"
+    },
+    {
+        "id": "cs_7",
+        "questionText": "What sequence correctly represents the machine instruction execution cycle of the CPU?",
+        "options": [
+            "Execute → Decode → Fetch → Store",
+            "Fetch → Decode → Execute → Store",
+            "Decode → Fetch → Store → Execute",
+            "Store → Fetch → Execute → Decode"
+        ],
+        "correctAnswer": "Fetch → Decode → Execute → Store",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
+        "difficulty": "medium"
+    },
+    {
+        "id": "cs_8",
+        "questionText": "Which component manages timing signals and directs data flow between the CPU, RAM, and I/O devices?",
+        "options": ["Arithmetic Logic Unit (ALU)", "Control Unit (CU)", "Flash ROM", "BIOS Chip"],
+        "correctAnswer": "Control Unit (CU)",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
+        "difficulty": "easy"
+    },
+
+    # ── Data and Information Representation ──
+    {
+        "id": "di_1",
+        "questionText": "What is the exact capacity in bytes of 1 Megabyte (1 MB) in strict binary computer notation?",
+        "options": ["1,000,000 Bytes", "1,048,576 Bytes (1024 x 1024)", "10,000 Bytes", "1,024 Bytes"],
+        "correctAnswer": "1,048,576 Bytes (1024 x 1024)",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "medium"
+    },
+    {
+        "id": "di_2",
+        "questionText": "Which logic gate produces an output of 1 ONLY when both of its inputs are 1?",
+        "options": ["OR Gate", "AND Gate", "NOT Gate", "XOR Gate"],
+        "correctAnswer": "AND Gate",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "easy"
+    },
+    {
+        "id": "di_3",
+        "questionText": "What is the binary equivalent of the decimal number 13?",
+        "options": ["1101", "1011", "1110", "1001"],
+        "correctAnswer": "1101",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "medium"
+    },
+    {
+        "id": "di_4",
+        "questionText": "Which character encoding standard uses variable-width encoding to represent characters from almost all written languages including Sinhala, Tamil, and English?",
+        "options": ["ASCII (7-bit)", "EBCDIC", "Unicode / UTF-8", "BCD"],
+        "correctAnswer": "Unicode / UTF-8",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "easy"
+    },
+    {
+        "id": "di_5",
+        "questionText": "What is the fundamental difference between 'Data' and 'Information'?",
+        "options": [
+            "Data is processed and meaningful; Information is raw and unorganized",
+            "Data is raw unorganized facts; Information is processed data with context and meaning",
+            "Data is only numbers; Information is only text",
+            "There is no difference in computing"
+        ],
+        "correctAnswer": "Data is raw unorganized facts; Information is processed data with context and meaning",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "easy"
+    },
+    {
+        "id": "di_6",
+        "questionText": "Which two logic gates are considered 'Universal Gates' because any boolean function can be created using only them?",
+        "options": ["AND and OR", "NAND and NOR", "NOT and XOR", "OR and NOT"],
+        "correctAnswer": "NAND and NOR",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "hard"
+    },
+    {
+        "id": "di_7",
+        "questionText": "What is the hexadecimal representation of the 4-bit binary nibble '1111'?",
+        "options": ["E", "F", "15", "A"],
+        "correctAnswer": "F",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "easy"
+    },
+    {
+        "id": "di_8",
+        "questionText": "In logic gates, what is the output of an inverter (NOT Gate) when its input is binary 0?",
+        "options": ["0", "1", "High Impedance", "Undefined"],
+        "correctAnswer": "1",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "easy"
+    },
+
+    # ── Operating Systems & Utilities ──
+    {
+        "id": "os_1",
+        "questionText": "Which component of an Operating System is the core program that remains in RAM to manage hardware and system resources?",
+        "options": ["User Shell", "Kernel", "Device Driver", "File Explorer"],
+        "correctAnswer": "Kernel",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "medium"
+    },
+    {
+        "id": "os_2",
+        "questionText": "What is the primary role of a Device Driver?",
+        "options": [
+            "To physically speed up computer cooling fans",
+            "To act as a software translator between the OS and a specific hardware peripheral",
+            "To prevent internet viruses from infecting RAM",
+            "To defragment hard disk storage sectors"
+        ],
+        "correctAnswer": "To act as a software translator between the OS and a specific hardware peripheral",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "easy"
+    },
+    {
+        "id": "os_3",
+        "questionText": "Which type of User Interface requires users to type text commands rather than clicking graphical windows and icons?",
+        "options": ["GUI (Graphical User Interface)", "CLI (Command Line Interface)", "NUI (Natural User Interface)", "Touch UI"],
+        "correctAnswer": "CLI (Command Line Interface)",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "easy"
+    },
+    {
+        "id": "os_4",
+        "questionText": "What technique allows an OS to use hard drive storage space as temporary extension memory when physical RAM is full?",
+        "options": ["Disk Striping", "Virtual Memory (Paging/Swapping)", "RAID Mirroring", "Flash Caching"],
+        "correctAnswer": "Virtual Memory (Paging/Swapping)",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "medium"
+    },
+    {
+        "id": "os_5",
+        "questionText": "Which utility software reorganizes fragmented files on an HDD into contiguous clusters to speed up access times?",
+        "options": ["Disk Defragmenter", "Disk Cleanup", "Antivirus Scanner", "File Compression Utility"],
+        "correctAnswer": "Disk Defragmenter",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "easy"
+    },
+    {
+        "id": "os_6",
+        "questionText": "Which of the following is an example of an Open Source operating system?",
+        "options": ["Microsoft Windows 11", "Apple macOS", "Linux (Ubuntu)", "Apple iOS"],
+        "correctAnswer": "Linux (Ubuntu)",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "easy"
+    },
+    {
+        "id": "os_7",
+        "questionText": "What OS process management state occurs when a running process is paused waiting for an I/O operation to finish?",
+        "options": ["Ready State", "Running State", "Blocked / Waiting State", "Terminated State"],
+        "correctAnswer": "Blocked / Waiting State",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "hard"
+    },
+    {
+        "id": "os_8",
+        "questionText": "Which file system structure is used by modern operating systems to organize files and folders?",
+        "options": ["Linear Queue", "Hierarchical Directory Tree", "Circular Ring", "Flat Database"],
+        "correctAnswer": "Hierarchical Directory Tree",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "easy"
+    },
+
+    # ── Networking & Internet ──
+    {
+        "id": "net_1",
+        "questionText": "Which network topology connects all client devices to a central forwarding switch or hub?",
         "options": ["Ring Topology", "Bus Topology", "Star Topology", "Mesh Topology"],
         "correctAnswer": "Star Topology",
         "topicId": "networking",
-        "topicName": "Networks",
+        "topicName": "Networking",
         "difficulty": "easy"
     },
     {
-        "id": "mx_4",
-        "questionText": "Which protocol is responsible for translating domain names into machine-readable IP addresses?",
+        "id": "net_2",
+        "questionText": "Which protocol is responsible for translating human-friendly domain names (e.g. www.nie.lk) into machine-routable IP addresses?",
         "options": ["HTTP", "DNS (Domain Name System)", "SMTP", "FTP"],
         "correctAnswer": "DNS (Domain Name System)",
         "topicId": "networking",
-        "topicName": "Networks",
+        "topicName": "Networking",
         "difficulty": "easy"
     },
     {
-        "id": "mx_5",
-        "questionText": "In relational databases, what property ensures that a primary key field cannot contain duplicate or NULL values?",
+        "id": "net_3",
+        "questionText": "What is the primary function of a Router in computer networking?",
+        "options": [
+            "To connect devices within the exact same Local Area Network (LAN)",
+            "To route data packets across different subnets and between a local network and the Internet",
+            "To convert digital signals into display pixels",
+            "To encrypt passwords stored in browser cookies"
+        ],
+        "correctAnswer": "To route data packets across different subnets and between a local network and the Internet",
+        "topicId": "networking",
+        "topicName": "Networking",
+        "difficulty": "medium"
+    },
+    {
+        "id": "net_4",
+        "questionText": "What is the difference between an IP address and a MAC address?",
+        "options": [
+            "An IP address is permanent hardware address; MAC address changes dynamically",
+            "An IP address is logical/network layer address; MAC address is physical hardware address on the NIC",
+            "MAC addresses are only used for satellite communications",
+            "There is no difference"
+        ],
+        "correctAnswer": "An IP address is logical/network layer address; MAC address is physical hardware address on the NIC",
+        "topicId": "networking",
+        "topicName": "Networking",
+        "difficulty": "medium"
+    },
+    {
+        "id": "net_5",
+        "questionText": "Which protocol securely transmits encrypted web pages over the internet using SSL/TLS?",
+        "options": ["HTTP", "HTTPS", "FTP", "SNMP"],
+        "correctAnswer": "HTTPS",
+        "topicId": "networking",
+        "topicName": "Networking",
+        "difficulty": "easy"
+    },
+    {
+        "id": "net_6",
+        "questionText": "In email architecture, which protocol is specifically used by email clients to SEND outgoing mail messages?",
+        "options": ["POP3", "IMAP", "SMTP (Simple Mail Transfer Protocol)", "HTTP"],
+        "correctAnswer": "SMTP (Simple Mail Transfer Protocol)",
+        "topicId": "networking",
+        "topicName": "Networking",
+        "difficulty": "easy"
+    },
+    {
+        "id": "net_7",
+        "questionText": "Which transmission medium provides the highest data transfer bandwidth and immunity against electromagnetic interference?",
+        "options": ["Unshielded Twisted Pair (UTP) Copper Cable", "Coaxial Cable", "Fiber Optic Cable", "Infrared Wave"],
+        "correctAnswer": "Fiber Optic Cable",
+        "topicId": "networking",
+        "topicName": "Networking",
+        "difficulty": "easy"
+    },
+    {
+        "id": "net_8",
+        "questionText": "In bus topology, what passive device is attached to both ends of the main backbone cable to prevent signal reflection?",
+        "options": ["Repeater", "Terminator", "Bridge", "Gateway"],
+        "correctAnswer": "Terminator",
+        "topicId": "networking",
+        "topicName": "Networking",
+        "difficulty": "hard"
+    },
+
+    # ── Databases & SQL ──
+    {
+        "id": "db_1",
+        "questionText": "In relational databases, what property ensures that a primary key column cannot contain duplicate or NULL values?",
         "options": ["Referential Integrity", "Entity Integrity", "Domain Integrity", "Atomicity"],
         "correctAnswer": "Entity Integrity",
         "topicId": "databases",
@@ -4445,59 +4741,803 @@ MOCK_EXAM_BANK = [
         "difficulty": "medium"
     },
     {
-        "id": "mx_6",
+        "id": "db_2",
         "questionText": "Which SQL command is used to retrieve specific columns of data from an existing database table?",
-        "options": ["INSERT INTO", "SELECT", "UPDATE", "DROP"],
+        "options": ["INSERT INTO", "SELECT", "UPDATE", "DROP TABLE"],
         "correctAnswer": "SELECT",
         "topicId": "databases",
         "topicName": "Databases",
         "difficulty": "easy"
     },
     {
-        "id": "mx_7",
-        "questionText": "Which logic gate outputs a binary 1 ONLY when both of its input signals are 1?",
-        "options": ["OR Gate", "AND Gate", "NOT Gate", "XOR Gate"],
-        "correctAnswer": "AND Gate",
-        "topicId": "data_information",
-        "topicName": "Data Representation",
+        "id": "db_3",
+        "questionText": "What is a Foreign Key in a relational database table?",
+        "options": [
+            "A key imported from another country's database",
+            "An attribute in one table that references the Primary Key of another table to establish a relationship",
+            "A key used exclusively for password encryption",
+            "A column that must contain only floating point numbers"
+        ],
+        "correctAnswer": "An attribute in one table that references the Primary Key of another table to establish a relationship",
+        "topicId": "databases",
+        "topicName": "Databases",
         "difficulty": "easy"
     },
     {
-        "id": "mx_8",
-        "questionText": "What type of malware disguises itself as legitimate software to trick users into running it?",
-        "options": ["Worm", "Trojan Horse", "Ransomware", "Spyware"],
+        "id": "db_4",
+        "questionText": "Which SQL statement is used to add new rows of records into an existing table?",
+        "options": ["ADD ROW", "INSERT INTO", "CREATE ROW", "UPDATE"],
+        "correctAnswer": "INSERT INTO",
+        "topicId": "databases",
+        "topicName": "Databases",
+        "difficulty": "easy"
+    },
+    {
+        "id": "db_5",
+        "questionText": "What database rule prevents a foreign key from referencing a non-existent primary key value?",
+        "options": ["Entity Integrity", "Referential Integrity", "Null Value Constraint", "Database Isolation"],
+        "correctAnswer": "Referential Integrity",
+        "topicId": "databases",
+        "topicName": "Databases",
+        "difficulty": "medium"
+    },
+    {
+        "id": "db_6",
+        "questionText": "In a relational table, what standard term refers to a single row representing an entity instance?",
+        "options": ["Tuple / Record", "Field / Attribute", "Schema", "Domain"],
+        "correctAnswer": "Tuple / Record",
+        "topicId": "databases",
+        "topicName": "Databases",
+        "difficulty": "easy"
+    },
+    {
+        "id": "db_7",
+        "questionText": "Which SQL clause is used to filter records so only rows meeting a specific logical condition are returned?",
+        "options": ["ORDER BY", "GROUP BY", "WHERE", "HAVING"],
+        "correctAnswer": "WHERE",
+        "topicId": "databases",
+        "topicName": "Databases",
+        "difficulty": "easy"
+    },
+    {
+        "id": "db_8",
+        "questionText": "What process systematically decomposes complex relational tables to minimize data redundancy and prevent update anomalies?",
+        "options": ["Database Normalization (1NF, 2NF, 3NF)", "Data Encryption", "Data Mining", "Table Indexing"],
+        "correctAnswer": "Database Normalization (1NF, 2NF, 3NF)",
+        "topicId": "databases",
+        "topicName": "Databases",
+        "difficulty": "hard"
+    },
+
+    # ── Programming & Algorithms ──
+    {
+        "id": "pr_1",
+        "questionText": "In standard flowchart notation, which geometric symbol represents a decision or conditional branch (If-Else)?",
+        "options": ["Rectangle", "Oval", "Diamond (Rhombus)", "Parallelogram"],
+        "correctAnswer": "Diamond (Rhombus)",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "easy"
+    },
+    {
+        "id": "pr_2",
+        "questionText": "Which geometric symbol is used in flowcharts to represent input and output operations (e.g. Read X, Print Y)?",
+        "options": ["Rectangle", "Parallelogram", "Oval", "Circle"],
+        "correctAnswer": "Parallelogram",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "easy"
+    },
+    {
+        "id": "pr_3",
+        "questionText": "Which type of programming error occurs when code violates the grammatical rules of the programming language and prevents compilation?",
+        "options": ["Logic Error", "Syntax Error", "Runtime Error", "Semantic Error"],
+        "correctAnswer": "Syntax Error",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "easy"
+    },
+    {
+        "id": "pr_4",
+        "questionText": "What are the three fundamental control structures used in structured algorithms?",
+        "options": [
+            "Input, Process, Output",
+            "Sequence, Selection (Condition), Iteration (Looping)",
+            "Compile, Link, Execute",
+            "Constant, Variable, Function"
+        ],
+        "correctAnswer": "Sequence, Selection (Condition), Iteration (Looping)",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "medium"
+    },
+    {
+        "id": "pr_5",
+        "questionText": "What type of error is present when a program runs without crashing but produces incorrect calculation results?",
+        "options": ["Syntax Error", "Logic Error", "Hardware Crash Error", "Type Mismatch Error"],
+        "correctAnswer": "Logic Error",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "easy"
+    },
+    {
+        "id": "pr_6",
+        "questionText": "What is the purpose of a flowchart connector symbol (small circle)?",
+        "options": [
+            "To connect flowchart lines when drawing complex flow across pages without crossing lines",
+            "To represent arithmetic calculation",
+            "To store variables in memory",
+            "To indicate user keyboard input"
+        ],
+        "correctAnswer": "To connect flowchart lines when drawing complex flow across pages without crossing lines",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "medium"
+    },
+    {
+        "id": "pr_7",
+        "questionText": "What is Pseudocode?",
+        "options": [
+            "Compiled binary machine code",
+            "An informal, human-readable outline of an algorithm written in structured plain English",
+            "An encryption algorithm",
+            "A visual UML diagram"
+        ],
+        "correctAnswer": "An informal, human-readable outline of an algorithm written in structured plain English",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "easy"
+    },
+    {
+        "id": "pr_8",
+        "questionText": "What programming language translator converts high-level source code line-by-line during execution rather than all at once?",
+        "options": ["Compiler", "Interpreter", "Assembler", "Linker"],
+        "correctAnswer": "Interpreter",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "hard"
+    },
+
+    # ── Cyber Security & Digital Ethics ──
+    {
+        "id": "sec_1",
+        "questionText": "What type of malicious software disguises itself as a legitimate file or application to trick users into running it?",
+        "options": ["Worm", "Trojan Horse", "Ransomware", "Adware"],
         "correctAnswer": "Trojan Horse",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
+        "difficulty": "easy"
+    },
+    {
+        "id": "sec_2",
+        "questionText": "Which core pillar of information security (CIA Triad) ensures that information and systems are accessible by authorized users whenever needed?",
+        "options": ["Confidentiality", "Integrity", "Availability", "Authentication"],
+        "correctAnswer": "Availability",
         "topicId": "cyber_security",
         "topicName": "Cyber Security",
         "difficulty": "medium"
     },
     {
-        "id": "mx_9",
-        "questionText": "In standard flowchart notation, which symbol represents a decision or conditional branch (If-Else)?",
-        "options": ["Rectangle", "Oval", "Diamond (Rhombus)", "Parallelogram"],
-        "correctAnswer": "Diamond (Rhombus)",
-        "topicId": "programming_basics",
-        "topicName": "Algorithms",
+        "id": "sec_3",
+        "questionText": "What is Phishing in cyber security?",
+        "options": [
+            "Searching for bugs in source code",
+            "A fraudulent social engineering attack using fake emails or websites to steal sensitive user credentials",
+            "Encrypting a hard drive to ask for ransom",
+            "Connecting a switch to a router"
+        ],
+        "correctAnswer": "A fraudulent social engineering attack using fake emails or websites to steal sensitive user credentials",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
         "difficulty": "easy"
     },
     {
-        "id": "mx_10",
-        "questionText": "Which component of an Operating System directly manages memory, processes, and hardware device communication?",
-        "options": ["User Shell", "Kernel", "Device Driver", "File Explorer"],
-        "correctAnswer": "Kernel",
-        "topicId": "operating_systems",
-        "topicName": "Operating Systems",
+        "id": "sec_4",
+        "questionText": "What type of malware self-replicates across computer networks WITHOUT requiring human execution of an infected host file?",
+        "options": ["Virus", "Worm", "Spyware", "Keylogger"],
+        "correctAnswer": "Worm",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
+        "difficulty": "medium"
+    },
+    {
+        "id": "sec_5",
+        "questionText": "What is the primary role of a Network Firewall?",
+        "options": [
+            "To physically extinguish overheating server room fires",
+            "To monitor and filter incoming and outgoing network traffic based on predefined security rules",
+            "To clean dust from fiber optic cable connectors",
+            "To speed up broadband download bandwidth"
+        ],
+        "correctAnswer": "To monitor and filter incoming and outgoing network traffic based on predefined security rules",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
+        "difficulty": "easy"
+    },
+    {
+        "id": "sec_6",
+        "questionText": "What security practice involves encoding readable plaintext into unreadable ciphertext that only authorized key-holders can decrypt?",
+        "options": ["Hashing", "Encryption", "Fragmentation", "Virtualization"],
+        "correctAnswer": "Encryption",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
+        "difficulty": "easy"
+    },
+    {
+        "id": "sec_7",
+        "questionText": "What malicious attack floods a target server with overwhelming fake network traffic to make it unavailable to legitimate users?",
+        "options": ["Man-in-the-Middle (MitM)", "Denial of Service (DoS / DDoS)", "SQL Injection", "Cross-Site Scripting (XSS)"],
+        "correctAnswer": "Denial of Service (DoS / DDoS)",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
+        "difficulty": "medium"
+    },
+    {
+        "id": "sec_8",
+        "questionText": "What legal framework grants creators exclusive rights to reproduce, distribute, and adapt their original software and digital works?",
+        "options": [
+            "Creative Commons Attribution",
+            "Copyright & Intellectual Property Law",
+            "Open Access Agreement",
+            "Digital Freedom Act"
+        ],
+        "correctAnswer": "Copyright & Intellectual Property Law",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
+        "difficulty": "easy"
+    },
+
+
+    # ── Database Normalization (1NF, 2NF, 3NF) ──
+    {
+
+        "id": "norm_1",
+        "questionText": "What is the primary condition required for a database table to satisfy First Normal Form (1NF)?",
+        "options": [
+            "All non-key attributes must depend on the primary key",
+            "Every column cell must contain atomic (indivisible) values and have no repeating groups",
+            "The table must have at least three foreign keys",
+            "All table data must be encrypted"
+        ],
+        "correctAnswer": "Every column cell must contain atomic (indivisible) values and have no repeating groups",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "easy"
+    },
+    {
+        "id": "norm_2",
+        "questionText": "A table is in 1NF and has a composite primary key (StudentID, CourseID). If 'StudentName' depends only on 'StudentID', what type of dependency is this?",
+        "options": ["Transitive Dependency", "Partial Dependency", "Full Functional Dependency", "Multi-valued Dependency"],
+        "correctAnswer": "Partial Dependency",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "medium"
+    },
+    {
+        "id": "norm_3",
+        "questionText": "To convert a 1NF table into Second Normal Form (2NF), what problem must be completely eliminated?",
+        "options": ["Transitive Dependencies", "Partial Dependencies on composite primary keys", "Atomic Values", "Foreign Keys"],
+        "correctAnswer": "Partial Dependencies on composite primary keys",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "easy"
+    },
+    {
+        "id": "norm_4",
+        "questionText": "What type of dependency exists when a non-key attribute depends on another non-key attribute (e.g. StudentID → DepartmentID → DepartmentName)?",
+        "options": ["Partial Dependency", "Transitive Dependency", "Atomic Dependency", "Referential Constraint"],
+        "correctAnswer": "Transitive Dependency",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "medium"
+    },
+    {
+        "id": "norm_5",
+        "questionText": "Which normal form requires a table to be in 2NF and have zero transitive dependencies between non-key columns?",
+        "options": ["1NF", "2NF", "3NF (Third Normal Form)", "UNF"],
+        "correctAnswer": "3NF (Third Normal Form)",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "easy"
+    },
+    {
+        "id": "norm_6",
+        "questionText": "What database issue occurs when deleting a course record unintentionally erases all student enrollment data from the database?",
+        "options": ["Insertion Anomaly", "Deletion Anomaly", "Modification Anomaly", "Deadlock"],
+        "correctAnswer": "Deletion Anomaly",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "medium"
+    },
+    {
+        "id": "norm_7",
+        "questionText": "If a table in 1NF has a single-column Primary Key (e.g. CourseID only), is it automatically in 2NF?",
+        "options": [
+            "Yes, because partial dependencies can only occur with composite primary keys",
+            "No, it must always be split into two tables",
+            "Only if it has fewer than 100 rows",
+            "No, it must first be converted to 3NF"
+        ],
+        "correctAnswer": "Yes, because partial dependencies can only occur with composite primary keys",
+        "topicId": "normalization",
+        "topicName": "Normalization",
         "difficulty": "hard"
+    },
+    {
+        "id": "norm_8",
+        "questionText": "What is the primary benefit of normalizing a database structure?",
+        "options": [
+            "Increases storage hardware costs",
+            "Minimizes data redundancy and prevents update, insertion, and deletion anomalies",
+            "Eliminates the need for Primary Keys",
+            "Translates SQL queries into Python code"
+        ],
+        "correctAnswer": "Minimizes data redundancy and prevents update, insertion, and deletion anomalies",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "easy"
+    },
+
+    # ── Database Management Systems (DBMS Architecture) ──
+    {
+        "id": "dbms_1",
+        "questionText": "Which layer of the standard ANSI-SPARC Three-Schema DBMS Architecture represents how individual end-users view their specific data?",
+        "options": ["Internal / Physical Schema", "Conceptual Schema", "External / View Schema", "Hardware Schema"],
+        "correctAnswer": "External / View Schema",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "medium"
+    },
+    {
+        "id": "dbms_2",
+        "questionText": "Which SQL category includes commands used to define, alter, and delete database structures (such as CREATE TABLE and DROP TABLE)?",
+        "options": ["DML (Data Manipulation Language)", "DDL (Data Definition Language)", "DCL (Data Control Language)", "TCL"],
+        "correctAnswer": "DDL (Data Definition Language)",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "easy"
+    },
+    {
+        "id": "dbms_3",
+        "questionText": "Which of the following is classified as a Data Manipulation Language (DML) command?",
+        "options": ["CREATE TABLE", "ALTER TABLE", "INSERT INTO", "DROP DATABASE"],
+        "correctAnswer": "INSERT INTO",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "easy"
+    },
+    {
+        "id": "dbms_4",
+        "questionText": "What is 'Physical Data Independence' in a Database Management System?",
+        "options": [
+            "The ability to modify physical storage structures without changing the conceptual database schema",
+            "Allowing physical hard drives to run without electrical power",
+            "Preventing users from viewing relational tables",
+            "Running databases on multiple physical computers"
+        ],
+        "correctAnswer": "The ability to modify physical storage structures without changing the conceptual database schema",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "hard"
+    },
+    {
+        "id": "dbms_5",
+        "questionText": "Who is the primary professional responsible for managing database permissions, backups, security, and schema maintenance?",
+        "options": ["Network Cabling Technician", "Database Administrator (DBA)", "Graphic Designer", "Hardware Assembler"],
+        "correctAnswer": "Database Administrator (DBA)",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "easy"
+    },
+    {
+        "id": "dbms_6",
+        "questionText": "What database component contains metadata descriptions of all table definitions, relationships, and access rights?",
+        "options": ["Data Dictionary / System Catalog", "Application Server", "Web Cache", "Print Spooler"],
+        "correctAnswer": "Data Dictionary / System Catalog",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "medium"
+    },
+    {
+        "id": "dbms_7",
+        "questionText": "Why are DBMS systems preferred over traditional Flat-File spreadsheet storage for large institutions?",
+        "options": [
+            "DBMS completely removes the need for backup power",
+            "DBMS supports multi-user concurrent access, eliminates duplicate data, and enforces strict security",
+            "DBMS only runs on mobile phones",
+            "Flat-file systems are too fast for modern computers"
+        ],
+        "correctAnswer": "DBMS supports multi-user concurrent access, eliminates duplicate data, and enforces strict security",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "easy"
+    },
+    {
+        "id": "dbms_8",
+        "questionText": "Which SQL command is used to remove all rows from a table while preserving the table structure for future use?",
+        "options": ["TRUNCATE TABLE / DELETE FROM", "DROP TABLE", "REMOVE SCHEMA", "CANCEL TABLE"],
+        "correctAnswer": "TRUNCATE TABLE / DELETE FROM",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "medium"
+    },
+
+    # ── Flowcharts & Algorithm Design ──
+    {
+        "id": "fc_1",
+        "questionText": "In standard flowchart notation, which symbol must be used to indicate the Start and Stop (Terminal) of an algorithm?",
+        "options": ["Rectangle", "Oval / Rounded Pill", "Diamond", "Parallelogram"],
+        "correctAnswer": "Oval / Rounded Pill",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "easy"
+    },
+    {
+        "id": "fc_2",
+        "questionText": "Which flowchart symbol represents calculation or variable assignment (e.g. Total = Count + 1)?",
+        "options": ["Parallelogram", "Diamond", "Rectangle (Process)", "Circle"],
+        "correctAnswer": "Rectangle (Process)",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "easy"
+    },
+    {
+        "id": "fc_3",
+        "questionText": "How many outgoing labeled flowlines MUST emerge from a Decision Diamond in a valid flowchart?",
+        "options": ["Exactly 1", "Exactly 2 (True/False or Yes/No)", "At least 4", "None"],
+        "correctAnswer": "Exactly 2 (True/False or Yes/No)",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "easy"
+    },
+    {
+        "id": "fc_4",
+        "questionText": "What manual dry-run debugging technique uses a multi-column table to track how variable values change row-by-row during algorithm execution?",
+        "options": ["Truth Table", "Trace Table", "Routing Table", "Entity Table"],
+        "correctAnswer": "Trace Table",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "medium"
+    },
+    {
+        "id": "fc_5",
+        "questionText": "What type of loop construct checks its condition at the beginning BEFORE executing the loop body even once?",
+        "options": ["Pre-test Loop (e.g. WHILE loop)", "Post-test Loop (e.g. DO-WHILE loop)", "Infinite Loop", "Recursive Branch"],
+        "correctAnswer": "Pre-test Loop (e.g. WHILE loop)",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "medium"
+    },
+    {
+        "id": "fc_6",
+        "questionText": "Which geometric symbol is used to connect flowchart segments across different sections of a diagram without crossing flowlines?",
+        "options": ["Triangle", "Small Circle (Connector)", "Hexagon", "Pentagon"],
+        "correctAnswer": "Small Circle (Connector)",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "easy"
+    },
+    {
+        "id": "fc_7",
+        "questionText": "Consider loop: 'Count = 1; WHILE Count <= 5 DO Print Count; Count = Count + 2'. What numbers are printed?",
+        "options": ["1, 2, 3, 4, 5", "1, 3, 5", "2, 4", "1, 3, 5, 7"],
+        "correctAnswer": "1, 3, 5",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "medium"
+    },
+    {
+        "id": "fc_8",
+        "questionText": "Which flowchart symbol represents reading user input from a keyboard or displaying output on a monitor?",
+        "options": ["Rectangle", "Parallelogram (Input/Output)", "Diamond", "Oval"],
+        "correctAnswer": "Parallelogram (Input/Output)",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "easy"
+    },
+
+    # ── Electronic Spreadsheets ──
+    {
+        "id": "ss_1",
+        "questionText": "In spreadsheet formulas, what does the dollar sign '$' indicate in the cell reference '$B$4'?",
+        "options": [
+            "The cell contains Sri Lankan Rupees currency",
+            "It is an Absolute Cell Reference that will not change when copied to other cells",
+            "The cell is encrypted with password protection",
+            "The formula has a syntax calculation error"
+        ],
+        "correctAnswer": "It is an Absolute Cell Reference that will not change when copied to other cells",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ss_2",
+        "questionText": "Which built-in spreadsheet function calculates the arithmetic mean of numeric cells in range A1 to A10?",
+        "options": ["=MEAN(A1:A10)", "=AVERAGE(A1:A10)", "=SUM(A1:A10)/10", "=TOTAL(A1:A10)"],
+        "correctAnswer": "=AVERAGE(A1:A10)",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ss_3",
+        "questionText": "What spreadsheet error code appears when a formula attempts to divide a number by zero or an empty cell?",
+        "options": ["#NAME?", "#DIV/0!", "#VALUE!", "#REF!"],
+        "correctAnswer": "#DIV/0!",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ss_4",
+        "questionText": "What formula in cell C1 will display 'Pass' if cell A1 is 50 or higher, and 'Fail' otherwise?",
+        "options": [
+            "=IF(A1 >= 50, 'Pass', 'Fail')",
+            "=CHECK(A1 > 50, Pass, Fail)",
+            "=WHEN(A1 = 50, 'Pass')",
+            "=COUNTIF(A1 >= 50)"
+        ],
+        "correctAnswer": "=IF(A1 >= 50, 'Pass', 'Fail')",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "medium"
+    },
+    {
+        "id": "ss_5",
+        "questionText": "Which chart type is best suited for showing continuous trends over time (e.g. monthly student attendance)?",
+        "options": ["Pie Chart", "Line Chart", "Radar Chart", "Scatter Bubble Chart"],
+        "correctAnswer": "Line Chart",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ss_6",
+        "questionText": "What is the difference between '=COUNT(A1:A10)' and '=COUNTA(A1:A10)'?",
+        "options": [
+            "=COUNT counts only numeric cells; =COUNTA counts all non-empty cells (numbers and text)",
+            "=COUNT adds the values; =COUNTA calculates averages",
+            "=COUNT is for Mac; =COUNTA is for Windows",
+            "There is no functional difference"
+        ],
+        "correctAnswer": "=COUNT counts only numeric cells; =COUNTA counts all non-empty cells (numbers and text)",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "medium"
+    },
+    {
+        "id": "ss_7",
+        "questionText": "If formula '=A1*2' in cell B1 is copied down to cell B2, what does the relative formula become?",
+        "options": ["=A1*2", "=A2*2", "=$A$2*2", "=B1*2"],
+        "correctAnswer": "=A2*2",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ss_8",
+        "questionText": "Which chart type is most appropriate for displaying the percentage contribution of individual categories to a whole (100%)?",
+        "options": ["Line Chart", "Pie Chart", "Column Chart", "Area Chart"],
+        "correctAnswer": "Pie Chart",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "easy"
+    },
+
+    # ── Word Processing Applications ──
+    {
+        "id": "wp_1",
+        "questionText": "What are the three essential components required to perform a Mail Merge in a Word Processor?",
+        "options": [
+            "Keyboard, Mouse, Monitor",
+            "Main Document, Data Source (Recipient List), and Merged Document",
+            "Header, Footer, Footnote",
+            "Font, Size, Alignment"
+        ],
+        "correctAnswer": "Main Document, Data Source (Recipient List), and Merged Document",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "easy"
+    },
+    {
+        "id": "wp_2",
+        "questionText": "Which page orientation formats a printed document wider than it is tall (horizontal width > vertical height)?",
+        "options": ["Portrait Orientation", "Landscape Orientation", "Gutter Orientation", "Booklet Layout"],
+        "correctAnswer": "Landscape Orientation",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "easy"
+    },
+    {
+        "id": "wp_3",
+        "questionText": "What character formatting option positions text slightly above the normal text baseline in smaller font (e.g. the '2' in X²)?",
+        "options": ["Subscript", "Superscript", "Small Caps", "Strikethrough"],
+        "correctAnswer": "Superscript",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "easy"
+    },
+    {
+        "id": "wp_4",
+        "questionText": "What is the difference between a Footnote and an Endnote in a word document?",
+        "options": [
+            "Footnotes appear at the bottom of each respective page; Endnotes appear at the very end of the document",
+            "Footnotes are only for numbers; Endnotes are for pictures",
+            "Footnotes cannot be printed",
+            "There is no difference"
+        ],
+        "correctAnswer": "Footnotes appear at the bottom of each respective page; Endnotes appear at the very end of the document",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "medium"
+    },
+    {
+        "id": "wp_5",
+        "questionText": "Which word processing feature automatically searches for predefined common typing mistakes and replaces them instantly with correct text?",
+        "options": ["AutoCorrect", "Thesaurus", "Track Changes", "Word Count"],
+        "correctAnswer": "AutoCorrect",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "easy"
+    },
+    {
+        "id": "wp_6",
+        "questionText": "What type of break must be inserted into a document to allow different headers or page orientations in different chapters?",
+        "options": ["Simple Page Break", "Section Break (Next Page)", "Line Break (Shift+Enter)", "Column Break"],
+        "correctAnswer": "Section Break (Next Page)",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "medium"
+    },
+    {
+        "id": "wp_7",
+        "questionText": "Which paragraph alignment distributes text evenly between left and right margins, creating smooth straight edges on both sides?",
+        "options": ["Align Left", "Center Align", "Align Right", "Justify"],
+        "correctAnswer": "Justify",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "easy"
+    },
+    {
+        "id": "wp_8",
+        "questionText": "What tool in word processors provides a dictionary of synonyms and antonyms to help improve document vocabulary?",
+        "options": ["Thesaurus", "Spell Checker", "Mail Merge Wizard", "Macro Recorder"],
+        "correctAnswer": "Thesaurus",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "easy"
+    },
+
+    # ── Internet, Web & Electronic Mail ──
+    {
+        "id": "ie_1",
+        "questionText": "What is the purpose of the 'BCC' (Blind Carbon Copy) field in an email message header?",
+        "options": [
+            "To send high priority emergency messages",
+            "To send copies to recipients while hiding their email addresses from all other recipients",
+            "To automatically attach zip files",
+            "To forward emails to the spam folder"
+        ],
+        "correctAnswer": "To send copies to recipients while hiding their email addresses from all other recipients",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ie_2",
+        "questionText": "Which protocol is strictly responsible for SENDING outgoing email messages from a client application to an email server?",
+        "options": ["POP3", "IMAP", "SMTP (Simple Mail Transfer Protocol)", "HTTP"],
+        "correctAnswer": "SMTP (Simple Mail Transfer Protocol)",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ie_3",
+        "questionText": "In URL 'https://www.nie.lk/syllabus/ict.pdf', what component is 'www.nie.lk'?",
+        "options": ["Protocol", "Domain Name (Host)", "File Path", "Search Query Parameter"],
+        "correctAnswer": "Domain Name (Host)",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ie_4",
+        "questionText": "What is the primary operational difference between POP3 and IMAP email retrieval protocols?",
+        "options": [
+            "POP3 downloads and removes mail from server; IMAP synchronizes folders live across multiple devices",
+            "POP3 is only for images; IMAP is only for text",
+            "POP3 requires satellite connection; IMAP requires fiber optics",
+            "There is no difference"
+        ],
+        "correctAnswer": "POP3 downloads and removes mail from server; IMAP synchronizes folders live across multiple devices",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "medium"
+    },
+    {
+        "id": "ie_5",
+        "questionText": "What is the fundamental difference between a 'Web Browser' and a 'Search Engine'?",
+        "options": [
+            "A Web Browser is software used to view web pages; a Search Engine is an online service that indexes and searches the web",
+            "A Search Engine is hardware; a Web Browser is an operating system",
+            "Web Browsers are only made by Google",
+            "There is no difference"
+        ],
+        "correctAnswer": "A Web Browser is software used to view web pages; a Search Engine is an online service that indexes and searches the web",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ie_6",
+        "questionText": "Which search engine technique forces the search engine to match the exact phrase in the exact word order?",
+        "options": ["Enclosing keywords in double quotation marks (\"... \")", "Adding asterisks (*)", "Typing in all capital letters", "Using question marks (?)"],
+        "correctAnswer": "Enclosing keywords in double quotation marks (\"... \")",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ie_7",
+        "questionText": "What top-level domain code in 'moe.gov.lk' indicates a government ministry or department in Sri Lanka?",
+        "options": [".edu.lk", ".gov.lk", ".org.lk", ".com.lk"],
+        "correctAnswer": ".gov.lk",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ie_8",
+        "questionText": "What technology allows users to access shared computing resources, software applications, and storage over the internet on demand?",
+        "options": ["Cloud Computing", "Dial-up Networking", "Analog Broadcasting", "Disk Defragmentation"],
+        "correctAnswer": "Cloud Computing",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
     }
 ]
 
 
-async def start_mock_exam(student_id: str) -> dict[str, Any]:
+
+async def start_mock_exam(student_id: str, topic_id: str | None = None) -> dict[str, Any]:
+    """
+    Initializes a 10-minute rapid-fire mock exam.
+    If topic_id is provided, filters questions to match the active topic.
+    """
+    normalized_topic = (topic_id or "").lower().replace("-", "_").strip()
+    filtered_questions = []
+
+    if normalized_topic:
+        # Match topic questions
+        for q in MOCK_EXAM_BANK:
+            q_topic = q["topicId"].lower().replace("-", "_")
+            if (
+                q_topic == normalized_topic
+                or normalized_topic in q_topic
+                or q_topic in normalized_topic
+                or normalized_topic in q["topicName"].lower()
+            ):
+                filtered_questions.append(q)
+
+    # Fallback to general exam if not enough topic questions
+    if not filtered_questions or len(filtered_questions) < 5:
+        filtered_questions = MOCK_EXAM_BANK[:10]
+        exam_title = "National O/L ICT Rapid-Fire Mock Exam (Comprehensive 2026)"
+    else:
+        topic_display_name = filtered_questions[0]["topicName"]
+        exam_title = f"10-Min Topic Mock Exam: {topic_display_name}"
+
+    # Take up to 10 questions for the timed exam
+    selected_questions = filtered_questions[:10]
+
     return {
         "examId": f"mock_exam_{int(datetime.now(timezone.utc).timestamp())}",
-        "title": "National O/L ICT Rapid-Fire Mock Exam (2026 Edition)",
+        "title": exam_title,
+        "topicId": topic_id or "all_topics",
         "durationMinutes": 10,
-        "totalQuestions": len(MOCK_EXAM_BANK),
+        "totalQuestions": len(selected_questions),
         "questions": [
             {
                 "id": q["id"],
@@ -4507,7 +5547,7 @@ async def start_mock_exam(student_id: str) -> dict[str, Any]:
                 "topicName": q["topicName"],
                 "difficulty": q["difficulty"],
             }
-            for q in MOCK_EXAM_BANK
+            for q in selected_questions
         ],
     }
 
@@ -4516,7 +5556,15 @@ async def submit_mock_exam(exam_id: str, student_id: str, answers: dict[str, str
     score = 0
     topic_scores: dict[str, dict[str, int]] = {}
 
-    for q in MOCK_EXAM_BANK:
+    # Build question lookup map
+    question_map = {q["id"]: q for q in MOCK_EXAM_BANK}
+    evaluated_questions = [question_map[qid] for qid in answers.keys() if qid in question_map]
+
+    # If submitted empty or partial, fallback to bank
+    if not evaluated_questions:
+        evaluated_questions = MOCK_EXAM_BANK[:10]
+
+    for q in evaluated_questions:
         t_name = q["topicName"]
         if t_name not in topic_scores:
             topic_scores[t_name] = {"correct": 0, "total": 0}
@@ -4527,21 +5575,21 @@ async def submit_mock_exam(exam_id: str, student_id: str, answers: dict[str, str
             score += 1
             topic_scores[t_name]["correct"] += 1
 
-    total = len(MOCK_EXAM_BANK)
-    percentage = int((score / total) * 100)
+    total = len(evaluated_questions)
+    percentage = int((score / total) * 100) if total > 0 else 0
 
     if percentage >= 75:
         grade = "A (Distinction)"
-        feedback = "Outstanding examination readiness! You exhibit mastery across all O/L ICT syllabus components."
+        feedback = "Outstanding examination readiness! You exhibit mastery across tested O/L ICT syllabus concepts."
     elif percentage >= 65:
         grade = "B (Very Good)"
-        feedback = "Very strong performance! A slight brush-up on databases and system architecture will lock in an A grade."
+        feedback = "Very strong performance! A slight brush-up on key definitions and architecture will lock in an A grade."
     elif percentage >= 50:
         grade = "C (Credit)"
-        feedback = "Solid foundational knowledge. Review short notes on network protocols and data representation."
+        feedback = "Solid foundational knowledge. Review short notes on topic mechanisms and common exam traps."
     elif percentage >= 35:
         grade = "S (Pass)"
-        feedback = "Passing grade achieved. We recommend daily 5-minute flashcard drills to strengthen weak spots."
+        feedback = "Passing grade achieved. We recommend reviewing the concept diagram and taking daily flashcard drills."
     else:
         grade = "W (Needs Intensive Revision)"
         feedback = "Knowledge gaps identified. Use the Attention-Aware weak spot recommendations and short notes immediately."
@@ -4579,4 +5627,5 @@ async def submit_mock_exam(exam_id: str, student_id: str, answers: dict[str, str
         "timeTakenFormatted": time_str,
         "studyPrescription": study_prescription,
     }
+
 

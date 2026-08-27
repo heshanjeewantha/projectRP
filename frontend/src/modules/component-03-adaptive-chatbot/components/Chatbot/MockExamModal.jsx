@@ -15,7 +15,13 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { startMockExam, submitMockExam } from '../../services/chatbotApi';
 
-const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
+const MockExamModal = ({
+  isOpen,
+  onClose,
+  studentId = 'student_demo_123',
+  topicId = null,
+  topicName = '',
+}) => {
   const [examData, setExamData] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -28,7 +34,7 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
     if (isOpen) {
       initExam();
     }
-  }, [isOpen]);
+  }, [isOpen, topicId]);
 
   // Countdown timer
   useEffect(() => {
@@ -53,7 +59,7 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
     setCurrentQuestionIndex(0);
     setTimeRemainingSeconds(600);
     try {
-      const data = await startMockExam(studentId);
+      const data = await startMockExam(studentId, topicId);
       setExamData(data);
     } catch (error) {
       console.error('Failed to initialize mock exam', error);
@@ -61,6 +67,7 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
       setIsLoading(false);
     }
   };
+
 
   const handleSelectOption = (questionId, option) => {
     setAnswers((prev) => ({ ...prev, [questionId]: option }));
@@ -119,7 +126,7 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
               </div>
               <div>
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  10-Min O/L Mock Exam Simulator
+                  {examData?.title || (topicName ? `10-Min Mock Exam: ${topicName}` : '10-Min O/L Mock Exam Simulator')}
                   <span className="text-[10px] font-mono uppercase tracking-wider bg-primary/20 text-primary px-2 py-0.5 rounded-full border border-primary/30">
                     Timed
                   </span>
@@ -128,6 +135,7 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
                   Adaptive 10-Question Test with O/L Grade Predictor (A to W)
                 </p>
               </div>
+
             </div>
 
             {/* Countdown Badge */}

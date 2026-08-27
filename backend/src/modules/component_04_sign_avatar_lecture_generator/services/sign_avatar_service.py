@@ -1477,3 +1477,377 @@ def _build_fallback_pose(word: str, fallback_type: str, sequence_index: int) -> 
         },
     }
     return left_hand_pose, right_hand_pose, bone_rotation_values
+
+
+# ── Feature: 26 ASL Manual Alphabet & Fingerspelling Engine ──────────────────
+
+ASL_26_ALPHABET_DATA: dict[str, dict[str, Any]] = {
+    "A": {
+        "letter": "A",
+        "name": "Letter A",
+        "description": "Closed fist with fingers curled into palm and thumb straight up against the side of index finger.",
+        "handShape": "Vertical fist with side thumb",
+        "curls": {"thumb": 0.18, "index": 0.96, "middle": 0.96, "ring": 0.96, "pinky": 0.96},
+        "wristAngle": 6,
+        "palmAngle": 2,
+        "thumbSpread": 18,
+        "ictExamples": ["ALU (Arithmetic Logic Unit)", "ASCII", "Algorithm", "Architecture", "Array"],
+    },
+    "B": {
+        "letter": "B",
+        "name": "Letter B",
+        "description": "Four fingers held straight and together pointing upward, thumb folded flat across palm.",
+        "handShape": "Open flat palm with thumb tucked",
+        "curls": {"thumb": 0.88, "index": 0.1, "middle": 0.1, "ring": 0.12, "pinky": 0.16},
+        "wristAngle": 10,
+        "palmAngle": 0,
+        "thumbSpread": 30,
+        "ictExamples": ["BIOS", "Byte", "Bit", "Bus", "Binary", "Browser"],
+    },
+    "C": {
+        "letter": "C",
+        "name": "Letter C",
+        "description": "Fingers and thumb curved to form a clear 'C' arc shape facing inward.",
+        "handShape": "Curved C-arc",
+        "curls": {"thumb": 0.34, "index": 0.46, "middle": 0.42, "ring": 0.46, "pinky": 0.52},
+        "wristAngle": 8,
+        "palmAngle": 0,
+        "thumbSpread": 24,
+        "ictExamples": ["CPU", "Cloud", "Cache", "Client", "Compiler", "Cyber"],
+    },
+    "D": {
+        "letter": "D",
+        "name": "Letter D",
+        "description": "Index finger pointing straight up, thumb touching middle/ring/pinky fingertips to form an 'O' base.",
+        "handShape": "Index vertical with circular base",
+        "curls": {"thumb": 0.4, "index": 0.08, "middle": 0.94, "ring": 0.96, "pinky": 0.96},
+        "wristAngle": 14,
+        "palmAngle": -8,
+        "thumbSpread": 22,
+        "ictExamples": ["DNS (Domain Name System)", "Database", "DBMS", "Data", "DDL", "DML"],
+    },
+    "E": {
+        "letter": "E",
+        "name": "Letter E",
+        "description": "All four fingers bent tightly down touching thumb resting curled underneath.",
+        "handShape": "Curled fingertips on thumb",
+        "curls": {"thumb": 0.78, "index": 0.98, "middle": 0.98, "ring": 0.98, "pinky": 0.98},
+        "wristAngle": 4,
+        "palmAngle": 2,
+        "thumbSpread": 16,
+        "ictExamples": ["Email", "Ethernet", "Encryption", "Entity", "Execution"],
+    },
+    "F": {
+        "letter": "F",
+        "name": "Letter F",
+        "description": "Index finger and thumb tips touching to form a circle, middle, ring, and pinky held straight up.",
+        "handShape": "OK sign with 3 fingers erect",
+        "curls": {"thumb": 0.12, "index": 0.22, "middle": 0.08, "ring": 0.08, "pinky": 0.1},
+        "wristAngle": 12,
+        "palmAngle": 8,
+        "thumbSpread": 22,
+        "ictExamples": ["Firewall", "FTP", "Flash", "Fiber Optic", "Flowchart"],
+    },
+    "G": {
+        "letter": "G",
+        "name": "Letter G",
+        "description": "Index finger and thumb pointing horizontally forward parallel to each other, other fingers closed.",
+        "handShape": "Horizontal pinch forward",
+        "curls": {"thumb": 0.32, "index": 0.08, "middle": 0.96, "ring": 0.98, "pinky": 0.98},
+        "wristAngle": 22,
+        "palmAngle": -20,
+        "thumbSpread": 20,
+        "ictExamples": ["GUI (Graphical User Interface)", "Gateway", "Gigabyte", "Graphics"],
+    },
+    "H": {
+        "letter": "H",
+        "name": "Letter H",
+        "description": "Index and middle fingers extended straight together horizontally, other fingers closed.",
+        "handShape": "Dual horizontal fingers",
+        "curls": {"thumb": 0.58, "index": 0.08, "middle": 0.08, "ring": 0.96, "pinky": 0.98},
+        "wristAngle": 18,
+        "palmAngle": -14,
+        "thumbSpread": 20,
+        "ictExamples": ["HTTP", "HTTPS", "HTML", "Hardware", "Host", "Hub"],
+    },
+    "I": {
+        "letter": "I",
+        "name": "Letter I",
+        "description": "Pinky finger pointing straight up, remaining three fingers and thumb closed in a fist.",
+        "handShape": "Pinky vertical finger",
+        "curls": {"thumb": 0.76, "index": 0.98, "middle": 0.98, "ring": 0.96, "pinky": 0.08},
+        "wristAngle": 10,
+        "palmAngle": 8,
+        "thumbSpread": 18,
+        "ictExamples": ["IP Address", "Internet", "IoT", "Input", "Integer", "ISP"],
+    },
+    "J": {
+        "letter": "J",
+        "name": "Letter J",
+        "description": "Start in 'I' position and trace a curved 'J' hook trajectory in the air with the pinky.",
+        "handShape": "Pinky hook stroke",
+        "curls": {"thumb": 0.74, "index": 0.98, "middle": 0.98, "ring": 0.96, "pinky": 0.08},
+        "wristAngle": 18,
+        "palmAngle": 14,
+        "thumbSpread": 18,
+        "ictExamples": ["JSON", "Java", "JavaScript", "JPEG", "Join"],
+    },
+    "K": {
+        "letter": "K",
+        "name": "Letter K",
+        "description": "Index and middle fingers extended in a V-shape, thumb resting upright between them.",
+        "handShape": "V-fingers with thumb between",
+        "curls": {"thumb": 0.24, "index": 0.08, "middle": 0.1, "ring": 0.96, "pinky": 0.98},
+        "wristAngle": 14,
+        "palmAngle": -4,
+        "thumbSpread": 28,
+        "ictExamples": ["Kernel", "Keyboard", "Kilobyte", "Key (Primary/Foreign)"],
+    },
+    "L": {
+        "letter": "L",
+        "name": "Letter L",
+        "description": "Thumb and index finger held at 90-degree right angles forming an 'L', other fingers folded.",
+        "handShape": "Right-angle L shape",
+        "curls": {"thumb": 0.08, "index": 0.08, "middle": 0.96, "ring": 0.98, "pinky": 0.98},
+        "wristAngle": 12,
+        "palmAngle": -8,
+        "thumbSpread": 32,
+        "ictExamples": ["LAN (Local Area Network)", "Linux", "Logic Gate", "Loop", "Link"],
+    },
+    "M": {
+        "letter": "M",
+        "name": "Letter M",
+        "description": "Thumb tucked underneath three fingers (index, middle, ring), pinky closed.",
+        "handShape": "Three fingers over thumb",
+        "curls": {"thumb": 0.9, "index": 0.84, "middle": 0.86, "ring": 0.88, "pinky": 0.98},
+        "wristAngle": 4,
+        "palmAngle": 0,
+        "thumbSpread": 14,
+        "ictExamples": ["Memory", "Modem", "MAC Address", "Motherboard", "Malware"],
+    },
+    "N": {
+        "letter": "N",
+        "name": "Letter N",
+        "description": "Thumb tucked underneath two fingers (index and middle), ring and pinky closed.",
+        "handShape": "Two fingers over thumb",
+        "curls": {"thumb": 0.84, "index": 0.82, "middle": 0.84, "ring": 0.98, "pinky": 0.98},
+        "wristAngle": 4,
+        "palmAngle": 0,
+        "thumbSpread": 15,
+        "ictExamples": ["Network", "Node", "Normalization", "NIC", "NAND Gate"],
+    },
+    "O": {
+        "letter": "O",
+        "name": "Letter O",
+        "description": "All fingertips and thumb meet together to form an 'O' circle.",
+        "handShape": "Circular O ring",
+        "curls": {"thumb": 0.28, "index": 0.34, "middle": 0.34, "ring": 0.36, "pinky": 0.4},
+        "wristAngle": 8,
+        "palmAngle": 0,
+        "thumbSpread": 24,
+        "ictExamples": ["OS (Operating System)", "Output", "Optical Fiber", "Octal"],
+    },
+    "P": {
+        "letter": "P",
+        "name": "Letter P",
+        "description": "Like 'K' but pointing downward with index horizontal and middle pointing down.",
+        "handShape": "Downward K gesture",
+        "curls": {"thumb": 0.28, "index": 0.08, "middle": 0.1, "ring": 0.96, "pinky": 0.98},
+        "wristAngle": 22,
+        "palmAngle": 18,
+        "thumbSpread": 24,
+        "ictExamples": ["Program Counter (PC)", "Protocol", "Phishing", "Port", "Pixel"],
+    },
+    "Q": {
+        "letter": "Q",
+        "name": "Letter Q",
+        "description": "Like 'G' but pointing downward with thumb and index finger extended downwards.",
+        "handShape": "Downward pinch",
+        "curls": {"thumb": 0.32, "index": 0.08, "middle": 0.96, "ring": 0.98, "pinky": 0.98},
+        "wristAngle": 20,
+        "palmAngle": 18,
+        "thumbSpread": 20,
+        "ictExamples": ["Query (SQL)", "Queue", "Qubit", "QuickSort"],
+    },
+    "R": {
+        "letter": "R",
+        "name": "Letter R",
+        "description": "Index and middle fingers crossed over each other vertically (good luck sign).",
+        "handShape": "Crossed vertical fingers",
+        "curls": {"thumb": 0.82, "index": 0.08, "middle": 0.08, "ring": 0.96, "pinky": 0.98},
+        "wristAngle": 10,
+        "palmAngle": -2,
+        "thumbSpread": 18,
+        "ictExamples": ["RAM (Random Access)", "ROM (Read Only)", "Router", "Register", "Relational DB"],
+    },
+    "S": {
+        "letter": "S",
+        "name": "Letter S",
+        "description": "Closed fist with thumb wrapped securely across the front of all curled fingers.",
+        "handShape": "Fist with thumb over front",
+        "curls": {"thumb": 0.18, "index": 0.98, "middle": 0.98, "ring": 0.98, "pinky": 0.98},
+        "wristAngle": 4,
+        "palmAngle": 0,
+        "thumbSpread": 14,
+        "ictExamples": ["SQL", "Server", "Software", "Switch", "Security", "SSD"],
+    },
+    "T": {
+        "letter": "T",
+        "name": "Letter T",
+        "description": "Thumb placed between index and middle finger inside a closed fist.",
+        "handShape": "Thumb between index and middle",
+        "curls": {"thumb": 0.1, "index": 0.98, "middle": 0.98, "ring": 0.98, "pinky": 0.98},
+        "wristAngle": 4,
+        "palmAngle": 0,
+        "thumbSpread": 10,
+        "ictExamples": ["TCP", "Topology", "Trace Table", "Trojan", "Tuple"],
+    },
+    "U": {
+        "letter": "U",
+        "name": "Letter U",
+        "description": "Index and middle fingers held straight up and pressed tightly together, other fingers closed.",
+        "handShape": "Dual vertical fingers together",
+        "curls": {"thumb": 0.58, "index": 0.08, "middle": 0.1, "ring": 0.98, "pinky": 0.98},
+        "wristAngle": 10,
+        "palmAngle": -4,
+        "thumbSpread": 18,
+        "ictExamples": ["URL", "USB", "UTP Cable", "Unicode / UTF-8", "Update"],
+    },
+    "V": {
+        "letter": "V",
+        "name": "Letter V",
+        "description": "Index and middle fingers held straight up in a spread 'V' peace sign.",
+        "handShape": "V peace sign",
+        "curls": {"thumb": 0.64, "index": 0.08, "middle": 0.08, "ring": 0.98, "pinky": 0.98},
+        "wristAngle": 10,
+        "palmAngle": -6,
+        "thumbSpread": 18,
+        "ictExamples": ["Virtual Memory", "VGA Port", "Variable", "Vector", "Virus"],
+    },
+    "W": {
+        "letter": "W",
+        "name": "Letter W",
+        "description": "Index, middle, and ring fingers held straight up spread apart forming a 'W', pinky and thumb tucked.",
+        "handShape": "Three vertical fingers (W)",
+        "curls": {"thumb": 0.68, "index": 0.08, "middle": 0.08, "ring": 0.08, "pinky": 0.98},
+        "wristAngle": 8,
+        "palmAngle": 0,
+        "thumbSpread": 18,
+        "ictExamples": ["WWW (World Wide Web)", "WAN", "Wi-Fi", "Word Processor", "Worm"],
+    },
+    "X": {
+        "letter": "X",
+        "name": "Letter X",
+        "description": "Index finger hooked into a curved bend (like a pirate hook), other fingers closed in a fist.",
+        "handShape": "Hooked index finger",
+        "curls": {"thumb": 0.72, "index": 0.48, "middle": 0.98, "ring": 0.98, "pinky": 0.98},
+        "wristAngle": 12,
+        "palmAngle": -6,
+        "thumbSpread": 16,
+        "ictExamples": ["XML", "XOR Gate", "XSS (Cross-site Scripting)"],
+    },
+    "Y": {
+        "letter": "Y",
+        "name": "Letter Y",
+        "description": "Thumb and pinky finger extended outwards (shaka sign), three middle fingers curled down.",
+        "handShape": "Shaka hang-loose sign",
+        "curls": {"thumb": 0.08, "index": 0.98, "middle": 0.98, "ring": 0.98, "pinky": 0.08},
+        "wristAngle": 10,
+        "palmAngle": 6,
+        "thumbSpread": 30,
+        "ictExamples": ["Yottabyte", "Yield", "YAML"],
+    },
+    "Z": {
+        "letter": "Z",
+        "name": "Letter Z",
+        "description": "Index finger pointing out to trace a 'Z' zigzag stroke in the air.",
+        "handShape": "Index pointing zigzag",
+        "curls": {"thumb": 0.42, "index": 0.08, "middle": 0.96, "ring": 0.98, "pinky": 0.98},
+        "wristAngle": 18,
+        "palmAngle": -10,
+        "thumbSpread": 20,
+        "ictExamples": ["Zip File", "Zettabyte", "Zero-day Exploit"],
+    },
+}
+
+KNOWN_ICT_ACRONYMS = [
+    "RAM", "ROM", "CPU", "ALU", "BIOS", "SQL", "DBMS", "HTTP", "HTTPS", "HTML",
+    "DNS", "LAN", "WAN", "MAN", "IP", "TCP", "UDP", "GUI", "CLI", "BYTE", "BIT",
+    "PORT", "BUS", "SSD", "HDD", "USB", "VGA", "NIC", "ISP", "FTP", "SMTP", "POP3",
+    "IMAP", "JSON", "XML", "UTF8", "ASCII", "VPN", "MAC", "OS", "DCL", "DDL", "DML",
+    "1NF", "2NF", "3NF", "NTFS", "FAT32", "DOS", "AI", "IOT"
+]
+
+
+async def get_asl_alphabet_reference() -> list[dict[str, Any]]:
+    """Returns the full 26-letter ASL manual alphabet definitions and handshape metrics."""
+    return list(ASL_26_ALPHABET_DATA.values())
+
+
+async def decompose_text_to_fingerspelling(payload: dict[str, Any]) -> dict[str, Any]:
+    """
+    Decomposes notes or words into ICT keywords and 26-letter ASL fingerspelling sequences.
+    """
+    text = (payload.get("text") or "").strip()
+    if not text:
+        text = "RAM and CPU process binary data in Computer Systems"
+
+    # Extract words and detect ICT acronyms
+    words = re.findall(r"[A-Za-z0-9]+", text)
+    detected_keywords = []
+    seen = set()
+
+    # Prioritize recognized ICT acronyms
+    for w in words:
+        upper = w.upper()
+        if upper in KNOWN_ICT_ACRONYMS and upper not in seen:
+            seen.add(upper)
+            detected_keywords.append({
+                "word": upper,
+                "isAcronym": True,
+                "letterCount": len(upper),
+                "letters": list(upper)
+            })
+
+    # Add other unique words
+    for w in words:
+        upper = w.upper()
+        if upper not in seen and len(upper) >= 2:
+            seen.add(upper)
+            detected_keywords.append({
+                "word": upper,
+                "isAcronym": False,
+                "letterCount": len(upper),
+                "letters": list(upper)
+            })
+
+    active_word = payload.get("selectedWord") or (detected_keywords[0]["word"] if detected_keywords else "RAM")
+    active_letters = [char.upper() for char in active_word if char.upper() in ASL_26_ALPHABET_DATA]
+
+    # Build letter animation timeline
+    letter_timeline = []
+    for idx, letter in enumerate(active_letters):
+        letter_data = ASL_26_ALPHABET_DATA.get(letter, ASL_26_ALPHABET_DATA["A"])
+        letter_timeline.append({
+            "index": idx,
+            "letter": letter,
+            "name": letter_data["name"],
+            "description": letter_data["description"],
+            "handShape": letter_data["handShape"],
+            "curls": letter_data["curls"],
+            "wristAngle": letter_data["wristAngle"],
+            "palmAngle": letter_data["palmAngle"],
+            "thumbSpread": letter_data["thumbSpread"],
+            "durationMs": 900,
+            "ictExamples": letter_data.get("ictExamples", [])
+        })
+
+    return {
+        "inputText": text,
+        "detectedKeywords": detected_keywords,
+        "selectedWord": active_word,
+        "totalLetters": len(active_letters),
+        "letterTimeline": letter_timeline,
+        "alphabetTotal": 26,
+    }
+

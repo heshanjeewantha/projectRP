@@ -345,6 +345,7 @@ class MockExamQuestion(BaseModel):
 class MockExamStartResponse(BaseModel):
     examId: str
     title: str
+    topicId: str | None = None
     durationMinutes: int
     totalQuestions: int
     questions: list[MockExamQuestion] = Field(default_factory=list)

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 const STORAGE_KEY = 'signlearn-auth-user';
+const THEME_KEY = 'signlearn-theme';
 
 const createSessionId = () => `sess_${Math.random().toString(36).slice(2, 11)}`;
 
@@ -24,9 +25,46 @@ const persistUser = (user) => {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
 };
 
+const readStoredTheme = () => {
+  if (typeof window === 'undefined') return 'dark';
+  try {
+    const raw = window.localStorage.getItem(THEME_KEY);
+    return raw === 'light' ? 'light' : 'dark';
+  } catch (error) {
+    return 'dark';
+  }
+};
+
+const applyThemeToDOM = (theme) => {
+  if (typeof window === 'undefined') return;
+  document.documentElement.setAttribute('data-theme', theme);
+};
+
 const initialUser = readStoredUser();
+const initialTheme = readStoredTheme();
+applyThemeToDOM(initialTheme);
 
 const useStore = create((set) => ({
+  // Theme state ('dark' | 'light')
+  theme: initialTheme,
+  setTheme: (theme) =>
+    set(() => {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(THEME_KEY, theme);
+      }
+      applyThemeToDOM(theme);
+      return { theme };
+    }),
+  toggleTheme: () =>
+    set((state) => {
+      const nextTheme = state.theme === 'dark' ? 'light' : 'dark';
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(THEME_KEY, nextTheme);
+      }
+      applyThemeToDOM(nextTheme);
+      return { theme: nextTheme };
+    }),
+
   // Auth state
   currentUser: initialUser,
   userId:      initialUser?.id   || '',

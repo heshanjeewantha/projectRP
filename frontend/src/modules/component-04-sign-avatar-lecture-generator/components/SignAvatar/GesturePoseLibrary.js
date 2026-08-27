@@ -1,4 +1,4 @@
-import { getFingerspellingPoses } from './FingerspellingFallback';
+import { getFingerspellingPoses, getSingleLetterPose } from './FingerspellingFallback';
 
 const createPose = (side, overrides = {}) => {
   const defaultPosition = side === 'left' ? { x: 334, y: 304, z: 0 } : { x: 566, y: 304, z: 0 };
@@ -414,9 +414,23 @@ const DEFAULT_MISSING_POSE = createEntry(
 );
 
 export const getGesturePoseData = (gesture, word) => {
-  const lookupWord = (gesture?.glossWord || word || '').toUpperCase();
+  const lookupWord = (gesture?.glossWord || word || '').toUpperCase().trim();
   const resolvedWord = SUPPORTED_SIGN_ALIASES[lookupWord] || lookupWord;
 
+  // 1. Direct hand pose object passed
+  if (gesture?.leftHandPose && gesture?.rightHandPose) {
+    return {
+      glossWord: gesture.glossWord || word || 'READY',
+      description: gesture.description || '',
+      leftHandPose: gesture.leftHandPose,
+      rightHandPose: gesture.rightHandPose,
+      boneRotationValues: gesture.boneRotationValues || null,
+      fingerspellingPoses: gesture.fingerspellingPoses || null,
+      warning: '',
+    };
+  }
+
+  // 2. Exact match in standard vocabulary
   if (resolvedWord && GESTURE_POSE_LIBRARY[resolvedWord]) {
     return {
       ...GESTURE_POSE_LIBRARY[resolvedWord],
@@ -428,7 +442,13 @@ export const getGesturePoseData = (gesture, word) => {
     };
   }
 
-  if (gesture?.fallbackType === 'fingerspelling') {
+  // 3. Single ASL Letter (A to Z)
+  if (/^[A-Z]$/.test(lookupWord)) {
+    return getSingleLetterPose(lookupWord);
+  }
+
+  // 4. Fingerspelling sequence fallback
+  if (gesture?.fallbackType === 'fingerspelling' || (lookupWord && lookupWord.length <= 6)) {
     const fingerspellingPoses = getFingerspellingPoses(lookupWord);
     return {
       ...DEFAULT_MISSING_POSE,
@@ -437,25 +457,6 @@ export const getGesturePoseData = (gesture, word) => {
       fingerspellingPoses,
       warning: `Mapped sign not found for ${lookupWord}. Using fingerspelling fallback.`,
     };
-  }
-
-  const directPose =
-    gesture?.leftHandPose && gesture?.rightHandPose
-      ? {
-          glossWord: gesture.glossWord || word || 'READY',
-          description: gesture.description,
-          leftHandPose: gesture.leftHandPose,
-          rightHandPose: gesture.rightHandPose,
-          boneRotationValues: gesture.boneRotationValues || null,
-          warning:
-            gesture.fallbackType === 'gesture_not_available'
-              ? `No mapped gesture for ${gesture.glossWord}. Showing a neutral replacement pose.`
-              : '',
-        }
-      : null;
-
-  if (directPose) {
-    return directPose;
   }
 
   return {
@@ -468,6 +469,7 @@ export const getGesturePoseData = (gesture, word) => {
         : '',
   };
 };
+
 
 export const getKnownGesturePoseLibrary = () =>
   Object.values(GESTURE_POSE_LIBRARY).map((entry) => ({

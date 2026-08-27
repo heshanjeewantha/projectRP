@@ -140,10 +140,14 @@ export const reviewFlashcard = async (payload) => {
 };
 
 // ── Feature 5: Mock Exam Simulator ──
-export const startMockExam = async (studentId = 'student_demo_123') => {
-  const response = await axios.get(`${API_BASE}/mock-exam/start?studentId=${studentId}`);
+export const startMockExam = async (studentId = 'student_demo_123', topicId = null) => {
+  const url = topicId
+    ? `${API_BASE}/mock-exam/start?studentId=${encodeURIComponent(studentId)}&topicId=${encodeURIComponent(topicId)}`
+    : `${API_BASE}/mock-exam/start?studentId=${encodeURIComponent(studentId)}`;
+  const response = await axios.get(url);
   return response.data;
 };
+
 
 export const submitMockExam = async (payload) => {
   const response = await axios.post(`${API_BASE}/mock-exam/submit`, payload);
