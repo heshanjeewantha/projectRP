@@ -94,6 +94,11 @@ class SignAvatarSequenceItemModel(BaseModel):
     fallbackGesture: str
     sourceGloss: str | None = None
     isFallback: bool = False
+    # WLASL BiLSTM model enrichment fields (populated when model is trained)
+    wlaslModelClass: bool = False
+    wlaslValAccuracy: float | None = None
+    wlaslArchitecture: str | None = None
+    wlaslLandmarkEndpoint: str | None = None
 
 
 class SubtitleSegmentModel(BaseModel):
@@ -110,6 +115,9 @@ class SignAvatarSequenceResponseModel(BaseModel):
     sourceType: str = "LOCAL_KEYWORD_MATCHER"
     simplifiedText: str
     llmAssisted: bool = False
+    # WLASL model metadata summary for the whole response
+    wlaslModelMeta: dict | None = None
+    wlaslEnrichedCount: int = 0
 
 
 class SignAvatarHistoryModel(BaseModel):

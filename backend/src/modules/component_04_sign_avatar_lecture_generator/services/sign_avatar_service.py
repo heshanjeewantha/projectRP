@@ -16,6 +16,10 @@ from uuid import uuid4
 from src.common.config.settings import settings
 from src.common.database.connection import get_db
 from pymongo import ReturnDocument
+from src.modules.component_04_sign_avatar_lecture_generator.services.wlasl_enrichment import (
+    enrich_sequence_with_wlasl,
+    get_wlasl_model_meta,
+)
 
 
 SIGN_GESTURE_DATASET_COLLECTION = "signGestureDataset"
@@ -321,7 +325,15 @@ async def generate_sign_avatar_sequence(payload: dict[str, Any]) -> dict[str, An
         selected_language=payload.get("selectedLanguage", "English"),
     )
     sequence = _build_avatar_animation_sequence(extracted["keywords"], gesture_library)
+
+    # ── WLASL BiLSTM enrichment: tag items whose keyword the trained model knows ──
+    # This does NOT run inference — it reads label_map.json to flag which keywords
+    # have real WLASL landmark data available via /api/signs/landmark-sequence/{word}.
+    sequence = enrich_sequence_with_wlasl(sequence)
+    wlasl_model_meta = get_wlasl_model_meta()
+
     subtitle_segments = _build_subtitle_segments(sequence)
+    wlasl_count = sum(1 for item in sequence if item.get("wlaslModelClass"))
 
     return {
         "keywords": [item["keyword"] for item in sequence],
@@ -330,6 +342,8 @@ async def generate_sign_avatar_sequence(payload: dict[str, Any]) -> dict[str, An
         "sourceType": extracted["sourceType"],
         "simplifiedText": extracted["simplifiedText"],
         "llmAssisted": extracted["llmAssisted"],
+        "wlaslModelMeta": wlasl_model_meta,
+        "wlaslEnrichedCount": wlasl_count,
     }
 
 

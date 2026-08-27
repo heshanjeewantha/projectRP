@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Pause, Play, RotateCcw, Send, SkipBack, SkipForward, Sparkles } from 'lucide-react';
+import { BrainCircuit, Pause, Play, RotateCcw, Send, SkipBack, SkipForward, Sparkles } from 'lucide-react';
+
 
 import { generateSignAvatarSequence } from '../../modules/component-04-sign-avatar-lecture-generator/services/signAvatarApi';
 import processLessonTextToSigns from '../../utils/textToSignProcessor';
@@ -22,6 +23,9 @@ const SignLecturePlayer = ({
   const [statusNote, setStatusNote] = useState('Paste lesson notes and generate a sign sequence.');
   const [sourceType, setSourceType] = useState('LOCAL_KEYWORD_MATCHER');
   const [llmAssisted, setLlmAssisted] = useState(false);
+  const [wlaslModelMeta, setWlaslModelMeta] = useState(null);
+  const [wlaslEnrichedCount, setWlaslEnrichedCount] = useState(0);
+
 
   const activeItem = sequencePayload.avatarAnimationSequence?.[currentIndex] || null;
   const fallbackCount = useMemo(
@@ -54,6 +58,9 @@ const SignLecturePlayer = ({
       });
       setSourceType(response.sourceType || 'LOCAL_KEYWORD_MATCHER');
       setLlmAssisted(Boolean(response.llmAssisted));
+      setWlaslModelMeta(response.wlaslModelMeta || null);
+      setWlaslEnrichedCount(response.wlaslEnrichedCount || 0);
+
       setCurrentIndex(0);
       setIsPlaying(true);
       setStatusNote(
@@ -167,7 +174,19 @@ const SignLecturePlayer = ({
               <span className="sign-lecture-player__stat-label">Source</span>
               <strong>{sourceType === 'LLM_KEYWORD_EXTRACTION' ? 'LLM' : 'Dataset'}</strong>
             </div>
+            {wlaslModelMeta?.modelReady && (
+              <div className="sign-lecture-player__stat sign-lecture-player__stat--wlasl">
+                <span className="sign-lecture-player__stat-label">
+                  <BrainCircuit size={12} style={{ display: 'inline', marginRight: 4 }} />
+                  BiLSTM Model
+                </span>
+                <strong title={`${wlaslModelMeta.architecture} · ${wlaslModelMeta.classCount} classes · val_acc ${(wlaslModelMeta.valAccuracy * 100).toFixed(1)}%`}>
+                  {wlaslEnrichedCount} / {sequencePayload.keywords?.length || 0} signs
+                </strong>
+              </div>
+            )}
           </div>
+
 
           <div className="sign-lecture-player__simplified">
             <div className="sign-lecture-player__eyebrow">Sign-friendly summary</div>
@@ -203,13 +222,24 @@ const SignLecturePlayer = ({
               setCurrentIndex(index);
               setIsPlaying(true);
             }}
-            className={`sign-lecture-player__timeline-item ${currentIndex === index ? 'is-active' : ''} ${item.isFallback ? 'is-fallback' : ''}`}
+            className={`sign-lecture-player__timeline-item ${currentIndex === index ? 'is-active' : ''} ${item.isFallback ? 'is-fallback' : ''} ${item.wlaslModelClass ? 'is-wlasl' : ''}`}
+            title={item.wlaslModelClass ? `WLASL BiLSTM model · ${item.wlaslArchitecture} · ${((item.wlaslValAccuracy || 0) * 100).toFixed(1)}% acc` : undefined}
           >
-            <span className="sign-lecture-player__timeline-word">{item.keyword}</span>
+            <span className="sign-lecture-player__timeline-word">
+              {item.keyword}
+              {item.wlaslModelClass && (
+                <BrainCircuit size={10} className="sign-lecture-player__wlasl-icon" />
+              )}
+            </span>
             <span className="sign-lecture-player__timeline-meta">
-              {item.isFallback ? `Fallback: ${item.fallbackGesture}` : item.animationName}
+              {item.wlaslModelClass
+                ? `BiLSTM · ${((item.wlaslValAccuracy || 0) * 100).toFixed(0)}%`
+                : item.isFallback
+                ? `Fallback: ${item.fallbackGesture}`
+                : item.animationName}
             </span>
           </button>
+
         ))}
       </div>
     </div>

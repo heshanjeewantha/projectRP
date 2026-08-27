@@ -24,6 +24,9 @@ from src.modules.component_04_sign_avatar_lecture_generator.services import (
     sign_mnist_service,
     wlasl_pipeline_service,
 )
+from src.modules.component_04_sign_avatar_lecture_generator.services.wlasl_enrichment import (
+    invalidate_cache as invalidate_wlasl_cache,
+)
 from src.modules.component_04_sign_avatar_lecture_generator.services.wlasl_pipeline_service import (
     get_landmark_sequence_async,
 )
@@ -48,7 +51,11 @@ async def get_sign_status():
 async def train_sign_model(payload: WlaslTrainRequestModel):
     """Launch the WLASL LSTM training script in the background."""
     try:
-        return await wlasl_pipeline_service.launch_training_job_async(payload.model_dump())
+        result = await wlasl_pipeline_service.launch_training_job_async(payload.model_dump())
+        # Invalidate the enrichment label-map cache so the new model is picked up
+        # on the next call to generate_sign_avatar_sequence.
+        invalidate_wlasl_cache()
+        return result
     except Exception as error:
         raise HTTPException(status_code=500, detail=str(error)) from error
 
