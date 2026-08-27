@@ -124,7 +124,7 @@ const shouldSkipMicroChallenge = (text, latestBotMessage) => {
 };
 
 const getSourceLabel = (sourceType) =>
-  sourceType === 'LLM' ? 'Answer' : 'Dataset Fallback Answer';
+  sourceType === 'LLM' ? 'Answer' : ' Answer';
 
 const ChatbotPage = () => {
   const { userId, attentionStatus } = useStore();

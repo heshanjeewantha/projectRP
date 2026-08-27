@@ -33,184 +33,184 @@ const ASL_26_DATABASE = {
   A: {
     letter: 'A',
     name: 'Letter A',
-    description: 'Closed fist with 4 fingers curled into palm and thumb resting upright alongside index finger.',
-    handShape: 'Fist with vertical thumb alongside',
-    ictExamples: ['ALU (Arithmetic Logic Unit)', 'ASCII', 'Algorithm', 'Array'],
+    description: 'Closed fist with 4 fingers curled tightly into palm and thumb resting upright along the side of index finger.',
+    handShape: 'Vertical fist with thumb along side',
+    ictExamples: ['ALU (Arithmetic Logic Unit)', 'ASCII Code', 'Algorithm', 'Array Data Structure'],
   },
   B: {
     letter: 'B',
     name: 'Letter B',
-    description: 'Four fingers held straight and together pointing upward, thumb folded flat across palm.',
+    description: 'Four fingers held straight and pressed together pointing upward, thumb folded flat across the palm.',
     handShape: 'Open flat 4 fingers with thumb tucked',
-    ictExamples: ['BIOS', 'Byte', 'Bit', 'Bus', 'Binary', 'Browser'],
+    ictExamples: ['BIOS (Basic Input/Output)', 'Byte', 'Bit (Binary Digit)', 'System Bus', 'Web Browser'],
   },
   C: {
     letter: 'C',
     name: 'Letter C',
     description: 'Fingers and thumb curved in a smooth arc forming a prominent "C" shape facing sideways.',
-    handShape: 'Curved C-arc',
-    ictExamples: ['CPU (Central Processing Unit)', 'Cloud', 'Cache', 'Client', 'Compiler'],
+    handShape: 'Curved C-arc shape',
+    ictExamples: ['CPU (Central Processing Unit)', 'Cloud Computing', 'Cache Memory', 'Client-Server Architecture'],
   },
   D: {
     letter: 'D',
     name: 'Letter D',
     description: 'Index finger pointing straight up, thumb touching middle, ring, and pinky fingertips in an "O" base.',
     handShape: 'Index vertical with circular O base',
-    ictExamples: ['DNS (Domain Name System)', 'Database', 'DBMS', 'Data', 'DDL'],
+    ictExamples: ['DNS (Domain Name System)', 'Database Management', 'DBMS', 'DDL / DML SQL Commands'],
   },
   E: {
     letter: 'E',
     name: 'Letter E',
     description: 'All 4 fingertips bent tightly down touching the thumb resting curled underneath.',
-    handShape: 'Bent fingertips resting on thumb',
-    ictExamples: ['Email', 'Ethernet', 'Encryption', 'Entity', 'Execution'],
+    handShape: 'Bent fingertips resting on curled thumb',
+    ictExamples: ['Email Protocols', 'Ethernet Cable', 'Data Encryption', 'Entity-Relationship Diagram'],
   },
   F: {
     letter: 'F',
     name: 'Letter F',
     description: 'Index finger and thumb touching at tips to form a circle, middle, ring, and pinky held straight up.',
-    handShape: 'OK sign with 3 vertical fingers',
-    ictExamples: ['Firewall', 'FTP', 'Flash Drive', 'Fiber Optic', 'Flowchart'],
+    handShape: 'OK circle sign with 3 vertical fingers',
+    ictExamples: ['Firewall Security', 'FTP (File Transfer)', 'Flash Memory', 'Fiber Optic Cable', 'Flowchart Symbols'],
   },
   G: {
     letter: 'G',
     name: 'Letter G',
     description: 'Index finger and thumb pointing horizontally forward parallel to each other, other fingers closed.',
     handShape: 'Horizontal pinch pointing forward',
-    ictExamples: ['GUI (Graphical User Interface)', 'Gateway', 'Gigabyte', 'Graphics'],
+    ictExamples: ['GUI (Graphical User Interface)', 'Gateway Router', 'Gigabyte Storage', 'Computer Graphics'],
   },
   H: {
     letter: 'H',
     name: 'Letter H',
-    description: 'Index and middle fingers extended straight together horizontally forward, other fingers closed.',
+    description: 'Index and middle fingers extended straight together horizontally forward, other fingers closed in a fist.',
     handShape: 'Dual horizontal fingers pointing forward',
-    ictExamples: ['HTTP', 'HTTPS', 'HTML', 'Hardware', 'Host', 'Hub'],
+    ictExamples: ['HTTP (Hypertext Transfer)', 'HTTPS Secure', 'HTML Code', 'Computer Hardware', 'Network Hub'],
   },
   I: {
     letter: 'I',
     name: 'Letter I',
     description: 'Pinky finger pointing straight up, remaining three fingers and thumb folded in a closed fist.',
     handShape: 'Pinky vertical finger',
-    ictExamples: ['IP Address', 'Internet', 'IoT', 'Input', 'ISP', 'Integer'],
+    ictExamples: ['IP Address (IPv4/IPv6)', 'Internet Connectivity', 'IoT (Internet of Things)', 'ISP Provider'],
   },
   J: {
     letter: 'J',
     name: 'Letter J',
-    description: 'Pinky finger extended pointing up while sweeping a curved "J" hook stroke in the air.',
-    handShape: 'Pinky tracing J hook',
-    ictExamples: ['JSON', 'Java', 'JavaScript', 'JPEG', 'Join Query'],
+    description: 'Pinky finger extended pointing up while tracing a curved "J" hook stroke in the air.',
+    handShape: 'Pinky tracing curved J hook',
+    ictExamples: ['JSON Data Format', 'Java Programming', 'JavaScript Engine', 'JPEG Image Compression'],
   },
   K: {
     letter: 'K',
     name: 'Letter K',
     description: 'Index and middle fingers held upright in a "V", thumb resting upright between them.',
     handShape: 'Upright V with thumb between',
-    ictExamples: ['Kernel', 'Keyboard', 'Kilobyte', 'Key (Primary/Foreign)'],
+    ictExamples: ['Operating System Kernel', 'Keyboard Input', 'Kilobyte Unit', 'Primary Key / Foreign Key'],
   },
   L: {
     letter: 'L',
     name: 'Letter L',
-    description: 'Thumb and index finger held at 90-degree right angles forming an "L", other fingers folded.',
+    description: 'Thumb and index finger held at 90-degree right angles forming an "L", other fingers folded in palm.',
     handShape: 'Right-angle L shape',
-    ictExamples: ['LAN (Local Area Network)', 'Linux', 'Logic Gate', 'Loop', 'Link'],
+    ictExamples: ['LAN (Local Area Network)', 'Linux OS', 'Logic Gates (AND/OR/NOT)', 'Programming Loop'],
   },
   M: {
     letter: 'M',
     name: 'Letter M',
-    description: 'Thumb tucked underneath three fingers (index, middle, ring), pinky closed in fist.',
+    description: 'Thumb tucked underneath three folded fingers (index, middle, ring), pinky closed in fist.',
     handShape: 'Three folded fingers over thumb',
-    ictExamples: ['Memory (RAM/ROM)', 'Modem', 'MAC Address', 'Motherboard', 'Malware'],
+    ictExamples: ['Main Memory (RAM/ROM)', 'Modem Device', 'MAC Physical Address', 'Motherboard Circuit'],
   },
   N: {
     letter: 'N',
     name: 'Letter N',
-    description: 'Thumb tucked underneath two fingers (index and middle), ring and pinky closed.',
+    description: 'Thumb tucked underneath two folded fingers (index and middle), ring and pinky closed.',
     handShape: 'Two folded fingers over thumb',
-    ictExamples: ['Network', 'Node', 'Normalization', 'NIC', 'NAND Gate'],
+    ictExamples: ['Computer Network', 'Network Node', 'Database Normalization (1NF/2NF/3NF)', 'NIC Card'],
   },
   O: {
     letter: 'O',
     name: 'Letter O',
     description: 'All fingertips and thumb meet together to form a full "O" circle.',
     handShape: 'Circular O ring',
-    ictExamples: ['OS (Operating System)', 'Output', 'Optical Fiber', 'Octal'],
+    ictExamples: ['OS (Operating System)', 'Output Peripherals', 'Optical Fiber Cable', 'Octal Number System'],
   },
   P: {
     letter: 'P',
     name: 'Letter P',
     description: 'Downward pointing "K" shape with index horizontal and middle pointing downwards.',
     handShape: 'Downward K posture',
-    ictExamples: ['Program Counter (PC)', 'Protocol', 'Phishing', 'Port', 'Pixel'],
+    ictExamples: ['Program Counter (PC)', 'Network Protocol', 'Phishing Cyber Attack', 'TCP Port Number'],
   },
   Q: {
     letter: 'Q',
     name: 'Letter Q',
     description: 'Downward pointing "G" shape with thumb and index finger pointing downwards.',
     handShape: 'Downward pinch posture',
-    ictExamples: ['Query (SQL)', 'Queue', 'Qubit', 'QuickSort'],
+    ictExamples: ['SQL Query Syntax', 'Queue Data Structure', 'Qubit Quantum Bit', 'QuickSort Algorithm'],
   },
   R: {
     letter: 'R',
     name: 'Letter R',
-    description: 'Index and middle fingers crossed over each other vertically (good luck sign).',
+    description: 'Index and middle fingers crossed over each other vertically in a good luck sign.',
     handShape: 'Crossed index & middle fingers',
-    ictExamples: ['RAM (Random Access)', 'ROM (Read Only)', 'Router', 'Register', 'Relational DB'],
+    ictExamples: ['RAM (Random Access Memory)', 'ROM (Read Only Memory)', 'Router Device', 'CPU Register'],
   },
   S: {
     letter: 'S',
     name: 'Letter S',
     description: 'Closed fist with thumb wrapped securely across the front of all curled fingers.',
     handShape: 'Fist with thumb across front',
-    ictExamples: ['SQL', 'Server', 'Software', 'Switch', 'Security', 'SSD'],
+    ictExamples: ['SQL (Structured Query Language)', 'Server Architecture', 'System Software', 'SSD Storage'],
   },
   T: {
     letter: 'T',
     name: 'Letter T',
     description: 'Thumb placed between index and middle finger inside a closed fist.',
     handShape: 'Thumb between index and middle',
-    ictExamples: ['TCP/IP', 'Topology', 'Trace Table', 'Trojan', 'Tuple'],
+    ictExamples: ['TCP/IP Protocol Suite', 'Network Topology (Star/Bus/Ring)', 'Trace Table Algorithm'],
   },
   U: {
     letter: 'U',
     name: 'Letter U',
     description: 'Index and middle fingers held straight up and pressed tightly together, other fingers closed.',
-    handShape: 'Dual vertical fingers together',
-    ictExamples: ['URL', 'USB', 'UTP Cable', 'Unicode / UTF-8', 'Update Query'],
+    handShape: 'Dual vertical fingers pressed together',
+    ictExamples: ['URL (Uniform Resource Locator)', 'USB Port Standard', 'UTP Cable', 'Unicode / UTF-8 Encoding'],
   },
   V: {
     letter: 'V',
     name: 'Letter V',
     description: 'Index and middle fingers held straight up in a spread "V" peace sign.',
     handShape: 'V peace sign',
-    ictExamples: ['Virtual Memory', 'VGA Port', 'Variable', 'Vector', 'Virus'],
+    ictExamples: ['Virtual Memory Paging', 'VGA Video Port', 'Variable Declaration', 'Computer Virus Malware'],
   },
   W: {
     letter: 'W',
     name: 'Letter W',
     description: 'Index, middle, and ring fingers held straight up spread apart forming a "W", pinky and thumb tucked.',
     handShape: 'Three vertical fingers (W)',
-    ictExamples: ['WWW (World Wide Web)', 'WAN', 'Wi-Fi', 'Word Processor', 'Worm'],
+    ictExamples: ['WWW (World Wide Web)', 'WAN (Wide Area Network)', 'Wi-Fi Wireless', 'Word Processor'],
   },
   X: {
     letter: 'X',
     name: 'Letter X',
     description: 'Index finger hooked into a curved bend, other fingers closed in a fist.',
     handShape: 'Hooked index finger',
-    ictExamples: ['XML', 'XOR Gate', 'XSS (Cross-site Scripting)'],
+    ictExamples: ['XML Data Format', 'XOR Logic Gate', 'XSS (Cross-site Scripting)'],
   },
   Y: {
     letter: 'Y',
     name: 'Letter Y',
     description: 'Thumb and pinky finger extended outwards (shaka sign), three middle fingers curled down in fist.',
     handShape: 'Shaka thumb & pinky sign',
-    ictExamples: ['Yottabyte', 'Yield', 'YAML'],
+    ictExamples: ['Yottabyte Unit', 'Yield Statement', 'YAML Configuration'],
   },
   Z: {
     letter: 'Z',
     name: 'Letter Z',
     description: 'Index finger pointing out to trace a "Z" zigzag stroke in the air.',
-    handShape: 'Index pointing zigzag',
-    ictExamples: ['Zip File', 'Zettabyte', 'Zero-day Exploit'],
+    handShape: 'Index pointing zigzag stroke',
+    ictExamples: ['Zip File Compression', 'Zettabyte Unit', 'Zero-day Vulnerability'],
   },
 };
 
@@ -604,14 +604,14 @@ const FingerspellingStudio = () => {
   return (
     <div className="space-y-6">
       {/* ── Studio Banner Header ── */}
-      <div className="rounded-3xl border border-primary/30 bg-gradient-to-br from-black/80 via-primary/[0.04] to-black/80 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+      <div className="fs-card border border-primary/30 p-6 sm:p-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/20 text-primary border border-primary/40 shadow-lg shadow-primary/20">
               <Hand size={30} />
             </div>
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-1.5">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
                 <span className="rounded-full bg-primary/20 px-3 py-0.5 text-[11px] font-black uppercase tracking-wider text-primary border border-primary/30">
                   ASL Fingerspelling Studio
                 </span>
@@ -619,29 +619,29 @@ const FingerspellingStudio = () => {
                   26 English Manual Alphabet &amp; 1080p HD Video Clips
                 </span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
                 Finger Spelling Words &amp; 3D Avatar Footage
               </h2>
             </div>
           </div>
 
           {/* Quick Controls & Stats */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <div className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-center">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="rounded-xl border border-border bg-black/5 dark:bg-white/5 px-4 py-2 text-center">
               <div className="text-[10px] uppercase font-bold text-text-muted">Active Sign</div>
               <div className="text-sm font-black text-primary">
                 {selectedManualLetter ? `Letter ${selectedManualLetter}` : selectedWord}
               </div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-center">
+            <div className="rounded-xl border border-border bg-black/5 dark:bg-white/5 px-4 py-2 text-center">
               <div className="text-[10px] uppercase font-bold text-text-muted">Letter Index</div>
-              <div className="text-sm font-black text-white font-mono">
+              <div className="text-sm font-black font-mono">
                 {activeLetterChar} ({activeLetterIndex + 1}/{currentLetters.length})
               </div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-center">
+            <div className="rounded-xl border border-border bg-black/5 dark:bg-white/5 px-4 py-2 text-center">
               <div className="text-[10px] uppercase font-bold text-text-muted">Video Quality</div>
-              <div className="text-sm font-black text-emerald-400">1080p 60FPS</div>
+              <div className="text-sm font-black text-emerald-500">1080p 60FPS</div>
             </div>
           </div>
         </div>
@@ -652,11 +652,11 @@ const FingerspellingStudio = () => {
         {/* Left Column: Notes Input, Keyword Detector & 26-Letter Grid (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Note Input Card */}
-          <div className="rounded-3xl border border-white/10 bg-black/60 p-6 shadow-xl backdrop-blur-md">
-            <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="fs-card space-y-5">
+            <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <FileText size={17} className="text-primary" />
-                <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                <FileText size={18} className="text-primary" />
+                <h4 className="text-sm font-bold uppercase tracking-wider">
                   Lesson Notes &amp; Text Input
                 </h4>
               </div>
@@ -664,17 +664,19 @@ const FingerspellingStudio = () => {
             </div>
 
             <textarea
-              rows={3}
+              rows={4}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white placeholder:text-text-muted focus:border-primary focus:outline-none transition-all leading-relaxed"
+              className="w-full rounded-2xl border border-border bg-black/[0.02] dark:bg-white/[0.03] p-4 text-sm placeholder:text-text-muted focus:border-primary focus:outline-none transition-all leading-relaxed"
               placeholder="Paste or type ICT notes here (e.g. RAM is volatile memory used by CPU and ALU)..."
             />
 
-            {/* Presets Row & Manual Filter Action */}
-            <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* Presets Row */}
+            <div className="space-y-2.5">
+              <div className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
+                Sample Lesson Presets:
+              </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-bold text-text-muted uppercase">Sample Presets:</span>
                 {SAMPLE_ICT_PRESETS.map((preset, idx) => (
                   <button
                     key={idx}
@@ -683,44 +685,47 @@ const FingerspellingStudio = () => {
                       setInputText(preset.text);
                       handleManualFilterKeywords(preset.text, preset.primaryWord);
                     }}
-                    className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold text-text-muted hover:border-primary/50 hover:text-white transition-all cursor-pointer"
+                    className="rounded-xl border border-border bg-black/5 dark:bg-white/5 px-3 py-1.5 text-xs font-semibold text-text-muted hover:border-primary hover:text-primary transition-all cursor-pointer"
                   >
                     {preset.label}
                   </button>
                 ))}
               </div>
+            </div>
 
-              {/* Manual Filter ICT Keywords Button */}
+            {/* Manual Filter Action Row */}
+            <div className="pt-2 flex items-center justify-between gap-3">
+              <span className="text-xs text-text-muted">
+                Detects acronyms like RAM, CPU, SQL, BIOS, HTTP...
+              </span>
               <button
                 type="button"
                 onClick={() => handleManualFilterKeywords()}
                 disabled={isFiltering || !inputText.trim()}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-black text-slate-950 hover:bg-primary-hover shadow-md shadow-primary/20 transition-all cursor-pointer shrink-0"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-black text-slate-950 hover:bg-primary-hover shadow-md shadow-primary/20 transition-all cursor-pointer shrink-0"
               >
-                <Filter size={14} className={isFiltering ? 'animate-spin' : ''} />
-                <span>{isFiltering ? 'Filtering...' : '🔍 Filter & Detect ICT Keywords'}</span>
+                <Filter size={15} className={isFiltering ? 'animate-spin' : ''} />
+                <span>{isFiltering ? 'Filtering Notes...' : '🔍 Filter & Detect ICT Keywords'}</span>
               </button>
             </div>
 
-            {/* Detected Keywords Section with Download Video Clip Buttons */}
-            <div className="mt-5 pt-4 border-t border-white/10">
-              <div className="flex items-center justify-between mb-3">
+            {/* Detected Keywords Section */}
+            <div className="pt-4 border-t border-border space-y-3">
+              <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
-                  <Zap size={14} className="text-amber-400" /> Detected ICT Keywords ({detectedKeywords.length}):
+                  <Zap size={15} className="text-amber-500" /> Detected ICT Keywords ({detectedKeywords.length}):
                 </span>
-                <span className="text-[11px] text-text-muted">Click keyword to spell, or download video clip</span>
+                <span className="text-[11px] text-text-muted">Click to spell or download footage</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {detectedKeywords.map((kw) => {
                   const isSelected = selectedWord === kw.word && !selectedManualLetter;
                   return (
                     <div
                       key={kw.word}
-                      className={`flex items-center justify-between p-2.5 rounded-2xl border transition-all ${
-                        isSelected
-                          ? 'border-primary bg-primary/15 shadow-md shadow-primary/10'
-                          : 'border-white/10 bg-white/[0.02] hover:border-white/20'
+                      className={`fs-keyword-card flex items-center justify-between p-3 rounded-2xl border transition-all ${
+                        isSelected ? 'is-active ring-2 ring-emerald-500/40 shadow-md' : ''
                       }`}
                     >
                       <button
@@ -728,10 +733,10 @@ const FingerspellingStudio = () => {
                         onClick={() => handleSelectKeyword(kw.word)}
                         className="flex items-center gap-2 text-left cursor-pointer flex-1"
                       >
-                        <span className={`text-sm font-black ${isSelected ? 'text-primary' : 'text-white'}`}>
+                        <span className={`text-sm font-black ${isSelected ? 'text-emerald-600 dark:text-emerald-400' : ''}`}>
                           {kw.word}
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded font-mono bg-white/10 text-text-muted">
+                        <span className="text-[10px] px-2 py-0.5 rounded font-mono bg-black/5 dark:bg-white/10 text-text-muted">
                           {kw.letterCount} letters
                         </span>
                       </button>
@@ -741,10 +746,10 @@ const FingerspellingStudio = () => {
                         type="button"
                         onClick={() => handleDownloadKeywordVideo(kw.word)}
                         disabled={isRecording}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/5 border border-white/10 text-text-muted hover:text-white hover:bg-white/15 transition-all cursor-pointer"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-black/5 dark:bg-white/10 border border-border text-text-muted hover:text-primary hover:border-primary transition-all cursor-pointer"
                         title={`Download "${kw.word}" 1080p sign video clip`}
                       >
-                        <Download size={13} />
+                        <Download size={14} />
                       </button>
                     </div>
                   );
@@ -754,21 +759,21 @@ const FingerspellingStudio = () => {
           </div>
 
           {/* 26-Letter ASL Manual Alphabet Grid */}
-          <div className="rounded-3xl border border-white/10 bg-black/60 p-6 shadow-xl backdrop-blur-md">
-            <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="fs-card space-y-4">
+            <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <Layers size={17} className="text-emerald-400" />
-                <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                <Layers size={18} className="text-emerald-500" />
+                <h4 className="text-sm font-bold uppercase tracking-wider">
                   26 English Letters Manual Alphabet (A–Z)
                 </h4>
               </div>
-              <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+              <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
                 Click any letter to test 3D hand sign
               </span>
             </div>
 
             {/* 26 Alphabet Buttons Grid */}
-            <div className="grid grid-cols-6 sm:grid-cols-9 md:grid-cols-13 gap-2">
+            <div className="grid grid-cols-6 sm:grid-cols-9 md:grid-cols-13 gap-2 sm:gap-2.5">
               {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((char) => {
                 const isCurrentActive = activeLetterChar === char;
                 return (
@@ -776,45 +781,57 @@ const FingerspellingStudio = () => {
                     key={char}
                     type="button"
                     onClick={() => handleSelectAlphabetLetter(char)}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[50px] border ${
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[52px] border ${
                       isCurrentActive
-                        ? 'border-emerald-400 bg-emerald-500/25 text-emerald-300 shadow-md shadow-emerald-500/20 scale-105 ring-2 ring-emerald-400/40'
-                        : 'border-white/10 bg-white/[0.02] text-slate-300 hover:bg-white/10 hover:border-white/30'
+                        ? 'border-emerald-500 bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 scale-105 ring-2 ring-emerald-500/40'
+                        : 'border-border bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/5 dark:hover:bg-white/10 hover:border-primary/50'
                     }`}
                   >
                     <span className="text-base font-black">{char}</span>
-                    <span className="text-[9px] text-text-muted font-normal font-mono">ASL</span>
+                    <span className={`text-[9px] font-normal font-mono ${isCurrentActive ? 'text-slate-900 font-bold' : 'text-text-muted'}`}>
+                      ASL
+                    </span>
                   </button>
                 );
               })}
             </div>
 
             {/* Active Letter Anatomical Guide Card */}
-            <div className="mt-4 p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/30">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase mb-1">
-                    <Sparkles size={14} />
+            <div className="fs-guide-box">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-2 flex-1">
+                  <div className="flex items-center gap-2 fs-guide-title text-xs uppercase">
+                    <Sparkles size={15} className="text-emerald-500" />
                     <span>Anatomical Sign Guide: {activeLetterMeta.name}</span>
                   </div>
-                  <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed font-medium">
+
+                  <p className="fs-guide-text text-sm leading-relaxed">
                     {activeLetterMeta.description}
                   </p>
-                  <div className="mt-2 text-xs font-bold text-emerald-300/80">
-                    Handshape: <span className="text-white font-normal">{activeLetterMeta.handShape}</span>
+
+                  <div className="text-xs font-semibold pt-1">
+                    Handshape Posture:{' '}
+                    <span className="font-bold underline decoration-emerald-500/40">
+                      {activeLetterMeta.handShape}
+                    </span>
                   </div>
                 </div>
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-2xl font-black font-mono shadow-md">
+
+                {/* Big Letter Badge */}
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-slate-950 font-black font-mono text-3xl shadow-lg shadow-emerald-500/30">
                   {activeLetterChar}
                 </div>
               </div>
 
               {/* ICT Acronym Examples */}
               {activeLetterMeta.ictExamples && activeLetterMeta.ictExamples.length > 0 && (
-                <div className="mt-3 pt-2.5 border-t border-emerald-500/20 flex items-center gap-2 flex-wrap text-[11px] text-emerald-200/80">
-                  <span className="font-bold text-emerald-400">ICT Examples:</span>
+                <div className="fs-guide-examples mt-3 pt-3 border-t border-emerald-500/20 flex items-center gap-2 flex-wrap text-xs">
+                  <span className="font-bold">ICT Examples:</span>
                   {activeLetterMeta.ictExamples.map((ex, i) => (
-                    <span key={i} className="bg-black/30 px-2 py-0.5 rounded border border-emerald-500/20">
+                    <span
+                      key={i}
+                      className="bg-black/5 dark:bg-black/40 px-2.5 py-1 rounded-lg border border-emerald-500/20 font-medium"
+                    >
                       {ex}
                     </span>
                   ))}
@@ -826,29 +843,29 @@ const FingerspellingStudio = () => {
 
         {/* Right Column: 3D Realistic Hand Avatar Stage & Recording Exporter (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="rounded-3xl border border-primary/30 bg-black/80 p-6 shadow-2xl backdrop-blur-xl">
+          <div className="fs-card space-y-4">
             {/* Top Toolbar */}
-            <div className="flex items-center justify-between gap-2 pb-4 border-b border-white/10">
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-border">
               <div className="flex items-center gap-2">
-                <span className="flex h-3 w-3 rounded-full bg-emerald-400 animate-ping" />
-                <span className="text-xs font-bold uppercase tracking-wider text-white">
+                <span className="flex h-3 w-3 rounded-full bg-emerald-500 animate-ping" />
+                <span className="text-xs font-bold uppercase tracking-wider">
                   3D ASL Hand Avatar
                 </span>
               </div>
 
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
                 {/* Both Hands Toggle Button */}
                 <button
                   type="button"
                   onClick={() => setUseBothHands((prev) => !prev)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                     useBothHands
-                      ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300'
-                      : 'border-white/10 bg-white/5 text-text-muted hover:text-white'
+                      ? 'border-emerald-500 bg-emerald-500/20 text-emerald-600 dark:text-emerald-300'
+                      : 'border-border bg-black/5 dark:bg-white/5 text-text-muted hover:text-primary'
                   }`}
                   title="Toggle between Both Hands and Single Dominant Hand signing"
                 >
-                  <Users size={13} />
+                  <Users size={14} />
                   <span>{useBothHands ? 'Both Hands' : 'Single Hand'}</span>
                 </button>
 
@@ -856,10 +873,10 @@ const FingerspellingStudio = () => {
                 <button
                   type="button"
                   onClick={() => setShowSkeleton((prev) => !prev)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                     showSkeleton
                       ? 'border-primary bg-primary/20 text-primary'
-                      : 'border-white/10 bg-white/5 text-text-muted hover:text-white'
+                      : 'border-border bg-black/5 dark:bg-white/5 text-text-muted hover:text-primary'
                   }`}
                   title="Toggle Hand Bones / Landmarks"
                 >
@@ -870,7 +887,7 @@ const FingerspellingStudio = () => {
                 <select
                   value={speed}
                   onChange={(e) => setSpeed(e.target.value)}
-                  className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs font-bold text-text-muted focus:outline-none cursor-pointer"
+                  className="rounded-xl border border-border bg-black/5 dark:bg-white/5 px-2.5 py-1.5 text-xs font-bold text-text-muted focus:outline-none cursor-pointer"
                 >
                   {Object.keys(SPEED_FACTORS).map((s) => (
                     <option key={s} value={s}>
@@ -882,27 +899,27 @@ const FingerspellingStudio = () => {
             </div>
 
             {/* Prominent Active Word Ribbon HUD */}
-            <div className="mt-4 p-3 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-black/60 to-emerald-950/40 border border-emerald-500/30 flex items-center justify-between gap-2 shadow-inner">
+            <div className="p-3.5 rounded-2xl bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between gap-3 shadow-inner">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                   {selectedManualLetter ? 'Single Sign:' : 'Word Spelling:'}
                 </span>
-                <span className="text-base font-black text-white font-mono tracking-widest">
+                <span className="text-base font-black font-mono tracking-widest text-emerald-700 dark:text-white">
                   {selectedManualLetter ? selectedManualLetter : selectedWord}
                 </span>
               </div>
 
               {/* Progress Letter Badges */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 {currentLetters.map((letter, idx) => {
                   const isActive = idx === activeLetterIndex;
                   return (
                     <span
                       key={idx}
-                      className={`inline-flex h-6 w-6 items-center justify-center rounded-lg font-mono text-xs font-black transition-all ${
+                      className={`inline-flex h-7 w-7 items-center justify-center rounded-lg font-mono text-xs font-black transition-all ${
                         isActive
-                          ? 'bg-emerald-400 text-slate-950 shadow-md shadow-emerald-400/40 scale-110 ring-1 ring-white'
-                          : 'bg-white/10 text-white/50'
+                          ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/40 scale-110 ring-2 ring-emerald-400'
+                          : 'bg-black/10 dark:bg-white/10 text-text-muted'
                       }`}
                     >
                       {letter}
@@ -915,7 +932,7 @@ const FingerspellingStudio = () => {
             {/* Realistic Avatar Canvas Stage */}
             <div
               id="realistic-avatar-canvas-container"
-              className="relative my-3 aspect-square w-full rounded-2xl border border-white/10 bg-gradient-to-b from-slate-950 via-[#060a12] to-black overflow-hidden shadow-inner flex items-center justify-center"
+              className="relative aspect-square w-full rounded-2xl border border-border bg-gradient-to-b from-slate-950 via-[#060a12] to-black overflow-hidden shadow-inner flex items-center justify-center"
             >
               <RealisticAvatarViewer
                 currentGesture={activeGestureData}
@@ -968,15 +985,15 @@ const FingerspellingStudio = () => {
             </div>
 
             {/* Letter Sequence Ribbon Interactive Stepper */}
-            <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/10">
-              <div className="text-[10px] uppercase font-bold text-text-muted mb-2 flex items-center justify-between">
+            <div className="p-3.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-border space-y-2">
+              <div className="text-[10px] uppercase font-bold text-text-muted flex items-center justify-between">
                 <span>Timeline Stepper ({selectedManualLetter ? 'Letter' : selectedWord}):</span>
                 <span className="font-mono text-primary font-bold">
                   Letter {activeLetterIndex + 1} of {currentLetters.length} ({activeLetterChar})
                 </span>
               </div>
 
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
                 {currentLetters.map((char, idx) => {
                   const isCurrent = idx === activeLetterIndex;
                   return (
@@ -989,8 +1006,8 @@ const FingerspellingStudio = () => {
                       }}
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-mono text-sm font-black transition-all cursor-pointer border ${
                         isCurrent
-                          ? 'border-emerald-400 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30 scale-110'
-                          : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
+                          ? 'border-emerald-500 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30 scale-110'
+                          : 'border-border bg-black/5 dark:bg-white/5 text-text-muted hover:text-primary hover:border-primary'
                       }`}
                     >
                       {char}
@@ -1001,12 +1018,12 @@ const FingerspellingStudio = () => {
             </div>
 
             {/* Media Controls Bar & Full Video Downloader */}
-            <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-              <div className="flex items-center gap-1.5">
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleStepPrev}
-                  className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-text-muted hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                  className="rounded-xl border border-border bg-black/5 dark:bg-white/5 p-2.5 text-text-muted hover:text-primary hover:border-primary transition-all cursor-pointer"
                   title="Previous Letter"
                 >
                   <ChevronLeft size={18} />
@@ -1015,7 +1032,7 @@ const FingerspellingStudio = () => {
                 <button
                   type="button"
                   onClick={handleTogglePlay}
-                  className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-extrabold shadow-lg transition-all cursor-pointer min-h-[40px] ${
+                  className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-extrabold shadow-lg transition-all cursor-pointer min-h-[42px] ${
                     isPlaying
                       ? 'bg-amber-400 text-slate-950 shadow-amber-400/20'
                       : 'bg-primary text-slate-950 hover:bg-primary-hover shadow-primary/20'
@@ -1028,7 +1045,7 @@ const FingerspellingStudio = () => {
                 <button
                   type="button"
                   onClick={handleStepNext}
-                  className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-text-muted hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                  className="rounded-xl border border-border bg-black/5 dark:bg-white/5 p-2.5 text-text-muted hover:text-primary hover:border-primary transition-all cursor-pointer"
                   title="Next Letter"
                 >
                   <ChevronRight size={18} />
@@ -1037,7 +1054,7 @@ const FingerspellingStudio = () => {
                 <button
                   type="button"
                   onClick={handleReplay}
-                  className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-text-muted hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                  className="rounded-xl border border-border bg-black/5 dark:bg-white/5 p-2.5 text-text-muted hover:text-primary hover:border-primary transition-all cursor-pointer"
                   title="Replay from Beginning"
                 >
                   <RotateCcw size={16} />
@@ -1049,7 +1066,7 @@ const FingerspellingStudio = () => {
                 type="button"
                 onClick={() => handleDownloadKeywordVideo()}
                 disabled={isRecording}
-                className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all shadow-md cursor-pointer ${
+                className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold transition-all shadow-md cursor-pointer ${
                   downloadSuccess
                     ? 'bg-emerald-500 text-slate-950'
                     : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/20'

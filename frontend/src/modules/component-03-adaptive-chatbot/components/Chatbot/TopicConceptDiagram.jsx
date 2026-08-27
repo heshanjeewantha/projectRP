@@ -80,23 +80,23 @@ const TopicConceptDiagram = ({ topicId, topicName }) => {
   };
 
   return (
-    <div className="rounded-2xl border border-primary/25 bg-primary/[0.02] p-4 sm:p-6 shadow-xl my-5 transition-all">
-      {/* Diagram Section Header */}
-      <div className="flex items-center justify-between gap-4 pb-4 border-b border-white/10 dark:border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary border border-primary/30 shadow-md">
-            <BrainCircuit size={20} />
+    <div className="note-diagram-focus-container p-5 sm:p-7 shadow-2xl my-8 transition-all ring-2 ring-emerald-500/40 border-2 border-emerald-500/60 rounded-3xl">
+      {/* Diagram Spotlight Section Header */}
+      <div className="flex items-center justify-between gap-4 pb-4 border-b border-border">
+        <div className="flex items-center gap-3.5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30">
+            <BrainCircuit size={24} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-primary">
-                Visual Concept Diagram
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                Core Visual Architecture
               </span>
-              <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-mono font-bold text-emerald-400 border border-emerald-500/30">
-                Interactive Architecture
+              <span className="rounded-full bg-emerald-500/20 px-3 py-0.5 text-[10px] font-mono font-black text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 animate-pulse">
+                ● SPOTLIGHT DIAGRAM
               </span>
             </div>
-            <h4 className="text-sm sm:text-base font-extrabold text-white mt-0.5 tracking-tight">
+            <h4 className="text-base sm:text-xl font-black text-text-main tracking-tight">
               {topicName || 'Topic Concept Model'}
             </h4>
           </div>
@@ -105,9 +105,9 @@ const TopicConceptDiagram = ({ topicId, topicName }) => {
         <button
           type="button"
           onClick={() => setIsExpanded((prev) => !prev)}
-          className="flex items-center gap-1.5 text-xs font-bold text-text-muted hover:text-primary transition-all px-3 py-1.5 rounded-xl border border-white/10 hover:bg-white/5 cursor-pointer shrink-0"
+          className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all px-4 py-2 rounded-xl border border-emerald-500/30 cursor-pointer shrink-0"
         >
-          <span>{isExpanded ? 'Hide Visual' : 'Show Visual'}</span>
+          <span>{isExpanded ? 'Collapse Diagram' : 'Expand Visual Model'}</span>
           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
       </div>
@@ -118,24 +118,28 @@ const TopicConceptDiagram = ({ topicId, topicName }) => {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="pt-4 overflow-hidden"
+          className="pt-6 overflow-hidden"
         >
-          <div className="note-diagram-canvas relative rounded-2xl p-4 sm:p-6 shadow-inner overflow-x-auto">
+          <div className="note-diagram-canvas relative rounded-2xl p-5 sm:p-7 shadow-inner overflow-x-auto border-2 border-border">
             {renderDiagram()}
           </div>
 
-          <div className="mt-3 flex items-center justify-between text-xs text-text-muted px-1 flex-wrap gap-2">
-            <span className="flex items-center gap-1.5 font-medium">
-              <Sparkles size={13} className="text-primary" />
-              Interactive high-yield visual architecture model
+          <div className="mt-4 flex items-center justify-between text-xs text-text-muted px-1 flex-wrap gap-2">
+            <span className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
+              <Sparkles size={15} />
+              Interactive high-yield visual architecture diagram
             </span>
-            <span className="font-mono text-[11px] font-bold text-primary/80">Sri Lanka National O/L ICT Standard</span>
+            <span className="font-mono text-[11px] font-extrabold text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
+              Sri Lanka National O/L ICT Standard
+            </span>
           </div>
         </motion.div>
       )}
     </div>
   );
 };
+
+
 
 /* ─────────────────────────────────────────────────────────────────────────────
    1. Real Relational Database & Entity-Relationship Schema (DBMS)
