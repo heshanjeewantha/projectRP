@@ -209,6 +209,8 @@ html[data-theme="light"] [class*="bg-primary\/"] * {
 /* Exception rules for primary buttons, vibrant solid badges */
 html[data-theme="light"] .btn-primary,
 html[data-theme="light"] .btn-primary *,
+html[data-theme="light"] .chatbot-send-button:not(:disabled),
+html[data-theme="light"] .chatbot-send-button:not(:disabled) *,
 html[data-theme="light"] .auth-primary-button,
 html[data-theme="light"] .auth-primary-button *,
 html[data-theme="light"] .popup-primary-button,
@@ -4104,21 +4106,57 @@ button:active, a:active {
   color: #062117;
   font-size: 0.95rem;
   font-weight: 700;
-  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   box-shadow: 0 4px 14px rgba(52, 211, 153, 0.18);
 }
 
-.chatbot-send-button:hover {
+.chatbot-send-button:not(:disabled):hover {
   transform: translateY(-1px);
-  filter: brightness(1.04);
+  filter: brightness(1.06);
   box-shadow: 0 8px 18px rgba(52, 211, 153, 0.24);
 }
 
 .chatbot-send-button:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  opacity: 0.75;
   transform: none;
   box-shadow: none;
+}
+
+html[data-theme="light"] .chatbot-send-button {
+  background: linear-gradient(135deg, #15803d, #0f766e) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(21, 128, 61, 0.3) !important;
+  border: none !important;
+  opacity: 1 !important;
+}
+
+html[data-theme="light"] .chatbot-send-button * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+html[data-theme="light"] .chatbot-send-button:not(:disabled):hover {
+  background: linear-gradient(135deg, #16a34a, #0d9488) !important;
+  box-shadow: 0 6px 20px rgba(21, 128, 61, 0.38) !important;
+  filter: none !important;
+}
+
+html[data-theme="light"] .chatbot-send-button:disabled {
+  background: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  opacity: 1 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+html[data-theme="light"] .chatbot-send-button:disabled * {
+  color: #94a3b8 !important;
+  stroke: #94a3b8 !important;
 }
 
 .chatbot-page-shell {
