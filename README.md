@@ -6,10 +6,9 @@
 
 ## 🏛️ Core Research Components
 
-1. **Component 01: Real-Time Attention Monitoring & Telemetry**
+1. **Component 01: Real-Time Attention Monitoring & Behavioral Telemetry**
    * Live webcam facial telemetry via MediaPipe FaceMesh & Pose (EAR, MAR, PERCLOS drowsiness tracking, Gaze Vectoring).
-   * YOLOv8 smartphone and unauthorized distraction detection.
-   * Real-time WebSocket streaming at `/ws/attention/{session_id}` with high-tech biometric HUD and video timeline attention heatmaps.
+   * Real-time WebSocket streaming at `/ws/attention/{session_id}` with biometric HUD overlay, video timeline attention heatmaps, and downloadable administrative PDF reports.
 
 2. **Component 02: Knowledge Graph Driven Popup Question System**
    * Graph-based weighted question selection algorithm (**GQSA**: 60% active concept, 25% prerequisite, 15% related concepts).
@@ -138,6 +137,7 @@ npm run dev
 | `http://localhost:5173/wristband` | **Smart Wristband IoT**: ESP32 BLE device pairing, vibration preset tuning, and OLED preview |
 | `http://localhost:5173/history` | **Student History**: Recorded attention sessions, distraction timelines, and answer stats |
 | `http://localhost:5173/admin` | **Admin Dashboard**: Pipeline analytics, uploaded video management, and alert reports |
+| `http://localhost:5173/admin/attention-reports` | **Admin Attention Reports**: Student attention & behavioral PDF evaluation reports |
 | `http://localhost:5173/upload` | **Admin Video Upload**: Upload O/L ICT video lessons and generate automatic transcripts |
 
 ---

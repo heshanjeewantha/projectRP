@@ -54,7 +54,7 @@ const AdminUpload = ({ embedded = false }) => {
   };
 
   const formCard = (
-    <div className="rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(15,22,18,0.98),rgba(9,14,11,0.98))] p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+    <div className="dashboard-panel rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
       {/* Decorative Glow */}
       <div className="absolute -top-20 -right-20 w-44 h-44 bg-primary/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-20 -left-20 w-44 h-44 bg-accent/15 rounded-full blur-3xl pointer-events-none" />
@@ -263,7 +263,7 @@ const AdminUpload = ({ embedded = false }) => {
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-8 sm:py-12">
       <div className="flex flex-col gap-6">
-        <div className="rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(15,22,18,0.98),rgba(9,14,11,0.98))] p-6 sm:p-7 shadow-xl">
+        <div className="dashboard-panel rounded-3xl p-6 sm:p-7 shadow-xl">
           <div className="flex items-center gap-3.5">
             <div className="bg-primary/20 p-3 rounded-xl text-primary border border-primary/25 shadow-inner">
               <UploadCloud size={24} />

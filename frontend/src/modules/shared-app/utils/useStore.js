@@ -140,12 +140,13 @@ const useStore = create((set) => ({
   engagementScore:    100,           // 0-100
   setEngagementScore: (score) => set({ engagementScore: score }),
 
-  // Live sign caption
-  liveSignText:        null,         // e.g. "COMPUTER"
+  // Live sign caption & Smart Lesson Gestures
+  liveSignText:        null,         // e.g. "COMPUTER" | "PALM" | "PEACE" | "FIST"
   liveSignConfidence:  0,
   liveSignExplanation: '',
-  setLiveSign:         (text, confidence, explanation) =>
-    set({ liveSignText: text, liveSignConfidence: confidence, liveSignExplanation: explanation }),
+  gestureAction:       null,         // 'SKIP_FORWARD_10S' | 'SKIP_BACKWARD_10S' | 'TOGGLE_PLAY_PAUSE' | null
+  setLiveSign:         (text, confidence, explanation, gestureAction = null) =>
+    set({ liveSignText: text, liveSignConfidence: confidence, liveSignExplanation: explanation, gestureAction }),
 
   // Session attention event log (for heatmap)
   attentionEvents: [],               // [{ timestamp, status, reason, engagementScore }]

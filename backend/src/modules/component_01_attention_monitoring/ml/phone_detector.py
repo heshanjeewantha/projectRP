@@ -105,20 +105,13 @@ class PhoneDetector:
         if not hand_res.multi_hand_landmarks:
             return False, "none", 0.0
 
-        # Case A: Both hands detected and close together (Dual-Hand Phone Texting/Holding)
-        if len(hand_res.multi_hand_landmarks) >= 2:
-            h1 = hand_res.multi_hand_landmarks[0].landmark[0] # Wrist 1
-            h2 = hand_res.multi_hand_landmarks[1].landmark[0] # Wrist 2
-            w1 = np.array([h1.x * w, h1.y * h])
-            w2 = np.array([h2.x * w, h2.y * h])
-            wrist_dist = np.linalg.norm(w1 - w2)
-
-            # If wrists are in lower half and close together (< 0.28 * width)
-            if h1.y > 0.45 and h2.y > 0.45 and wrist_dist < (w * 0.28):
-                return True, "phone_in_hand_two_hands", 0.89
+        # If any hand is showing an open gesture (palm/peace/raised), NEVER detect as phone
+        for hand_lms in hand_res.multi_hand_landmarks:
+            if self._is_open_gesture(hand_lms.landmark):
+                return False, "none", 0.0
 
         if not face_res.multi_face_landmarks:
-            # If no face but hand in lower center with grip, check phone in hand
+            # If no face but hand in lower center with tight phone grip, check desk phone
             for hand_lms in hand_res.multi_hand_landmarks:
                 wrist = hand_lms.landmark[0]
                 if wrist.y > 0.5:
@@ -148,25 +141,49 @@ class PhoneDetector:
         is_looking_down = nose[1] > ears_mid_y + (face_height * 0.08)
 
         for hand_lms in hand_res.multi_hand_landmarks:
-            # Check key hand points: Wrist (0), Index MCP (5), Middle MCP (9), Pinky MCP (17), Middle Tip (12), Thumb Tip (4)
-            hand_pts = [
-                np.array([hand_lms.landmark[i].x * w, hand_lms.landmark[i].y * h])
-                for i in [0, 4, 5, 9, 12, 17]
-            ]
+            # If the user is showing an open hand / gesture (palm, peace, open fingers), NOT a phone
+            if self._is_open_gesture(hand_lms.landmark):
+                continue
+
             wrist_y = hand_lms.landmark[0].y
+            has_phone_grip = self._is_phone_grip(hand_lms.landmark, w, h)
 
-            # 1. Texting / Holding phone in hand in front of chest/chin
-            for hp in hand_pts:
-                dist_chin = np.linalg.norm(hp - chin)
-                if dist_chin < (threshold_dist * 0.85) and hp[1] < chin[1] + (face_width * 0.35):
-                    return True, "phone_in_hand_texting", 0.86
+            # 1. Texting / Holding phone near chest/chin (Only if looking down and gripping an object)
+            if is_looking_down and has_phone_grip:
+                hand_pts = [
+                    np.array([hand_lms.landmark[i].x * w, hand_lms.landmark[i].y * h])
+                    for i in [0, 4, 5, 9, 12, 17]
+                ]
+                for hp in hand_pts:
+                    dist_chin = np.linalg.norm(hp - chin)
+                    if dist_chin < (threshold_dist * 0.75):
+                        return True, "phone_in_hand_texting", 0.86
 
-            # 2. Phone in Hand (Desk / Lap texting): Hand resting low + looking downward
-            if wrist_y > 0.52 and is_looking_down:
-                if self._is_phone_grip(hand_lms.landmark, w, h):
-                    return True, "phone_in_hand_desk", 0.84
+            # 2. Phone in Hand (Desk / Lap texting): Hand resting low + looking downward + phone grip
+            if wrist_y > 0.52 and is_looking_down and has_phone_grip:
+                return True, "phone_in_hand_desk", 0.84
 
         return False, "none", 0.0
+
+    def _is_open_gesture(self, lms) -> bool:
+        """True if hand has extended fingers (e.g. Open Palm, Peace, Thumbs Up)."""
+        try:
+            wrist = np.array([lms[0].x, lms[0].y])
+            idx_tip = np.array([lms[8].x, lms[8].y])
+            idx_mcp = np.array([lms[5].x, lms[5].y])
+            mid_tip = np.array([lms[12].x, lms[12].y])
+            mid_mcp = np.array([lms[9].x, lms[9].y])
+            ring_tip = np.array([lms[16].x, lms[16].y])
+            ring_mcp = np.array([lms[13].x, lms[13].y])
+
+            idx_open = np.linalg.norm(idx_tip - wrist) > np.linalg.norm(idx_mcp - wrist) * 1.15
+            mid_open = np.linalg.norm(mid_tip - wrist) > np.linalg.norm(mid_mcp - wrist) * 1.15
+            ring_open = np.linalg.norm(ring_tip - wrist) > np.linalg.norm(ring_mcp - wrist) * 1.15
+
+            # If 2 or more fingers are open, it is an open gesture, not phone grip
+            return sum([idx_open, mid_open, ring_open]) >= 2
+        except Exception:
+            return False
 
     def _is_phone_grip(self, lms, w: int, h: int) -> bool:
         """
@@ -186,15 +203,15 @@ class PhoneDetector:
 
             palm_size = np.linalg.norm(idx_mcp - wrist)
             if palm_size < 5:
-                return True
+                return False
 
             idx_curl = np.linalg.norm(idx_tip - idx_mcp) / palm_size
             mid_curl = np.linalg.norm(mid_tip - mid_mcp) / palm_size
 
             # Curled fingers holding an object
-            return (idx_curl < 1.4 and mid_curl < 1.4)
+            return (idx_curl < 0.95 and mid_curl < 0.95)
         except Exception:
-            return True
+            return False
 
     def __del__(self):
         try:

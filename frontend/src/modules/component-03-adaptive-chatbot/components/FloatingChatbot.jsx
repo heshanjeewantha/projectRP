@@ -4,6 +4,7 @@ import { Bot, MessageCircle, Minimize2, Send, Sparkles, X } from 'lucide-react';
 
 import { askChatbot, getChatbotHistory } from '../services/chatbotApi';
 import useStore from '../../shared-app/utils/useStore';
+import ChatbotFormattedAnswer from './Chatbot/ChatbotFormattedAnswer';
 import './FloatingChatbot.css';
 
 const routeTopicMap = {
@@ -272,7 +273,7 @@ const FloatingChatbot = ({ pathname }) => {
                           </span>
                         ) : null}
                       </div>
-                      <p>{message.answer}</p>
+                      <ChatbotFormattedAnswer content={message.answer} compact />
                       {message.sourceType === 'LOCAL_DATASET' ? (
                         <div className="floating-chatbot__source-note">
                           Answered using local lesson dataset.

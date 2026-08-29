@@ -56,11 +56,6 @@ const LoginPage = () => {
           </div>
         </div>
 
-        <div className="auth-demo-box">
-          <div>Admin demo: <span className="text-white">admin@signlearn.ai / admin123</span></div>
-          <div>Student demo: <span className="text-white">student@signlearn.ai / student123</span></div>
-        </div>
-
         <form onSubmit={handleSubmit} className="auth-form">
           <label className="auth-field">
             <span>Email</span>

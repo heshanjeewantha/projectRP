@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { Camera, CameraOff, Smartphone, Moon } from 'lucide-react';
+import { Camera, CameraOff, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useStore from '../../../shared-app/utils/useStore';
 import { useWebSocket } from '../../hooks/useWebSocket';
@@ -20,6 +20,11 @@ const WebcamFeed = ({ videoRef, compact = false }) => {
 
   const effectiveUserId               = userId || 'student_demo_123';
   const { isConnected, latestDetection, sendFrame } = useWebSocket(sessionId);
+
+  const sendFrameRef = useRef(sendFrame);
+  sendFrameRef.current = sendFrame;
+  const videoRefRef = useRef(videoRef);
+  videoRefRef.current = videoRef;
 
   useEffect(() => {
     latestDetectionRef.current = latestDetection;
@@ -44,7 +49,7 @@ const WebcamFeed = ({ videoRef, compact = false }) => {
     return () => { if (stream) stream.getTracks().forEach((t) => t.stop()); };
   }, [setWebcamActive]);
 
-  // Frame capture loop
+  // Frame capture loop (Runs steadily at 2 FPS regardless of parent re-renders)
   useEffect(() => {
     let intervalId;
     if (isWebcamActive && isConnected) {
@@ -60,8 +65,8 @@ const WebcamFeed = ({ videoRef, compact = false }) => {
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const base64Frame     = canvas.toDataURL('image/jpeg', 0.5);
-        const videoTimestamp  = videoRef?.current?.currentTime || 0;
-        sendFrame(base64Frame, videoTimestamp);
+        const videoTimestamp  = videoRefRef.current?.current?.currentTime || 0;
+        sendFrameRef.current?.(base64Frame, videoTimestamp);
 
         const latestEvent = latestDetectionRef.current;
         if (latestEvent) {
@@ -81,13 +86,14 @@ const WebcamFeed = ({ videoRef, compact = false }) => {
             phone_confidence:    latestEvent.phone_confidence ?? 0,
             sign_text:           latestEvent.sign_text ?? null,
             sign_confidence:     latestEvent.sign_confidence ?? 0,
+            gesture_action:      latestEvent.gesture_action ?? null,
             engagement_score:    latestEvent.engagement_score ?? 100,
           });
         }
       }, 500); // 2 FPS
     }
     return () => clearInterval(intervalId);
-  }, [isWebcamActive, isConnected, sendFrame, videoRef]);
+  }, [isWebcamActive, isConnected]);
 
   // Batch logging every 5 seconds
   useEffect(() => {
@@ -140,21 +146,6 @@ const WebcamFeed = ({ videoRef, compact = false }) => {
             <div className="h-1 w-full bg-primary/40 shadow-[0_0_15px_rgba(99,102,241,0.5)] animate-[scan_3s_ease-in-out_infinite]" />
           </div>
         )}
-
-        {/* Phone alert overlay */}
-        <AnimatePresence>
-          {phoneDetected && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full bg-red-500/90 px-3 py-1.5 text-xs font-bold text-white shadow-lg backdrop-blur-sm"
-            >
-              <Smartphone size={12} />
-              Phone in Hand Detected!
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Drowsy alert */}
         <AnimatePresence>

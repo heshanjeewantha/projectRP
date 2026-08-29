@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Play, Pause, Volume2, Maximize, MonitorPlay } from 'lucide-react';
-import MissedPopup from '../../../component-02-knowledge-graph-question-system/components/Popup/MissedPopup';
 
 const VideoPlayer = ({ video, transcript, onTimeUpdate, videoRef }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -59,8 +58,6 @@ const VideoPlayer = ({ video, transcript, onTimeUpdate, videoRef }) => {
 
   return (
     <div className="group relative w-full overflow-hidden rounded-[24px] bg-[linear-gradient(180deg,rgba(12,16,13,0.92),rgba(5,8,6,0.96))]">
-      <MissedPopup videoRef={videoRef} />
-      
       <video
         ref={videoRef}
         src={videoUrl}

@@ -983,6 +983,22 @@ async def get_report_file(format_name: str, student_id: str | None = None, topic
     return {"content": content, "filename": filename, "mediaType": media_type}
 
 
+def _clean_formatted_answer(value: str) -> str:
+    """Cleans LLM response text, strips markdown header hashes (#, ##, ###),
+    preserves multi-paragraph spacing and lists, removes raw markdown clutter."""
+    if not value:
+        return ""
+    text = str(value).replace("\r\n", "\n")
+    lines = []
+    for line in text.split("\n"):
+        cleaned_line = re.sub(r"^#{1,6}\s*", "", line)
+        cleaned_line = re.sub(r"[ \t]+", " ", cleaned_line).strip()
+        lines.append(cleaned_line)
+    result = "\n".join(lines)
+    result = re.sub(r"\n{3,}", "\n\n", result).strip()
+    return result
+
+
 async def _generate_answer_bundle(
     question: str,
     mode: str,
@@ -1008,17 +1024,18 @@ async def _generate_answer_bundle(
             refresh_points=refresh_points,
             prompt=prompt,
         )
-        answer = _normalize_whitespace(llm_result["answer"])
+        raw_answer = _clean_formatted_answer(llm_result["answer"])
         if mode == "exam":
-            answer = formatExamAnswer(answer, _build_key_terms(topic_doc))
+            answer = formatExamAnswer(raw_answer, _build_key_terms(topic_doc))
         else:
             answer = formatLearningAnswer(
-                answer=answer,
+                answer=raw_answer,
                 learning_state=learning_state,
                 example=_select_topic_example(topic_doc),
                 prerequisites=prerequisites,
                 refresh_points=refresh_points,
                 allow_prefix=False,
+                is_llm=True,
             )
         return {
             "answer": answer,
@@ -1094,7 +1111,7 @@ async def callLLMApi(
     provider = str(settings.LLM_PROVIDER or "").strip().lower()
     api_key = str(settings.LLM_API_KEY or "").strip()
     model = str(settings.LLM_MODEL or "").strip()
-    timeout_ms = max(1000, int(settings.LLM_TIMEOUT_MS or 10000))
+    timeout_ms = max(1000, min(int(settings.LLM_TIMEOUT_MS or 4000), 5000))
 
     if not provider:
         raise LLMApiError("llm_provider_missing")
@@ -1105,7 +1122,7 @@ async def callLLMApi(
 
     candidate_models = [model]
     if provider == "gemini":
-        for fallback_m in ["gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"]:
+        for fallback_m in ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]:
             if fallback_m not in candidate_models:
                 candidate_models.append(fallback_m)
 
@@ -1125,7 +1142,8 @@ async def callLLMApi(
             refresh_points=refresh_points,
         )
 
-        for attempt in range(2):
+        max_attempts = 1 if len(candidate_models) > 1 else 2
+        for attempt in range(max_attempts):
             try:
                 payload = await asyncio.to_thread(
                     _post_json_request,
@@ -1144,14 +1162,16 @@ async def callLLMApi(
                 }
             except LLMApiError as exc:
                 last_error = exc
-                if exc.safe_reason in ("quota_exceeded", "provider_server_error"):
+                if exc.safe_reason in ("api_auth_error", "quota_exceeded", "provider_server_error"):
+                    raise exc
+                if exc.safe_reason == "model_not_found":
                     break
-                if attempt == 0 and exc.safe_reason in LLM_RETRYABLE_REASONS:
+                if attempt == 0 and max_attempts > 1 and exc.safe_reason in LLM_RETRYABLE_REASONS:
                     continue
                 break
             except Exception as exc:
                 last_error = LLMApiError("invalid_llm_response")
-                if attempt == 0:
+                if attempt == 0 and max_attempts > 1:
                     continue
                 break
 
@@ -1242,11 +1262,20 @@ def formatLearningAnswer(
     topic_name: str | None = None,
     difficulty_level: int | None = None,
     allow_prefix: bool = True,
+    is_llm: bool = False,
 ) -> str:
     prerequisites = prerequisites or []
     refresh_points = refresh_points or []
     key_points = key_points or []
-    answer = _ensure_sentence(answer)
+    clean_ans = _clean_formatted_answer(answer)
+
+    if is_llm:
+        parts = []
+        if prerequisites and not any(p.lower() in clean_ans.lower() for p in prerequisites[:2]):
+            parts.append(f"Before this, remember {', '.join(prerequisites[:2])}.")
+        parts.append(clean_ans)
+        return "\n\n".join(parts).strip()
+
     intro = ""
     if allow_prefix:
         intro = {
@@ -1259,23 +1288,24 @@ def formatLearningAnswer(
     parts = []
     if prerequisites:
         parts.append(f"Before this, remember {', '.join(prerequisites[:2])}.")
-    parts.append(f"{intro}{answer}".strip())
+    parts.append(f"{intro}{_ensure_sentence(clean_ans)}".strip())
 
     if learning_state == "distracted":
         if key_points:
             parts.append("Key points: " + "; ".join(key_points[:2]) + ".")
         if example:
             parts.append(f"Example: {_ensure_sentence(example)}")
-        return " ".join(parts)
+        return "\n\n".join(parts)
 
     if learning_state == "not_understanding":
         if key_points:
-            parts.append(_build_gentle_step_line(key_points))
+            step_lines = "\n".join(f"{i+1}. {pt}" for i, pt in enumerate(_clean_list_points(key_points[:3])))
+            parts.append("Key points:\n" + step_lines)
         if example:
             parts.append(f"Small example: {_ensure_sentence(example)}")
         if refresh_points:
-            parts.append("Quick reminder: " + "; ".join(_clean_list_points(refresh_points[:2])) + ".")
-        return " ".join(parts)
+            parts.append("Quick reminder:\n" + "\n".join(f"• {pt}" for pt in _clean_list_points(refresh_points[:2])))
+        return "\n\n".join(parts)
 
     if learning_state == "bored" and example:
         parts.append(f"Interesting example: {_ensure_sentence(example)}")
@@ -1283,12 +1313,12 @@ def formatLearningAnswer(
         parts.append(f"Example: {_ensure_sentence(example)}")
 
     if refresh_points:
-        parts.append("Quick reminder: " + "; ".join(_clean_list_points(refresh_points[:3])) + ".")
+        parts.append("Quick reminder:\n" + "\n".join(f"• {pt}" for pt in _clean_list_points(refresh_points[:3])))
     if key_points and learning_state != "bored":
-        parts.append("Main points: " + "; ".join(key_points[:3]) + ".")
+        parts.append("Main points:\n" + "\n".join(f"{i+1}. {pt}" for i, pt in enumerate(_clean_list_points(key_points[:3]))))
     if topic_name and difficulty_level:
         parts.append(f"Difficulty level: {DIFFICULTY_LABELS.get(difficulty_level, 'Basic definition')}.")
-    return " ".join(parts)
+    return "\n\n".join(parts)
 
 
 def _build_llm_request(
@@ -1451,11 +1481,13 @@ def _build_llm_user_prompt(
         f"Reference sentences: {reference_sentences or 'none'}\n"
         f"Exam questions: {exam_questions or 'none'}\n"
         f"Refresh points: {refresh_text}\n"
-        "Instructions: answer in plain text only. "
-        "If exam mode, keep it concise and marks-friendly. "
-        "If the student is not understanding, use very simple step-by-step wording. "
-        "If the student is distracted, keep it short. "
-        "If the student is bored, make the answer example-based."
+        "Instructions for answer format & presentation:\n"
+        "- Format clearly for Sri Lankan G.C.E. O/L ICT students with clean paragraphs and line breaks.\n"
+        "- Structure multi-part questions or definitions with clear question tags, e.g. '(a) What is ...? (2 marks)' and '(b) Name the three levels... (3 marks)'.\n"
+        "- Present lists and levels cleanly as numbered items (e.g. '1. External Level – View of the database seen by individual users.') or clean bullet points.\n"
+        "- Always format practical examples on their own line starting with 'Example: ...' or 'For example: ...'.\n"
+        "- Do NOT use markdown header hashes (#, ##, ###). Keep bold terms like **Term** clean and concise without excessive asterisks.\n"
+        "- If the student asks about a topic outside O/L ICT, politely explain that it is outside the ICT syllabus in 1 friendly sentence, then transition to provide the relevant O/L note for the current topic."
     )
 
 
@@ -1492,15 +1524,15 @@ def _post_json_request(
 
 def _extract_llm_answer(provider: str, payload: dict[str, Any]) -> str:
     if provider == "openai":
-        return _normalize_whitespace(_extract_openai_response_text(payload))
+        return _clean_formatted_answer(_extract_openai_response_text(payload))
     if provider == "openrouter":
         choices = payload.get("choices", [])
         content = (((choices[0] if choices else {}).get("message") or {}).get("content")) or ""
-        return _normalize_whitespace(content)
+        return _clean_formatted_answer(content)
     if provider == "gemini":
-        return _normalize_whitespace(_extract_gemini_response_text(payload))
+        return _clean_formatted_answer(_extract_gemini_response_text(payload))
     if provider == "ollama":
-        return _normalize_whitespace(str(payload.get("response") or ""))
+        return _clean_formatted_answer(str(payload.get("response") or ""))
     raise LLMApiError("unsupported_llm_provider")
 
 
@@ -1532,11 +1564,13 @@ def _extract_gemini_response_text(payload: dict[str, Any]) -> str:
 
 def _map_http_error_reason(status_code: int, payload: str) -> str:
     normalized = _normalize_text(payload)
-    if status_code == 401 or status_code == 403:
+    if status_code in (401, 403) or (status_code == 400 and any(k in normalized for k in ("api_key", "key", "invalid", "unregistered", "auth"))):
         return "api_auth_error"
+    if status_code == 404 or "not found" in normalized:
+        return "model_not_found"
     if status_code == 408:
         return "api_timeout"
-    if status_code == 429 or "quota" in normalized or "rate limit" in normalized:
+    if status_code == 429 or "quota" in normalized or "rate limit" in normalized or "resource_exhausted" in normalized:
         return "quota_exceeded"
     if status_code >= 500:
         return "provider_server_error"

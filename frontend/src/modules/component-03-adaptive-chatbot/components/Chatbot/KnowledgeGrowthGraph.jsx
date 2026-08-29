@@ -13,13 +13,39 @@ import {
   Zap,
 } from 'lucide-react';
 
+const DEFAULT_GROWTH_DATA = {
+  overallMastery: 0,
+  overallAttention: 0,
+  growthStreakDays: 1,
+  strongestTopic: 'None yet',
+  needsAttentionTopic: 'None yet',
+  topics: [
+    { topicId: 'computer_system', topicName: 'Computer Systems & Hardware', masteryScore: 0, attentionCorrelation: 0, level: 'Novice', questionsAnswered: 0, accuracyRate: 0, lastReviewed: 'Not started' },
+    { topicId: 'data_information', topicName: 'Data Representation & Logic', masteryScore: 0, attentionCorrelation: 0, level: 'Novice', questionsAnswered: 0, accuracyRate: 0, lastReviewed: 'Not started' },
+    { topicId: 'operating_systems', topicName: 'Operating Systems & Utilities', masteryScore: 0, attentionCorrelation: 0, level: 'Novice', questionsAnswered: 0, accuracyRate: 0, lastReviewed: 'Not started' },
+    { topicId: 'networking', topicName: 'Networks & Internet Protocols', masteryScore: 0, attentionCorrelation: 0, level: 'Novice', questionsAnswered: 0, accuracyRate: 0, lastReviewed: 'Not started' },
+    { topicId: 'databases', topicName: 'Relational Databases & SQL', masteryScore: 0, attentionCorrelation: 0, level: 'Novice', questionsAnswered: 0, accuracyRate: 0, lastReviewed: 'Not started' },
+    { topicId: 'programming_basics', topicName: 'Algorithms & Flowcharts', masteryScore: 0, attentionCorrelation: 0, level: 'Novice', questionsAnswered: 0, accuracyRate: 0, lastReviewed: 'Not started' },
+    { topicId: 'cyber_security', topicName: 'Cyber Security & Digital Ethics', masteryScore: 0, attentionCorrelation: 0, level: 'Novice', questionsAnswered: 0, accuracyRate: 0, lastReviewed: 'Not started' },
+  ],
+  growthHistory: [
+    { day: 'Mon', mastery: 0, attention: 0 },
+    { day: 'Tue', mastery: 0, attention: 0 },
+    { day: 'Wed', mastery: 0, attention: 0 },
+    { day: 'Thu', mastery: 0, attention: 0 },
+    { day: 'Fri', mastery: 0, attention: 0 },
+    { day: 'Sat', mastery: 0, attention: 0 },
+    { day: 'Sun', mastery: 0, attention: 0 },
+  ],
+};
+
 const KnowledgeGrowthGraph = ({
   growthData,
   onSelectTopic,
 }) => {
   const [activeTab, setActiveTab] = useState('mastery'); // 'mastery' | 'trends'
 
-  if (!growthData) return null;
+  const data = growthData || DEFAULT_GROWTH_DATA;
 
   const getLevelBadgeClass = (level) => {
     switch (level) {
@@ -34,9 +60,9 @@ const KnowledgeGrowthGraph = ({
     }
   };
 
-  const overallMastery = growthData.overallMastery ?? 0;
-  const overallAttention = growthData.overallAttention ?? 0;
-  const streakDays = growthData.growthStreakDays ?? 0;
+  const overallMastery = data.overallMastery ?? 0;
+  const overallAttention = data.overallAttention ?? 0;
+  const streakDays = data.growthStreakDays ?? 0;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/40 p-5 shadow-xl backdrop-blur-md">
@@ -117,7 +143,7 @@ const KnowledgeGrowthGraph = ({
             Strongest Topic
           </div>
           <div className="mt-1 truncate text-xs font-bold text-emerald-300">
-            {growthData.strongestTopic || 'None yet'}
+            {data.strongestTopic || 'None yet'}
           </div>
           <div className="mt-0.5 text-[10px] text-emerald-400">
             {overallMastery > 0 ? 'Top Performing Domain' : 'Complete quizzes to track'}
@@ -129,7 +155,7 @@ const KnowledgeGrowthGraph = ({
             Needs Revision
           </div>
           <div className="mt-1 truncate text-xs font-bold text-amber-300">
-            {growthData.needsAttentionTopic || 'None yet'}
+            {data.needsAttentionTopic || 'None yet'}
           </div>
           <div className="mt-0.5 text-[10px] text-amber-400">
             {overallMastery > 0 ? 'Target for Next Study Session' : 'No weak topics identified'}
@@ -150,7 +176,7 @@ const KnowledgeGrowthGraph = ({
       {/* Tab: Mastery bars */}
       {activeTab === 'mastery' && (
         <div className="mt-5 space-y-3">
-          {(growthData.topics || []).map((topic) => (
+          {(data.topics || []).map((topic) => (
             <div
               key={topic.topicId}
               onClick={() => onSelectTopic && onSelectTopic(topic.topicId, topic.topicName)}
@@ -217,7 +243,7 @@ const KnowledgeGrowthGraph = ({
           </div>
 
           <div className="grid grid-cols-7 gap-2 items-end h-40 pt-4 border-b border-white/10 pb-2">
-            {(growthData.growthHistory || []).map((item, idx) => (
+            {(data.growthHistory || []).map((item, idx) => (
               <div key={idx} className="flex flex-col items-center gap-2 h-full justify-end">
                 <div className="flex items-end gap-1 w-full justify-center h-28">
                   {/* Mastery Bar */}

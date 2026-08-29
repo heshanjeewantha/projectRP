@@ -38,7 +38,7 @@ graph TD
 ---
 
 ## 1. Attention-Aware Concept & Lesson Recommendations
-* **Pipeline**: Queries the `attention_logs` MongoDB collection to identify video segments where the student experienced gaze deviations, phone distractions, or PERCLOS drowsiness.
+* **Pipeline**: Queries the `attention_logs` MongoDB collection to identify video segments where the student experienced gaze deviations or PERCLOS drowsiness.
 * **Smart Remediation**: Maps distraction timestamps to corresponding O/L ICT concepts and suggests direct chat prompts (*"Let's review Von Neumann Architecture"*).
 * **UI**: [AttentionSuggestionBanner.jsx](file:///g:/projectRP/frontend/src/modules/component-03-adaptive-chatbot/components/Chatbot/AttentionSuggestionBanner.jsx) displays weak spots with 1-click *Short Note* and *Review in Chat* action buttons.
 * **Endpoint**: `GET /api/chatbot/attention-recommendations/{student_id}`
@@ -106,12 +106,26 @@ Adjusts tone and support based on student learning state:
 ## 8. 10-Minute Rapid-Fire O/L Mock Exam Simulator
 * **Functionality**: Timed 10-question adaptive exam with countdown timer and automatic grading.
 * **Grade Predictor**: Predicts O/L Grade (`A Distinction`, `B`, `C`, `S`, `W`) and generates a personalized study prescription.
-* **Endpoint**: `GET /api/chatbot/mock-exam/start`, `POST /api/chatbot/mock-exam/submit`
+* **Endpoint**: `POST /api/chatbot/mock-exam/start`, `POST /api/chatbot/mock-exam/submit`
 * **UI**: [MockExamModal.jsx](file:///g:/projectRP/frontend/src/modules/component-03-adaptive-chatbot/components/Chatbot/MockExamModal.jsx)
 
 ---
 
-## 9. In-Chat Quick Sign Translation & Algorithm Visualizer
+## 9. Daily Login Diagnostic Quiz
+* **Functionality**: 3-question daily diagnostic warm-up quiz evaluating student mastery on startup.
+* **Endpoint**: `GET /api/chatbot/login-quiz`, `POST /api/chatbot/login-quiz/submit`
+* **UI**: [LoginQuizModal.jsx](file:///g:/projectRP/frontend/src/modules/component-03-adaptive-chatbot/components/Chatbot/LoginQuizModal.jsx)
+
+---
+
+## 10. Teacher Analytics & Repeated Query Intervention
+* **Teacher Analytics**: Aggregates topic difficulty metrics, student comprehension rates, and generates downloadable PDF reports.
+* **Repeated Query Alerts**: Automatically flags students repeatedly asking for clarification on the same concept across multiple sessions for direct teacher intervention.
+* **Endpoints**: `GET /api/chatbot/analytics/teacher`, `GET /api/chatbot/analytics/report/pdf`, `GET /api/chatbot/repeated-alerts`
+
+---
+
+## 11. In-Chat Quick Sign Translation & Algorithm Visualizer
 * **In-Chat Quick Sign Translation**: Keywords like *CPU*, *Database*, *Network*, *Internet* display an interactive `[🤟 Sign]` badge triggering sign avatar previews ([SignWordBadge.jsx](file:///g:/projectRP/frontend/src/modules/component-03-adaptive-chatbot/components/Chatbot/SignWordBadge.jsx)).
 * **Flowchart & Algorithm Visualizer**: Chatbot automatically structures algorithm responses using formatted SVG diagrams and step-by-step logic traces.
 
@@ -121,7 +135,7 @@ Adjusts tone and support based on student learning state:
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/chatbot/ask` | Main adaptive chat endpoint supporting EARA and explain modes |
+| `POST` | `/api/chatbot/chat` | Main adaptive chat endpoint supporting EARA and explain modes |
 | `GET` | `/api/chatbot/attention-recommendations/{student_id}` | Retrieves low-attention lesson segments and revision prompts |
 | `GET` | `/api/chatbot/short-notes/{topic_id}` | Generates structured high-yield O/L short notes |
 | `GET` | `/api/chatbot/knowledge-growth/{student_id}` | Retrieves mastery scores, attention correlation, and 7-day trend |
@@ -129,11 +143,14 @@ Adjusts tone and support based on student learning state:
 | `POST` | `/api/chatbot/past-paper/evaluate` | Evaluates past paper answer against official rubric |
 | `GET` | `/api/chatbot/flashcards/{topic_id}` | Returns flashcard deck for topic |
 | `POST` | `/api/chatbot/flashcards/review` | Submits SM-2 spaced repetition review rating |
-| `GET` | `/api/chatbot/mock-exam/start` | Initializes a timed 10-minute mock exam |
+| `POST` | `/api/chatbot/mock-exam/start` | Initializes a timed 10-minute mock exam |
 | `POST` | `/api/chatbot/mock-exam/submit` | Grades mock exam and outputs predicted O/L grade (A-W) |
+| `GET` | `/api/chatbot/login-quiz` | Retrieves 3-question diagnostic warm-up quiz |
+| `POST` | `/api/chatbot/login-quiz/submit` | Submits diagnostic answers |
 | `GET` | `/api/chatbot/topics` | Retrieves list of all supported O/L ICT topics |
-| `POST` | `/api/chatbot/micro-challenge` | Returns optional prerequisite micro-challenge |
-| `POST` | `/api/chatbot/check-challenge` | Evaluates micro-challenge answer |
-
+| `POST` | `/api/chatbot/challenge/check` | Evaluates prerequisite micro-challenge answer |
+| `GET` | `/api/chatbot/history/{student_id}` | Retrieves student chat conversation history |
+| `DELETE`| `/api/chatbot/history/{student_id}` | Clears chat history |
 | `GET` | `/api/chatbot/analytics/teacher` | Teacher dashboard analytics (understanding scores, weak areas) |
 | `GET` | `/api/chatbot/analytics/report/pdf` | Generates downloadable PDF analytics report |
+| `GET` | `/api/chatbot/repeated-alerts` | Alerts for students struggling with the same concept |

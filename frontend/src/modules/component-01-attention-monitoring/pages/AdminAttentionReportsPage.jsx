@@ -11,7 +11,6 @@ import {
   Moon,
   Printer,
   ShieldCheck,
-  Smartphone,
   Sparkles,
   User,
   Users,
@@ -98,7 +97,7 @@ const AdminAttentionReportsPage = () => {
             .title { font-size: 24px; font-weight: 800; color: #0f172a; margin: 0; }
             .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
             .badge { background: #e0e7ff; color: #4338ca; font-weight: 700; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
-            .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+            .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
             .card { background: #f8fafc; border: 1fr solid #e2e8f0; border-radius: 12px; padding: 15px; text-align: center; }
             .card-val { font-size: 26px; font-weight: 800; color: #0f172a; margin-top: 5px; }
             .card-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
@@ -133,10 +132,6 @@ const AdminAttentionReportsPage = () => {
               <div class="card-lbl">Drowsy Alerts</div>
               <div class="card-val" style="color: #d97706;">${report.drowsy_alerts}</div>
             </div>
-            <div class="card">
-              <div class="card-lbl">Phone Usage</div>
-              <div class="card-val" style="color: #dc2626;">${report.phone_detections}</div>
-            </div>
           </div>
 
           <div class="section-title">Distraction Breakdown</div>
@@ -151,6 +146,7 @@ const AdminAttentionReportsPage = () => {
             </thead>
             <tbody>
               ${Object.entries(report.reasons_breakdown || {})
+                .filter(([reason]) => reason !== 'phone_detected')
                 .map(([reason, count]) => {
                   const pct = Math.round((count / (report.total_events || 1)) * 100);
                   const color =
@@ -158,8 +154,6 @@ const AdminAttentionReportsPage = () => {
                       ? '#16a34a'
                       : reason === 'drowsy'
                       ? '#d97706'
-                      : reason === 'phone_detected'
-                      ? '#dc2626'
                       : '#6366f1';
                   return `
                   <tr>
@@ -239,7 +233,7 @@ const AdminAttentionReportsPage = () => {
               label="Admin Attention Center"
               icon={ShieldCheck}
               title="Student Attention & Behavioral Reports"
-              description="Monitor real-time student engagement, MediaPipe drowsiness, yawning, and phone detection logs. Download official PDF reports."
+              description="Monitor real-time student engagement, MediaPipe drowsiness, and yawning logs. Download official PDF reports."
             />
             {report && (
               <button
@@ -321,7 +315,7 @@ const AdminAttentionReportsPage = () => {
         ) : report ? (
           <div className="grid gap-6" ref={printAreaRef}>
             {/* Top Metric Cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <DashboardPanel className="flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-2">
@@ -354,17 +348,6 @@ const AdminAttentionReportsPage = () => {
                 </div>
                 <div className="text-xs text-text-muted mt-3">Total PERCLOS alerts</div>
               </DashboardPanel>
-
-              <DashboardPanel className="flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-rose-400 mb-2">
-                    <Smartphone size={16} />
-                    Phone Detections
-                  </div>
-                  <div className="text-3xl sm:text-4xl font-black text-white">{report.phone_detections}</div>
-                </div>
-                <div className="text-xs text-text-muted mt-3">MediaPipe spatial detections</div>
-              </DashboardPanel>
             </div>
 
             {/* Breakdown & Session Log Layout */}
@@ -383,7 +366,6 @@ const AdminAttentionReportsPage = () => {
                     { label: 'Looking Away / Head Turned', count: reasons.head_turned || 0, color: '#a78bfa' },
                     { label: 'Drowsy / Sleepy (PERCLOS)', count: reasons.drowsy || 0, color: '#f59e0b' },
                     { label: 'Yawning (MAR)', count: reasons.yawning || 0, color: '#fb923c' },
-                    { label: 'Phone in Hand', count: reasons.phone_detected || 0, color: '#ef4444' },
                     { label: 'Eyes Closed', count: reasons.eyes_closed || 0, color: '#e879f9' },
                     { label: 'No Face Visible', count: reasons.no_face || 0, color: '#94a3b8' },
                   ].map((item) => {

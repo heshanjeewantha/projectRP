@@ -47,6 +47,7 @@ import KnowledgeGrowthGraph from '../components/Chatbot/KnowledgeGrowthGraph';
 import PastPaperGraderModal from '../components/Chatbot/PastPaperGraderModal';
 import FlashcardDeckModal from '../components/Chatbot/FlashcardDeckModal';
 import MockExamModal from '../components/Chatbot/MockExamModal';
+import ChatbotFormattedAnswer from '../components/Chatbot/ChatbotFormattedAnswer';
 import { SignWordBadge, SignWordModal, getDetectedSignWords, SIGN_DICTIONARY } from '../components/Chatbot/SignWordBadge';
 
 const MODE_OPTIONS = [
@@ -128,10 +129,25 @@ const getSourceLabel = (sourceType) =>
 
 const ChatbotPage = () => {
   const { userId, attentionStatus } = useStore();
+  const effectiveUserId = userId || 'student_demo_123';
   const location = useLocation();
 
-  const [chatHistory, setChatHistory] = useState([]);
-  const [topicOptions, setTopicOptions] = useState(DEFAULT_TOPIC_OPTIONS);
+  const [chatHistory, setChatHistory] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`chat_history_${effectiveUserId}`);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [topicOptions, setTopicOptions] = useState(() => {
+    try {
+      const cached = localStorage.getItem('chat_topics');
+      return cached ? JSON.parse(cached) : DEFAULT_TOPIC_OPTIONS;
+    } catch {
+      return DEFAULT_TOPIC_OPTIONS;
+    }
+  });
   const [question, setQuestion] = useState('');
   const [selectedMode, setSelectedMode] = useState('learning');
   const [manualLearningState, setManualLearningState] = useState('');
@@ -146,9 +162,23 @@ const ChatbotPage = () => {
   const [summaryPreview, setSummaryPreview] = useState(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
-  // New states: Attention recommendations, Short notes & Knowledge growth
-  const [recommendations, setRecommendations] = useState([]);
-  const [growthData, setGrowthData] = useState(null);
+  // New states: Attention recommendations, Short notes & Knowledge growth with instant cache
+  const [recommendations, setRecommendations] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`chat_recs_${effectiveUserId}`);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [growthData, setGrowthData] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`chat_growth_${effectiveUserId}`);
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
   const [activeShortNote, setActiveShortNote] = useState(null);
   const [isShortNoteLoading, setIsShortNoteLoading] = useState(false);
   const [activeViewTab, setActiveViewTab] = useState('chat'); // 'chat' | 'growth' | 'notes'
@@ -169,21 +199,30 @@ const ChatbotPage = () => {
     const loadHistoryAndAnalytics = async () => {
       try {
         const [historyResponse, recsResponse, growthResponse] = await Promise.allSettled([
-          getChatbotHistory(userId),
-          getAttentionRecommendations(userId),
-          getKnowledgeGrowth(userId),
+          getChatbotHistory(effectiveUserId),
+          getAttentionRecommendations(effectiveUserId),
+          getKnowledgeGrowth(effectiveUserId),
         ]);
 
         if (!isMounted) return;
 
-        if (historyResponse.status === 'fulfilled') {
+        if (historyResponse.status === 'fulfilled' && historyResponse.value) {
           setChatHistory(historyResponse.value || []);
+          try {
+            localStorage.setItem(`chat_history_${effectiveUserId}`, JSON.stringify(historyResponse.value));
+          } catch {}
         }
         if (recsResponse.status === 'fulfilled' && recsResponse.value?.recommendations) {
           setRecommendations(recsResponse.value.recommendations);
+          try {
+            localStorage.setItem(`chat_recs_${effectiveUserId}`, JSON.stringify(recsResponse.value.recommendations));
+          } catch {}
         }
-        if (growthResponse.status === 'fulfilled') {
+        if (growthResponse.status === 'fulfilled' && growthResponse.value) {
           setGrowthData(growthResponse.value);
+          try {
+            localStorage.setItem(`chat_growth_${effectiveUserId}`, JSON.stringify(growthResponse.value));
+          } catch {}
         }
       } catch (error) {
         console.error('Failed to load chatbot analytics & history', error);
@@ -194,7 +233,7 @@ const ChatbotPage = () => {
     return () => {
       isMounted = false;
     };
-  }, [userId]);
+  }, [effectiveUserId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -209,6 +248,9 @@ const ChatbotPage = () => {
           prerequisites: topic.prerequisites || [],
         }));
         setTopicOptions(normalizedTopics);
+        try {
+          localStorage.setItem('chat_topics', JSON.stringify(normalizedTopics));
+        } catch {}
         setSelectedTopicId((current) =>
           normalizedTopics.some((topic) => topic.id === current)
             ? current
@@ -337,7 +379,7 @@ const ChatbotPage = () => {
     }
 
     const payload = {
-      studentId: userId,
+      studentId: effectiveUserId,
       question: finalQuestion,
       selectedMode,
       currentLearningState: learningState,
@@ -375,7 +417,7 @@ const ChatbotPage = () => {
     if (!challengeOffer?.challenge || !challengeSelection || !pendingPayload) return;
     try {
       const response = await checkMicroChallenge({
-        studentId: userId,
+        studentId: effectiveUserId,
         challengeId: challengeOffer.challenge.challengeId,
         selectedAnswer: challengeSelection,
         topicId: challengeOffer.challenge.topicId,
@@ -390,8 +432,11 @@ const ChatbotPage = () => {
     if (isClearing) return;
     setIsClearing(true);
     try {
-      await clearChatbotHistory(userId);
+      await clearChatbotHistory(effectiveUserId);
       setChatHistory([]);
+      try {
+        localStorage.removeItem(`chat_history_${effectiveUserId}`);
+      } catch {}
       resetChallengeFlow();
     } catch (error) {
       console.error('Failed to clear chatbot history', error);
@@ -565,7 +610,7 @@ const ChatbotPage = () => {
                             <span className="chatbot-meta-tag">{item.learningStateBadge || item.learningState?.replaceAll('_', ' ')}</span>
                             <span className="chatbot-meta-tag">{getSourceLabel(item.sourceType)}</span>
                             {item.compressedAnswer ? (
-                              <span className="chatbot-meta-tag is-exam">Compressed answer</span>
+                              <span className="chatbot-meta-tag is-exam">Exam Mode</span>
                             ) : null}
                           </div>
 
@@ -583,9 +628,7 @@ const ChatbotPage = () => {
                             </div>
                           ) : null}
 
-                          <p className="dashboard-text-wrap whitespace-pre-line text-sm text-white/95">
-                            {item.answer}
-                          </p>
+                          <ChatbotFormattedAnswer content={item.answer} />
                           {item.sourceType === 'LOCAL_DATASET' ? (
                             <p className="chatbot-source-note">
                               Answered using local lesson dataset.
