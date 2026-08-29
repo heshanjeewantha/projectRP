@@ -80,13 +80,27 @@ async def initialize_knowledge_graph() -> None:
     )
 
 
-async def get_knowledge_graph() -> dict[str, Any]:
-    """Return the full O/L ICT knowledge graph dataset from MongoDB."""
+async def get_knowledge_graph(video_id: str | None = None) -> dict[str, Any]:
+    """
+    Return the O/L ICT knowledge graph dataset from MongoDB.
+    If video_id is provided, returns the concept cluster rooted in that uploaded video title.
+    """
     db = get_db()
     concepts = []
-    cursor = db[KNOWLEDGE_GRAPH_COLLECTION].find().sort("sortOrder", 1)
-    async for concept in cursor:
-        concepts.append(_serialize_concept(concept))
+
+    if video_id:
+        v_id_str = str(video_id)
+        cursor = db[KNOWLEDGE_GRAPH_COLLECTION].find(
+            {"$or": [{"videoId": v_id_str}, {"conceptId": f"vid_concept_{v_id_str}"}]}
+        ).sort("sortOrder", 1)
+        async for concept in cursor:
+            concepts.append(_serialize_concept(concept))
+
+    # If no video_id specified or no video-specific nodes yet, return full curriculum graph
+    if not concepts:
+        cursor = db[KNOWLEDGE_GRAPH_COLLECTION].find().sort("sortOrder", 1)
+        async for concept in cursor:
+            concepts.append(_serialize_concept(concept))
 
     return {
         "subject": "O/L ICT",
@@ -176,7 +190,11 @@ async def get_popup_question(student_id: str, lesson_id: str, current_time: floa
     try:
         cursor = db[POPUP_QUESTIONS_COLLECTION].find(
             {
-                "conceptId": {"$in": list(concept_scope.keys())},
+                "$or": [
+                    {"conceptId": {"$in": list(concept_scope.keys())}},
+                    {"conceptId": current_concept.get("conceptId")},
+                    {"conceptId": {"$regex": str(lesson_id)[:8] if len(str(lesson_id)) >= 8 else "dyn"}},
+                ]
             }
         )
         async for question in cursor:
@@ -195,6 +213,27 @@ async def get_popup_question(student_id: str, lesson_id: str, current_time: floa
             q_copy["unit"] = current_concept.get("unit", "ICT")
             q_copy["selectionScore"] = 1.0
             all_scope_questions.append(q_copy)
+
+    # Dynamic fallback question if collection has no questions for this concept yet
+    if not all_scope_questions:
+        c_name = current_concept.get("conceptName", "ICT Core Concept")
+        auto_q = {
+            "questionId": f"auto_q_{current_concept.get('conceptId', 'gen')}",
+            "conceptId": current_concept.get("conceptId", "gen_c"),
+            "conceptName": c_name,
+            "questionText": f"What is the primary role of {c_name} in computing?",
+            "options": [
+                f"{c_name} Core Function",
+                "Operating System Kernel",
+                "RAM Volatile Storage",
+                "Ethernet Protocol Transfer",
+            ],
+            "correctAnswer": f"{c_name} Core Function",
+            "explanation": current_concept.get("description") or f"Core concept regarding {c_name}.",
+            "difficultyLevel": "medium",
+            "selectionScore": 1.0,
+        }
+        all_scope_questions.append(auto_q)
 
     answered_lookup = {}
     try:
@@ -331,16 +370,54 @@ async def get_student_popup_answers(student_id: str) -> list[dict[str, Any]]:
 
 
 async def _resolve_lesson_timeline(lesson_id: str) -> dict[str, Any] | None:
+    db = get_db()
+    from bson import ObjectId
+    v_id_obj = ObjectId(lesson_id) if ObjectId.is_valid(lesson_id) else None
+
     try:
-        db = get_db()
-        timeline = await db[LESSON_TIMELINES_COLLECTION].find_one({"lessonId": lesson_id})
+        # 1. Look for existing dynamic or linked timeline
+        timeline = await db[LESSON_TIMELINES_COLLECTION].find_one({
+            "$or": [
+                {"lessonId": lesson_id},
+                {"lessonId": str(lesson_id)},
+                {"linkedVideoId": lesson_id},
+                {"videoId": lesson_id},
+            ]
+        })
         if timeline:
             return _serialize_timeline(timeline)
 
-        timeline = await db[LESSON_TIMELINES_COLLECTION].find_one({"linkedVideoId": lesson_id})
-        if timeline:
-            return _serialize_timeline(timeline)
+        # 2. Check if transcripts exist for this video and auto-generate timeline & questions on demand
+        transcript_doc = await db["transcripts"].find_one({
+            "$or": [
+                {"video_id": lesson_id},
+                {"video_id": str(lesson_id)},
+                {"video_id": v_id_obj} if v_id_obj else {"video_id": lesson_id},
+            ]
+        })
 
+        if transcript_doc and transcript_doc.get("segments"):
+            video_doc = await db["videos"].find_one({
+                "$or": [
+                    {"_id": lesson_id},
+                    {"_id": str(lesson_id)},
+                    {"_id": v_id_obj} if v_id_obj else {"_id": lesson_id},
+                ]
+            })
+            vid_title = video_doc.get("title") if video_doc else f"Lesson Video ({lesson_id[:8]})"
+
+            from src.modules.component_02_knowledge_graph_question_system.services.dynamic_question_generator import (
+                generate_graph_and_mcqs_from_transcript,
+            )
+            await generate_graph_and_mcqs_from_transcript(lesson_id, transcript_doc["segments"], title=vid_title)
+
+            generated_timeline = await db[LESSON_TIMELINES_COLLECTION].find_one({
+                "$or": [{"lessonId": lesson_id}, {"lessonId": str(lesson_id)}]
+            })
+            if generated_timeline:
+                return _serialize_timeline(generated_timeline)
+
+        # 3. Default fallback
         timeline = await db[LESSON_TIMELINES_COLLECTION].find_one({"isDefault": True})
         if timeline:
             return _serialize_timeline(timeline)
@@ -391,107 +468,138 @@ async def _build_student_profile(student_id: str) -> dict[str, Any]:
 
 async def _ensure_indexes() -> None:
     db = get_db()
-    await db[KNOWLEDGE_GRAPH_COLLECTION].create_index("conceptId", unique=True)
-    await db[POPUP_QUESTIONS_COLLECTION].create_index("questionId", unique=True)
-    await db[POPUP_QUESTIONS_COLLECTION].create_index("conceptId")
-    await db[LESSON_TIMELINES_COLLECTION].create_index("lessonId", unique=True)
-    await db[LESSON_TIMELINES_COLLECTION].create_index("linkedVideoId")
-    await db[STUDENT_ANSWERS_COLLECTION].create_index(
-        [("studentId", 1), ("questionId", 1)],
-        unique=True,
-    )
-    await db[STUDENT_ANSWERS_COLLECTION].create_index([("studentId", 1), ("answeredAt", -1)])
+    index_specs = [
+        (KNOWLEDGE_GRAPH_COLLECTION, "conceptId", {"unique": True}),
+        (POPUP_QUESTIONS_COLLECTION, "questionId", {"unique": True}),
+        (POPUP_QUESTIONS_COLLECTION, "conceptId", {}),
+        (LESSON_TIMELINES_COLLECTION, "lessonId", {}),
+        (STUDENT_ANSWERS_COLLECTION, [("studentId", 1), ("answeredAt", -1)], {}),
+    ]
+    for coll_name, keys, kwargs in index_specs:
+        try:
+            await db[coll_name].create_index(keys, **kwargs)
+        except Exception:
+            pass
 
 
 def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _clean_diagram(diag: dict[str, Any] | None, default_id: str = "diag_default") -> dict[str, Any] | None:
+    if not diag or not isinstance(diag, dict):
+        return None
+    cleaned = dict(diag)
+    if "diagramId" not in cleaned or not cleaned["diagramId"]:
+        cleaned["diagramId"] = f"diag_{default_id}"
+    return cleaned
+
+
 def _serialize_concept(doc: dict[str, Any]) -> dict[str, Any]:
+    c_id = doc.get("conceptId", "")
     return {
-        "conceptId": doc["conceptId"],
-        "conceptName": doc["conceptName"],
-        "grade": doc["grade"],
-        "unit": doc["unit"],
-        "description": doc["description"],
+        "conceptId": c_id,
+        "conceptName": doc.get("conceptName", ""),
+        "grade": doc.get("grade", "O/L"),
+        "unit": doc.get("unit", "Interactive Video Lecture"),
+        "description": doc.get("description", ""),
+        "videoId": doc.get("videoId"),
+        "videoTitle": doc.get("videoTitle"),
+        "isRoot": doc.get("isRoot", False),
         "prerequisites": doc.get("prerequisites", []),
         "relatedConcepts": doc.get("relatedConcepts", []),
-        "difficultyLevel": doc["difficultyLevel"],
+        "difficultyLevel": doc.get("difficultyLevel", "medium"),
         "keywords": doc.get("keywords", []),
-        "diagram": doc.get("diagram"),
+        "diagram": _clean_diagram(doc.get("diagram"), c_id),
         "questions": [_serialize_question(question) for question in doc.get("questions", [])],
     }
 
 
 def _serialize_current_concept(doc: dict[str, Any]) -> dict[str, Any]:
+    c_id = doc.get("conceptId", "")
     return {
-        "conceptId": doc["conceptId"],
-        "conceptName": doc["conceptName"],
-        "unit": doc["unit"],
-        "description": doc["description"],
-        "difficultyLevel": doc["difficultyLevel"],
+        "conceptId": c_id,
+        "conceptName": doc.get("conceptName", ""),
+        "unit": doc.get("unit", "Interactive Video Lecture"),
+        "description": doc.get("description", ""),
+        "videoId": doc.get("videoId"),
+        "videoTitle": doc.get("videoTitle"),
+        "isRoot": doc.get("isRoot", False),
+        "difficultyLevel": doc.get("difficultyLevel", "medium"),
         "prerequisites": doc.get("prerequisites", []),
         "relatedConcepts": doc.get("relatedConcepts", []),
         "keywords": doc.get("keywords", []),
-        "diagram": doc.get("diagram"),
+        "diagram": _clean_diagram(doc.get("diagram"), c_id),
     }
 
 
 def _serialize_question(doc: dict[str, Any]) -> dict[str, Any]:
     return {
-        "questionId": doc["questionId"],
-        "questionText": doc["questionText"],
-        "options": doc["options"],
-        "correctAnswer": doc["correctAnswer"],
-        "explanation": doc["explanation"],
-        "difficultyLevel": doc["difficultyLevel"],
-        "conceptId": doc["conceptId"],
+        "questionId": doc.get("questionId", ""),
+        "questionText": doc.get("questionText", ""),
+        "options": doc.get("options", []),
+        "correctAnswer": doc.get("correctAnswer", ""),
+        "explanation": doc.get("explanation", ""),
+        "difficultyLevel": doc.get("difficultyLevel", "medium"),
+        "conceptId": doc.get("conceptId", ""),
     }
 
 
 def _serialize_question_prompt(doc: dict[str, Any]) -> dict[str, Any]:
     return {
-        "questionId": doc["questionId"],
-        "questionText": doc["questionText"],
-        "options": doc["options"],
-        "difficultyLevel": doc["difficultyLevel"],
-        "conceptId": doc["conceptId"],
+        "questionId": doc.get("questionId", ""),
+        "questionText": doc.get("questionText", ""),
+        "options": doc.get("options", []),
+        "difficultyLevel": doc.get("difficultyLevel", "medium"),
+        "conceptId": doc.get("conceptId", ""),
     }
 
 
 def _serialize_answer(doc: dict[str, Any]) -> dict[str, Any]:
     return {
-        "id": str(doc["_id"]),
-        "studentId": doc["studentId"],
-        "lessonId": doc["lessonId"],
-        "conceptId": doc["conceptId"],
-        "conceptName": doc["conceptName"],
-        "questionId": doc["questionId"],
-        "questionText": doc["questionText"],
-        "selectedAnswer": doc["selectedAnswer"],
-        "correctAnswer": doc["correctAnswer"],
-        "isCorrect": doc["isCorrect"],
-        "difficultyLevel": doc["difficultyLevel"],
-        "explanation": doc["explanation"],
-        "answeredAt": doc["answeredAt"],
+        "id": str(doc.get("_id", "")),
+        "studentId": doc.get("studentId", ""),
+        "lessonId": doc.get("lessonId", ""),
+        "conceptId": doc.get("conceptId", ""),
+        "conceptName": doc.get("conceptName", ""),
+        "questionId": doc.get("questionId", ""),
+        "questionText": doc.get("questionText", ""),
+        "selectedAnswer": doc.get("selectedAnswer", ""),
+        "correctAnswer": doc.get("correctAnswer", ""),
+        "isCorrect": doc.get("isCorrect", False),
+        "difficultyLevel": doc.get("difficultyLevel", "medium"),
+        "explanation": doc.get("explanation", ""),
+        "answeredAt": doc.get("answeredAt"),
     }
 
 
 def _serialize_timeline(doc: dict[str, Any]) -> dict[str, Any]:
     return {
-        "lessonId": doc["lessonId"],
-        "videoTitle": doc["videoTitle"],
-        "videoUrl": doc["videoUrl"],
+        "lessonId": str(doc.get("lessonId", "")),
+        "videoTitle": doc.get("videoTitle") or doc.get("title") or "Interactive Video Lecture",
+        "videoUrl": doc.get("videoUrl", ""),
         "isDefault": doc.get("isDefault", False),
-        "timeline": doc.get("timeline", []),
+        "timeline": doc.get("timeline", doc.get("segments", [])),
     }
 
 
 def _find_timeline_segment(timeline: list[dict[str, Any]], current_time: float) -> dict[str, Any] | None:
+    if not timeline:
+        return None
+    # 1. Exact match
     for segment in timeline:
-        if segment["startTime"] <= current_time <= segment["endTime"]:
+        s = float(segment.get("startTime", 0.0))
+        e = float(segment.get("endTime", s + 15.0))
+        if s <= current_time <= e:
             return segment
-    return None
+
+    # 2. Nearest preceding segment
+    preceding = [s for s in timeline if float(s.get("startTime", 0.0)) <= current_time]
+    if preceding:
+        return preceding[-1]
+
+    # 3. Fallback to first segment
+    return timeline[0]
 
 
 def _build_concept_scope(current_concept: dict[str, Any]) -> dict[str, float]:

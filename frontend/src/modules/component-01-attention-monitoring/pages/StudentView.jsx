@@ -46,8 +46,14 @@ const formatClock = (seconds = 0) => {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
 
-const findTimelineSegment = (timeline = [], currentTime = 0) =>
-  timeline.find((segment) => currentTime >= segment.startTime && currentTime <= segment.endTime) || null;
+const findTimelineSegment = (timeline = [], currentTime = 0) => {
+  if (!timeline?.length) return null;
+  const exact = timeline.find((segment) => currentTime >= segment.startTime && currentTime <= segment.endTime);
+  if (exact) return exact;
+  const preceding = timeline.filter((segment) => segment.startTime <= currentTime);
+  if (preceding.length > 0) return preceding[preceding.length - 1];
+  return timeline[0];
+};
 
 const resolveConceptForTime = (timeline, concepts, currentTime) => {
   const segment = findTimelineSegment(timeline?.timeline || [], currentTime);
@@ -199,7 +205,7 @@ const StudentView = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const loadLessonTimeline = async () => {
+    const loadLessonTimelineAndGraph = async () => {
       if (!currentVideo?.id) {
         if (isMounted) {
           setLessonTimeline(null);
@@ -208,19 +214,30 @@ const StudentView = () => {
       }
 
       try {
-        const timeline = await getLessonTimeline(currentVideo.id);
+        const [timeline, graphData] = await Promise.allSettled([
+          getLessonTimeline(currentVideo.id),
+          getKnowledgeGraph(currentVideo.id),
+        ]);
+
         if (isMounted) {
-          setLessonTimeline(timeline);
+          if (timeline.status === 'fulfilled') {
+            setLessonTimeline(timeline.value);
+          } else {
+            setLessonTimeline(null);
+          }
+          if (graphData.status === 'fulfilled' && graphData.value?.concepts?.length) {
+            setKnowledgeGraph(graphData.value.concepts);
+          }
         }
       } catch (error) {
-        console.error('Failed to load lesson timeline', error);
+        console.error('Failed to load lesson timeline or video knowledge graph', error);
         if (isMounted) {
           setLessonTimeline(null);
         }
       }
     };
 
-    loadLessonTimeline();
+    loadLessonTimelineAndGraph();
 
     return () => {
       isMounted = false;
@@ -285,12 +302,13 @@ const StudentView = () => {
         const popup = await getPopupQuestion(popupStudentId, currentVideo.id, checkpointSecond);
         if (isCancelled) return;
 
-        requestedPopupCheckpointsRef.current.add(checkpointKey);
-        if (popup.currentConcept) {
+        if (popup?.currentConcept) {
           setCurrentLearningConcept(popup.currentConcept);
         }
-        if (popup.question) {
+        if (popup?.question) {
+          requestedPopupCheckpointsRef.current.add(checkpointKey);
           videoElement.pause();
+          setIsLessonPlaying(false);
           setActiveKnowledgePopup(popup);
         }
       } catch (error) {

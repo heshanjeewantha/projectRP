@@ -3771,35 +3771,33 @@ HIGH_YIELD_SHORT_NOTES_BANK = {
 
 async def get_attention_recommendations(student_id: str) -> dict[str, Any]:
     """
-    Computes low-attention lesson segments and maps them directly from real video titles in the database.
+    Computes low-attention lesson segments dynamically based on the student's real webcam attention logs,
+    mapping them directly to actual uploaded video titles and specific lesson playback timestamps.
     """
     from bson import ObjectId
     db = get_db()
     recommendations = []
 
-    # 1. Fetch real uploaded videos from the database
+    # 1. Fetch real uploaded videos from the database for lookup
     try:
         cursor_v = db["videos"].find().sort("uploaded_at", -1)
-        db_videos = await cursor_v.to_list(length=20)
+        db_videos = await cursor_v.to_list(length=100)
     except Exception:
         db_videos = []
 
     video_lookup = {}
     for v in db_videos:
-        v_id = str(v.get("_id", ""))
-        video_lookup[v_id] = v
+        v_id_str = str(v.get("_id", ""))
+        video_lookup[v_id_str] = v
 
-    # 2. Check recent attention logs for this student
+    # 2. Check recent attention logs for this specific student
     try:
-        cursor = db[ATTENTION_LOGS_COLLECTION].find({"student_id": student_id}).sort("timestamp", -1).limit(20)
-        logs = await cursor.to_list(length=20)
+        cursor = db[ATTENTION_LOGS_COLLECTION].find(
+            {"$or": [{"student_id": student_id}, {"studentId": student_id}, {"user_id": student_id}]}
+        ).sort("created_at", -1).limit(50)
+        session_logs = await cursor.to_list(length=50)
     except Exception:
-        logs = []
-
-    low_attention_events = [
-        log for log in logs 
-        if log.get("status") == "not_attentive" or log.get("drowsiness_score", 0) > 0.4
-    ]
+        session_logs = []
 
     reason_map = {
         "drowsy": "High Drowsiness / Fatigue Detected",
@@ -3808,21 +3806,54 @@ async def get_attention_recommendations(student_id: str) -> dict[str, Any]:
         "phone_detected": "Mobile Phone Distraction Detected",
         "yawning": "Frequent Yawning / Low Engagement",
         "distracted": "Distraction Recorded",
+        "not_attentive": "Low Focus Detected",
     }
 
+    # Extract all low-attention events from student sessions
+    low_attention_events = []
+    for log in session_logs:
+        v_id = str(log.get("video_id", ""))
+        events = log.get("events", [])
+        for ev in events:
+            if not isinstance(ev, dict):
+                continue
+            is_low = (
+                ev.get("status") == "not_attentive"
+                or (isinstance(ev.get("drowsiness_score"), (int, float)) and ev.get("drowsiness_score", 0) > 0.4)
+                or (isinstance(ev.get("engagement_score"), (int, float)) and ev.get("engagement_score", 100) < 60)
+            )
+            if is_low:
+                low_attention_events.append({
+                    "video_id": v_id,
+                    "event": ev,
+                })
+
+    # Build student-specific recommendations from real low attention events
     if low_attention_events:
-        for ev in low_attention_events[:3]:
-            raw_vid_id = str(ev.get("video_id", ""))
-            matched_video = video_lookup.get(raw_vid_id)
-            if not matched_video and db_videos:
-                matched_video = db_videos[0]
-
-            vid_title = matched_video.get("title") if matched_video else "Information and Communication Technology (ICT)"
+        seen_keys = set()
+        for item in low_attention_events:
+            if len(recommendations) >= 5:
+                break
+            raw_vid_id = item["video_id"]
+            ev = item["event"]
+            time_val = float(ev.get("timestamp", 0.0))
             reason = ev.get("reason", "distracted")
-            avg_att = round(float(ev.get("engagement_score", 38.5)), 1)
-            time_val = float(ev.get("timestamp", 120.0))
+            avg_att = round(float(ev.get("engagement_score", 42.0)), 1)
+            
+            matched_video = video_lookup.get(raw_vid_id)
+            if not matched_video and raw_vid_id:
+                try:
+                    matched_video = await db["videos"].find_one({"_id": ObjectId(raw_vid_id)})
+                except Exception:
+                    pass
 
-            # Derive concept ID from video title keywords
+            vid_title = matched_video.get("title") if matched_video else "O/L ICT Lesson"
+
+            key = (vid_title, int(time_val // 30))
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+
             t_lower = vid_title.lower()
             if "network" in t_lower:
                 c_id = "networking"
@@ -3832,91 +3863,39 @@ async def get_attention_recommendations(student_id: str) -> dict[str, Any]:
                 c_id = "data_information"
             elif "security" in t_lower:
                 c_id = "cyber_security"
+            elif "program" in t_lower or "python" in t_lower or "algorithm" in t_lower:
+                c_id = "programming_basics"
+            elif "os" in t_lower or "operating" in t_lower:
+                c_id = "operating_systems"
             else:
                 c_id = "computer_system"
 
+            mins = int(time_val // 60)
+            secs = int(time_val % 60)
+            time_str = f"{mins}m {secs:02d}s" if time_val > 0 else "Lesson segment"
+
             recommendations.append({
-                "lessonId": raw_vid_id or "lesson_01",
-                "lessonTitle": vid_title,
+                "lessonId": raw_vid_id or c_id,
+                "lessonTitle": f"{vid_title} ({time_str})",
                 "conceptId": c_id,
                 "conceptName": f"{vid_title} (Core Concepts)",
                 "averageAttention": avg_att,
                 "distractionReason": reason_map.get(reason, "Low Attention Recorded"),
                 "recommendedAction": f"Review Short Note & Practice Quiz on {vid_title}",
-                "suggestedPrompt": f"Explain the key concepts and exam points of {vid_title}.",
+                "suggestedPrompt": f"Explain the key concepts and exam points of {vid_title} around {time_str}.",
                 "timestamp": time_val,
             })
 
-    # If < 2 logs, generate weak spots directly from the actual uploaded video titles in db["videos"]
-    if len(recommendations) < 3:
-        sample_reasons = [
-            ("Gaze Deviation / Looking Away", 42.0, 120.0),
-            ("Drowsiness Alert during playback", 38.5, 135.0),
-            ("Frequent Distraction Detected", 45.0, 210.0),
-        ]
-
-        if db_videos:
-            for idx, v in enumerate(db_videos):
-                if len(recommendations) >= 3:
-                    break
-                vid_title = v.get("title") or "Information and Communication Technology ICT"
-                # Avoid duplicates
-                if any(r["lessonTitle"] == vid_title for r in recommendations):
-                    continue
-
-                t_lower = vid_title.lower()
-                if "network" in t_lower:
-                    c_id = "networking"
-                elif "database" in t_lower or "sql" in t_lower:
-                    c_id = "databases"
-                elif "sign" in t_lower or "asl" in t_lower:
-                    c_id = "computer_system"
-                elif "data" in t_lower or "logic" in t_lower:
-                    c_id = "data_information"
-                else:
-                    c_id = "computer_system"
-
-                reason_text, att_score, time_sec = sample_reasons[idx % len(sample_reasons)]
-
-                recommendations.append({
-                    "lessonId": str(v.get("_id", f"v_{idx}")),
-                    "lessonTitle": vid_title,
-                    "conceptId": c_id,
-                    "conceptName": f"{vid_title} (Core Concepts)",
-                    "averageAttention": att_score,
-                    "distractionReason": reason_text,
-                    "recommendedAction": f"Review Short Note on {vid_title}",
-                    "suggestedPrompt": f"Can you explain the main points of {vid_title} with a simple analogy?",
-                    "timestamp": time_sec,
-                })
-
-        # Fallback if no videos are in database
-        if len(recommendations) < 3:
-            fallback_video_titles = [
-                ("Information and Communication Technology ICT", "computer_system", "Gaze Deviation / Looking Away", 42.0),
-                ("Computer Networks and Internet Protocols", "networking", "Drowsiness Alert during playback", 38.5),
-                ("Database Management & SQL Systems", "databases", "Frequent Distraction Detected", 46.0),
-            ]
-            for title, cid, reas, att in fallback_video_titles:
-                if len(recommendations) >= 3:
-                    break
-                if not any(r["lessonTitle"] == title for r in recommendations):
-                    recommendations.append({
-                        "lessonId": cid,
-                        "lessonTitle": title,
-                        "conceptId": cid,
-                        "conceptName": f"{title} (Core Concepts)",
-                        "averageAttention": att,
-                        "distractionReason": reas,
-                        "recommendedAction": f"Review Short Note on {title}",
-                        "suggestedPrompt": f"Explain the main exam questions on {title}.",
-                        "timestamp": 120.0,
-                    })
+    has_alerts = len(recommendations) > 0
+    if has_alerts:
+        summary_msg = f"Identified {len(recommendations)} concept segment(s) where your webcam attention dipped below threshold during video lessons. Reviewing these now will boost retention."
+    else:
+        summary_msg = "No low attention events recorded. Great focus during your recent lesson sessions!"
 
     return {
         "studentId": student_id,
-        "hasLowAttentionAlerts": True,
-        "summaryMessage": f"Identified {len(recommendations)} concept segment(s) where your attention dipped below optimal learning threshold. Reviewing these now will boost retention.",
+        "hasLowAttentionAlerts": has_alerts,
+        "summaryMessage": summary_msg,
         "recommendations": recommendations,
     }
 
@@ -3942,78 +3921,236 @@ async def get_short_notes(topic_id: str) -> dict[str, Any]:
 
 async def get_knowledge_growth(student_id: str) -> dict[str, Any]:
     """
-    Calculates overall student knowledge mastery scores, domain growth, and attention correlation.
+    Calculates overall student knowledge mastery scores, domain growth, and attention correlation
+    dynamically based on the student's real quiz attempts, micro-challenges, popup answers, and attention logs.
+    For brand-new users, starts at 0% baseline and grows as they interact.
     """
     db = get_db()
 
-    # Aggregate quiz / challenge answers
-    try:
-        answers_count = await db[STUDENT_ANSWERS_COLLECTION].count_documents({"student_id": student_id})
-        challenge_count = await db[MICRO_CHALLENGE_ATTEMPTS_COLLECTION].count_documents({"student_id": student_id})
-    except Exception:
-        answers_count = 14
-        challenge_count = 8
-
-    # Topic domain baseline calculation
-    topic_configs = [
-        {"id": "computer_system", "name": "Computer Systems & Hardware", "baseMastery": 78, "att": 82, "q": 12, "acc": 85},
-        {"id": "data_information", "name": "Data Representation & Logic", "baseMastery": 84, "att": 88, "q": 15, "acc": 90},
-        {"id": "operating_systems", "name": "Operating Systems & Utilities", "baseMastery": 70, "att": 74, "q": 9, "acc": 76},
-        {"id": "networking", "name": "Networks & Internet Protocols", "baseMastery": 62, "att": 60, "q": 8, "acc": 65},
-        {"id": "databases", "name": "Relational Databases & SQL", "baseMastery": 58, "att": 55, "q": 7, "acc": 60},
-        {"id": "programming_basics", "name": "Algorithms & Flowcharts", "baseMastery": 74, "att": 80, "q": 11, "acc": 80},
-        {"id": "cyber_security", "name": "Cyber Security & Digital Ethics", "baseMastery": 88, "att": 92, "q": 14, "acc": 94},
+    # 1. Base syllabus topics
+    syllabus_topics = [
+        {"id": "computer_system", "name": "Computer Systems & Hardware"},
+        {"id": "data_information", "name": "Data Representation & Logic"},
+        {"id": "operating_systems", "name": "Operating Systems & Utilities"},
+        {"id": "networking", "name": "Networks & Internet Protocols"},
+        {"id": "databases", "name": "Relational Databases & SQL"},
+        {"id": "programming_basics", "name": "Algorithms & Flowcharts"},
+        {"id": "cyber_security", "name": "Cyber Security & Digital Ethics"},
     ]
 
+    try:
+        db_topics = [doc async for doc in db[ICT_SYLLABUS_TOPICS_COLLECTION].find().sort("sortOrder", 1)]
+        if db_topics:
+            existing_ids = {t["id"] for t in syllabus_topics}
+            for dbt in db_topics:
+                t_id = dbt.get("topicId")
+                t_name = dbt.get("topicName")
+                if t_id and t_id not in existing_ids and t_name:
+                    syllabus_topics.append({"id": t_id, "name": t_name})
+                    existing_ids.add(t_id)
+    except Exception:
+        pass
+
+    # 2. Fetch student understanding scores, challenge attempts, quiz attempts, and attention logs
+    try:
+        understanding_docs = [
+            doc async for doc in db[STUDENT_UNDERSTANDING_SCORES_COLLECTION].find({"studentId": student_id})
+        ]
+        score_by_topic = {doc["topicId"]: doc for doc in understanding_docs if "topicId" in doc}
+    except Exception:
+        understanding_docs = []
+        score_by_topic = {}
+
+    try:
+        challenge_attempts = [
+            doc async for doc in db[MICRO_CHALLENGE_ATTEMPTS_COLLECTION].find({"studentId": student_id})
+        ]
+    except Exception:
+        challenge_attempts = []
+
+    try:
+        quiz_attempts = [
+            doc async for doc in db[LOGIN_QUIZ_ATTEMPTS_COLLECTION].find({"studentId": student_id})
+        ]
+    except Exception:
+        quiz_attempts = []
+
+    try:
+        popup_answers = [
+            doc async for doc in db[STUDENT_ANSWERS_COLLECTION].find(
+                {"$or": [{"student_id": student_id}, {"studentId": student_id}]}
+            )
+        ]
+    except Exception:
+        popup_answers = []
+
+    try:
+        attention_cursor = db[ATTENTION_LOGS_COLLECTION].find(
+            {"$or": [{"student_id": student_id}, {"studentId": student_id}, {"user_id": student_id}]}
+        ).sort("created_at", -1)
+        attention_logs = await attention_cursor.to_list(length=100)
+    except Exception:
+        attention_logs = []
+
+    # 3. Compute overall student attention index (0 if no logs)
+    all_attention_scores = []
+    for log in attention_logs:
+        if "events" in log and isinstance(log["events"], list):
+            for e in log["events"]:
+                if isinstance(e, dict) and e.get("engagement_score") is not None:
+                    try:
+                        all_attention_scores.append(float(e["engagement_score"]))
+                    except (ValueError, TypeError):
+                        pass
+        elif log.get("engagement_score") is not None:
+            try:
+                all_attention_scores.append(float(log["engagement_score"]))
+            except (ValueError, TypeError):
+                pass
+
+    if all_attention_scores:
+        overall_attention = round(sum(all_attention_scores) / len(all_attention_scores))
+        overall_attention = max(0, min(100, overall_attention))
+    else:
+        overall_attention = 0
+
+    # 4. Group attempts per topic
+    challenges_by_topic: dict[str, list[dict[str, Any]]] = {}
+    for ca in challenge_attempts:
+        tid = ca.get("topicId")
+        if tid:
+            challenges_by_topic.setdefault(tid, []).append(ca)
+
+    quizzes_by_topic: dict[str, list[dict[str, Any]]] = {}
+    for qa in quiz_attempts:
+        tid = qa.get("topicId")
+        if tid:
+            quizzes_by_topic.setdefault(tid, []).append(qa)
+
+    total_activities_count = len(understanding_docs) + len(challenge_attempts) + len(quiz_attempts) + len(popup_answers)
+
+    # 5. Build dynamic topics list
     topics = []
     total_mastery = 0
-    total_att = 0
+    attempted_topics_count = 0
+    best_topic = None
+    best_topic_score = -1
+    lowest_topic = None
+    lowest_topic_score = 999
 
-    for cfg in topic_configs:
-        m = cfg["baseMastery"]
-        att = cfg["att"]
-        total_mastery += m
-        total_att += att
+    for cfg in syllabus_topics:
+        tid = cfg["id"]
+        tname = cfg["name"]
+        score_doc = score_by_topic.get(tid)
+        t_challenges = challenges_by_topic.get(tid, [])
+        t_quizzes = quizzes_by_topic.get(tid, [])
+
+        q_count = len(t_challenges) + len(t_quizzes)
+        correct_count = sum(1 for c in t_challenges if c.get("isCorrect")) + sum(
+            1 for q in t_quizzes if q.get("passed") or (isinstance(q.get("score"), (int, float)) and q.get("score", 0) >= 50)
+        )
+        accuracy = round((correct_count / q_count) * 100) if q_count > 0 else 0
+
+        # Topic mastery calculation
+        if score_doc and "understandingScore" in score_doc:
+            mastery = round(score_doc["understandingScore"])
+            attempted_topics_count += 1
+        elif q_count > 0:
+            mastery = round(accuracy * 0.8 + min(20, q_count * 5))
+            attempted_topics_count += 1
+        else:
+            mastery = 0
+
+        mastery = max(0, min(100, mastery))
+        total_mastery += mastery
+
+        if mastery > 0:
+            if mastery > best_topic_score:
+                best_topic_score = mastery
+                best_topic = tname
+            if mastery < lowest_topic_score:
+                lowest_topic_score = mastery
+                lowest_topic = tname
+        elif lowest_topic is None and attempted_topics_count > 0:
+            lowest_topic = tname
+
+        topic_att = overall_attention if (mastery > 0 or overall_attention > 0) else 0
 
         level = (
-            "Master" if m >= 85
-            else "Proficient" if m >= 70
-            else "Developing" if m >= 55
+            "Master" if mastery >= 85
+            else "Proficient" if mastery >= 70
+            else "Developing" if mastery >= 50
             else "Novice"
         )
 
+        last_rev = "Today" if (score_doc or q_count > 0) else "Not started"
+
         topics.append({
-            "topicId": cfg["id"],
-            "topicName": cfg["name"],
-            "masteryScore": m,
-            "attentionCorrelation": att,
+            "topicId": tid,
+            "topicName": tname,
+            "masteryScore": mastery,
+            "attentionCorrelation": topic_att,
             "level": level,
-            "questionsAnswered": cfg["q"],
-            "accuracyRate": cfg["acc"],
-            "lastReviewed": "Today",
+            "questionsAnswered": q_count,
+            "accuracyRate": accuracy,
+            "lastReviewed": last_rev,
         })
 
-    overall_mastery = round(total_mastery / len(topic_configs))
-    overall_attention = round(total_att / len(topic_configs))
+    # 6. Overall Mastery Calculation
+    if len(syllabus_topics) > 0 and attempted_topics_count > 0:
+        overall_mastery = round(total_mastery / len(syllabus_topics))
+    else:
+        overall_mastery = 0
 
-    # 7-day growth history mock for sparkline/trend graph
-    growth_history = [
-        {"day": "Mon", "mastery": 54, "attention": 62},
-        {"day": "Tue", "mastery": 58, "attention": 68},
-        {"day": "Wed", "mastery": 63, "attention": 71},
-        {"day": "Thu", "mastery": 67, "attention": 75},
-        {"day": "Fri", "mastery": 70, "attention": 78},
-        {"day": "Sat", "mastery": 73, "attention": 82},
-        {"day": "Sun", "mastery": overall_mastery, "attention": overall_attention},
-    ]
+    # 7. Growth streak calculation
+    try:
+        activity_dates = set()
+        for doc in challenge_attempts + quiz_attempts + understanding_docs + attention_logs:
+            raw_ts = doc.get("createdAt") or doc.get("updatedAt") or doc.get("timestamp")
+            if isinstance(raw_ts, datetime):
+                activity_dates.add(raw_ts.date())
+            elif isinstance(raw_ts, str):
+                try:
+                    dt = datetime.fromisoformat(raw_ts.replace("Z", "+00:00"))
+                    activity_dates.add(dt.date())
+                except Exception:
+                    pass
+        streak_days = len(activity_dates) if activity_dates else (1 if total_activities_count > 0 else 0)
+    except Exception:
+        streak_days = 1 if total_activities_count > 0 else 0
+
+    # 8. Strongest and Weakest topics
+    strongest_topic = best_topic if best_topic else "None yet (Start learning)"
+    needs_attention_topic = (
+        lowest_topic if lowest_topic and lowest_topic != best_topic
+        else ("All topics on track!" if overall_mastery >= 75 and total_activities_count > 0 else "None yet (Take a quiz to discover)")
+    )
+
+    # 9. 7-Day Trend
+    days_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    now_day_idx = datetime.now().weekday()
+
+    if overall_mastery == 0 and overall_attention == 0:
+        growth_history = [{"day": d, "mastery": 0, "attention": 0} for d in days_labels]
+    else:
+        growth_history = []
+        for idx, day_name in enumerate(days_labels):
+            if idx <= now_day_idx:
+                fraction = max(0.2, (idx + 1) / (now_day_idx + 1))
+                day_m = round(overall_mastery * fraction)
+                day_a = round(overall_attention * fraction)
+            else:
+                day_m = 0
+                day_a = 0
+            growth_history.append({"day": day_name, "mastery": day_m, "attention": day_a})
 
     return {
         "studentId": student_id,
         "overallMastery": overall_mastery,
         "overallAttention": overall_attention,
-        "growthStreakDays": 6,
-        "strongestTopic": "Cyber Security & Digital Ethics",
-        "needsAttentionTopic": "Relational Databases & SQL",
+        "growthStreakDays": streak_days,
+        "strongestTopic": strongest_topic,
+        "needsAttentionTopic": needs_attention_topic,
         "topics": topics,
         "growthHistory": growth_history,
     }

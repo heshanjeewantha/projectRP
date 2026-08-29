@@ -445,7 +445,7 @@ const ChatbotPage = () => {
                     className={`chatbot-tab-button ${activeViewTab === 'growth' ? 'is-active' : ''}`}
                   >
                     <TrendingUp size={13} />
-                    <span>Growth Matrix ({growthData?.overallMastery || 74}%)</span>
+                    <span>Growth Matrix</span>
                   </button>
                   <button
                     type="button"
@@ -895,7 +895,7 @@ const ChatbotPage = () => {
                     className="chatbot-tool-button is-neutral is-full"
                   >
                     <TrendingUp size={13} />
-                    <span>View Growth Matrix ({growthData?.overallMastery || 74}%)</span>
+                    <span>View Growth Matrix</span>
                   </button>
                 </div>
               </div>

@@ -17,9 +17,9 @@ router = APIRouter(prefix="/api", tags=["Knowledge Graph"])
 
 
 @router.get("/knowledge-graph")
-async def get_knowledge_graph():
-    """Return the full O/L ICT knowledge graph dataset."""
-    return await knowledge_graph_service.get_knowledge_graph()
+async def get_knowledge_graph(videoId: str | None = Query(None)):
+    """Return the full O/L ICT knowledge graph dataset, or filtered by videoId."""
+    return await knowledge_graph_service.get_knowledge_graph(video_id=videoId)
 
 
 @router.get("/lesson-timeline", response_model=LessonTimelineModel)
