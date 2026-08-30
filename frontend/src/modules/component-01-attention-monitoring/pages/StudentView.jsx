@@ -776,7 +776,7 @@ const StudentView = () => {
               label="Analytics"
               icon={BarChart2}
               title="Attention Heatmap"
-              description="Session distraction events mapped to the video timeline. Green = focused, orange = distracted, red = phone, amber = drowsy."
+              description="Session distraction events mapped to the video timeline. Green = focused, orange = distracted, amber = drowsy."
             />
             <div className="mt-4">
               <AttentionHeatmap videoDuration={timelineDuration} />
@@ -808,7 +808,7 @@ const StudentView = () => {
               label="Attention"
               icon={Activity}
               title="Attention Analytics"
-              description="Real-time engagement score, drowsiness (PERCLOS), gaze direction, blink rate, and phone detections."
+              description="Real-time engagement score, drowsiness (PERCLOS), gaze direction, and blink rate."
             />
             <div className="mt-4">
               <AttentionStatsPanel />
