@@ -119,11 +119,13 @@ const TopicConceptDiagram = ({ topicId, topicName }) => {
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
           className="pt-6 overflow-hidden"
-        >
+        > <br></br>
           <div className="note-diagram-canvas relative rounded-2xl p-5 sm:p-7 shadow-inner overflow-x-auto border-2 border-border">
             {renderDiagram()}
+            <br></br>
+            <br></br>
           </div>
-
+          
           <div className="mt-4 flex items-center justify-between text-xs text-text-muted px-1 flex-wrap gap-2">
             <span className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
               <Sparkles size={15} />
