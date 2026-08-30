@@ -2,19 +2,11 @@ import { useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
-  Award,
-  BookOpen,
-  CheckCircle2,
   Eye,
   EyeOff,
-  Flame,
   Hand,
-  Play,
-  RotateCcw,
   Sparkles,
-  Watch,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 import CameraSignEvaluator from './CameraSignEvaluator';
 import SignAvatarDemo from './SignAvatarDemo';
@@ -22,7 +14,6 @@ import SignAvatarDemo from './SignAvatarDemo';
 const SignPracticeArena = ({
   activeModule,
   activeKeyword,
-  progress,
   onSelectKeyword,
   onPassKeyword,
   onErrorTrigger,
@@ -33,7 +24,6 @@ const SignPracticeArena = ({
 
   const keywords = activeModule?.keywords || [];
   const currentIndex = keywords.findIndex((k) => k.keyword === activeKeyword?.keyword);
-  const isPassed = progress?.completedKeywords?.includes(activeKeyword?.keyword);
 
   const handleNext = () => {
     if (currentIndex < keywords.length - 1) {
@@ -48,20 +38,20 @@ const SignPracticeArena = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="sign-practice-arena flex w-full min-w-0 flex-col gap-4">
       {/* Top Header Card */}
-      <div className="rounded-2xl border border-white/10 bg-slate-900/90 p-4 shadow-xl backdrop-blur-md">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+      <div className="sign-practice-card rounded-2xl border border-white/10 bg-slate-900/90 p-4 shadow-xl backdrop-blur-md">
+        <div className="sign-practice-header">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
             <button
               onClick={onBackToModules}
-              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 transition-colors"
+              className="sign-practice-action flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 transition-colors"
             >
               <ArrowLeft size={14} />
               <span className="hidden sm:inline">All Modules</span>
             </button>
             <div className="min-w-0">
-              <span className="block text-[10px] font-mono font-semibold text-primary uppercase tracking-wider truncate">
+              <span className="block text-[10px] font-mono font-semibold text-primary uppercase tracking-wider">
                 Unit {activeModule?.moduleNumber}: {activeModule?.title}
               </span>
               <h3 className="text-sm sm:text-base font-black text-white mt-0.5 leading-tight overflow-wrap-anywhere">
@@ -75,7 +65,7 @@ const SignPracticeArena = ({
 
           <button
             onClick={() => setExamMode(!examMode)}
-            className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all ${
+            className={`sign-practice-action shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all ${
               examMode
                 ? 'border border-purple-500/40 bg-purple-500/20 text-purple-300'
                 : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
@@ -89,11 +79,11 @@ const SignPracticeArena = ({
       </div>
 
       {/* Main Split Grid: Left = Avatar & Instructions, Right = Camera Evaluator */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 items-start">
+      <div className="sign-practice-grid">
         {/* Left Column: Avatar Demonstration & Sign Breakdown */}
         <div className="flex flex-col gap-4">
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950 p-4 sm:p-5 shadow-2xl">
-            <div className="flex flex-wrap items-start justify-between gap-2 border-b border-white/10 pb-3">
+          <div className="sign-practice-card relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950 p-4 shadow-2xl sm:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 pb-3">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
                   <Hand size={16} />
@@ -131,7 +121,7 @@ const SignPracticeArena = ({
             )}
 
             {/* Keyword Details & Instructions Card */}
-            <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/80 p-4 sm:p-5 shadow-lg">
+            <div className="sign-practice-card mt-4 rounded-2xl border border-white/10 bg-slate-900/80 p-4 shadow-lg sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
                 <div className="flex items-center gap-2">
                   <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/20 text-primary text-xs font-black">
@@ -185,11 +175,11 @@ const SignPracticeArena = ({
           />
 
           {/* Keyword Module Navigation Strip */}
-          <div className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-900/90 p-3 shadow-lg backdrop-blur">
+          <div className="sign-practice-nav-strip flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-900/90 p-3 shadow-lg backdrop-blur">
             <button
               onClick={handlePrev}
               disabled={currentIndex <= 0}
-              className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="sign-practice-action flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <ArrowLeft size={14} />
               <span className="hidden sm:inline">Previous</span>
@@ -202,7 +192,7 @@ const SignPracticeArena = ({
             <button
               onClick={handleNext}
               disabled={currentIndex >= keywords.length - 1}
-              className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="sign-practice-action flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <span className="hidden sm:inline">Next</span>
               <ArrowRight size={14} />

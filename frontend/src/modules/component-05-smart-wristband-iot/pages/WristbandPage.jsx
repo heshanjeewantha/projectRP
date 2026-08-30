@@ -26,6 +26,14 @@ import {
   saveWristbandConfig,
   sendWristbandTest,
 } from '../services/wristbandApi';
+import {
+  getDefaultWristbandEndpoint,
+  getHttpWristbandStatus,
+  getStoredWristbandEndpoint,
+  resolveWristbandEndpoint,
+  sendHttpWristbandNotification,
+  setStoredWristbandEndpoint,
+} from '../services/wristbandHttpController';
 
 const ALERT_PRESETS = [
   {
@@ -127,6 +135,10 @@ const WristbandPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [deviceEndpoint, setDeviceEndpoint] = useState(() => resolveWristbandEndpoint(getStoredWristbandEndpoint()));
+  const [httpDeviceStatus, setHttpDeviceStatus] = useState(null);
+  const [isDeviceChecking, setIsDeviceChecking] = useState(false);
+  const [isHttpSending, setIsHttpSending] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -170,6 +182,7 @@ const WristbandPage = () => {
   }, [userId]);
 
   const derivedStatus = attentionStatus === 'not_attentive' ? 'Focus Trigger Ready' : 'Monitoring Calm';
+  const httpStatusLabel = httpDeviceStatus ? 'connected' : deviceEndpoint ? 'ready' : 'not set';
 
   const handleAlertTypeChange = (alertType) => {
     const preset = ALERT_PRESETS.find((item) => item.alertType === alertType) || ALERT_PRESETS[0];
@@ -213,19 +226,94 @@ const WristbandPage = () => {
   const handleTestNotification = async () => {
     if (isTesting) return;
     setIsTesting(true);
+    let backendSent = false;
+    let deviceSent = false;
     try {
       await sendWristbandTest({
         studentId: userId,
         ...config,
       });
-      setPageNotice('Test notification sent to the wristband service.');
+      backendSent = true;
+    } catch (error) {
+      console.error('Failed to send wristband test', error);
+    }
+
+    const endpoint = resolveWristbandEndpoint(deviceEndpoint);
+    setDeviceEndpoint(endpoint);
+    setStoredWristbandEndpoint(endpoint);
+
+    if (endpoint) {
+      try {
+        await sendHttpWristbandNotification({
+          endpoint,
+          oledMessage: config.oledMessage,
+          vibrationPattern: config.vibrationPattern,
+          intensity: config.intensity,
+          duration: config.duration,
+        });
+        deviceSent = true;
+      } catch (error) {
+        console.error('Failed to send ESP32 wristband test', error);
+      }
+    }
+
+    try {
       const refreshedHistory = await getWristbandHistory(userId);
       setHistory(refreshedHistory || []);
     } catch (error) {
-      console.error('Failed to send wristband test', error);
-      setPageNotice('Backend test notification failed. The local wristband preview still reflects your current configuration.');
+      console.error('Failed to refresh wristband history', error);
     } finally {
       setIsTesting(false);
+    }
+
+    if (backendSent && deviceSent) {
+      setPageNotice('Test notification sent to the wristband service and ESP32 device.');
+    } else if (deviceSent) {
+      setPageNotice('Test notification sent directly to the ESP32 device.');
+    } else if (backendSent) {
+      setPageNotice('Test notification sent to the wristband service. Enter the ESP32 IP to send it to the physical band too.');
+    } else {
+      setPageNotice('Could not send the test notification. Check the backend or ESP32 IP address.');
+    }
+  };
+
+  const handleConnectHttpDevice = async () => {
+    if (isDeviceChecking) return;
+    setIsDeviceChecking(true);
+    try {
+      const endpoint = setStoredWristbandEndpoint(resolveWristbandEndpoint(deviceEndpoint));
+      setDeviceEndpoint(endpoint);
+      const status = await getHttpWristbandStatus(endpoint);
+      setHttpDeviceStatus(status);
+      setPageNotice(`ESP32 wristband connected at ${endpoint}.`);
+    } catch (error) {
+      console.error('Failed to connect ESP32 wristband', error);
+      setHttpDeviceStatus(null);
+      setPageNotice(`ESP32 connection failed: ${error.message}`);
+    } finally {
+      setIsDeviceChecking(false);
+    }
+  };
+
+  const handleSendCurrentAlertToDevice = async () => {
+    if (isHttpSending) return;
+    setIsHttpSending(true);
+    try {
+      const endpoint = setStoredWristbandEndpoint(resolveWristbandEndpoint(deviceEndpoint));
+      setDeviceEndpoint(endpoint);
+      await sendHttpWristbandNotification({
+        endpoint,
+        oledMessage: config.oledMessage,
+        vibrationPattern: config.vibrationPattern,
+        intensity: config.intensity,
+        duration: config.duration,
+      });
+      setPageNotice(`Current alert sent to ESP32 wristband at ${endpoint}.`);
+    } catch (error) {
+      console.error('Failed to send current alert to ESP32 wristband', error);
+      setPageNotice(`ESP32 alert failed: ${error.message}`);
+    } finally {
+      setIsHttpSending(false);
     }
   };
 
@@ -270,6 +358,10 @@ const WristbandPage = () => {
                   <Cpu size={16} className="text-primary" />
                   ESP32 + OLED + Haptic Motor
                 </span>
+                <span className="dashboard-chip">
+                  <Wifi size={16} className="text-primary" />
+                  ESP32 HTTP: {httpStatusLabel}
+                </span>
               </div>
 
               <Link
@@ -279,6 +371,38 @@ const WristbandPage = () => {
                 <Sparkles size={14} />
                 Launch ICT Sign Course & Camera
               </Link>
+            </div>
+
+            <div className="wristband-quick-connect mt-5">
+              <div className="min-w-0">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+                  ESP32 Device IP
+                </div>
+                <input
+                  value={deviceEndpoint}
+                  onChange={(event) => setDeviceEndpoint(event.target.value)}
+                  placeholder={getDefaultWristbandEndpoint()}
+                  className="wristband-http-input mt-2"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleConnectHttpDevice}
+                disabled={isDeviceChecking}
+                className="inline-flex items-center justify-center gap-2 rounded-[16px] bg-primary px-4 py-3 text-sm font-semibold text-[#032418] transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Wifi size={16} />
+                {isDeviceChecking ? 'Checking...' : 'Connect ESP32'}
+              </button>
+              <button
+                type="button"
+                onClick={handleSendCurrentAlertToDevice}
+                disabled={isHttpSending}
+                className="inline-flex items-center justify-center gap-2 rounded-[16px] border border-primary/20 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary transition hover:bg-primary/16 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Send size={16} />
+                {isHttpSending ? 'Sending...' : 'Send Alert'}
+              </button>
             </div>
           </DashboardPanel>
 
@@ -332,6 +456,14 @@ const WristbandPage = () => {
                   >
                     <Send size={16} />
                     {isTesting ? 'Sending Test...' : 'Test Notification'}
+                  </button>
+                  <button
+                    onClick={handleSendCurrentAlertToDevice}
+                    disabled={isHttpSending}
+                    className="inline-flex items-center justify-center gap-2 rounded-[16px] border border-primary/20 bg-primary/10 px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/16 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Wifi size={16} />
+                    {isHttpSending ? 'Sending...' : 'Send to ESP32'}
                   </button>
                   <button
                     onClick={handleSaveConfig}
@@ -471,6 +603,50 @@ const WristbandPage = () => {
             />
 
             <div className="mt-6 grid gap-4">
+              <div className="wristband-device-card">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+                  Real ESP32 Wi-Fi Device
+                </div>
+                <p className="mt-2 text-sm text-text-muted">
+                  Flash `sketch_aug31a`, then enter the IP shown on the OLED or Serial Monitor.
+                </p>
+                <div className="mt-4 grid gap-3">
+                  <input
+                    value={deviceEndpoint}
+                    onChange={(event) => setDeviceEndpoint(event.target.value)}
+                    placeholder={getDefaultWristbandEndpoint()}
+                    className="wristband-http-input"
+                  />
+                  <div className="wristband-http-actions">
+                    <button
+                      type="button"
+                      onClick={handleConnectHttpDevice}
+                      disabled={isDeviceChecking}
+                      className="inline-flex items-center justify-center gap-2 rounded-[16px] bg-primary px-4 py-3 text-sm font-semibold text-[#032418] transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Wifi size={16} />
+                      {isDeviceChecking ? 'Checking...' : 'Connect ESP32'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSendCurrentAlertToDevice}
+                      disabled={isHttpSending}
+                      className="inline-flex items-center justify-center gap-2 rounded-[16px] bg-white/[0.05] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Send size={16} />
+                      {isHttpSending ? 'Sending...' : 'Send Current Alert'}
+                    </button>
+                  </div>
+                </div>
+                {httpDeviceStatus && (
+                  <div className="mt-4 grid gap-2 text-sm text-text-muted">
+                    <div>Device: <span className="text-white">{httpDeviceStatus.deviceName || 'SignLearn ESP32 Band'}</span></div>
+                    <div>IP: <span className="text-white">{httpDeviceStatus.ip || deviceEndpoint}</span></div>
+                    <div>Firmware: <span className="text-white">{httpDeviceStatus.firmwareVersion || '0.2.0-http-notify'}</span></div>
+                  </div>
+                )}
+              </div>
+
               <div className="wristband-device-card">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm font-semibold text-white">Connection</span>

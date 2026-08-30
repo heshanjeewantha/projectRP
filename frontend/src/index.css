@@ -535,6 +535,27 @@ div {
   scrollbar-width: none;
 }
 
+.app-navbar {
+  overflow-x: clip;
+}
+
+.app-navbar-shell {
+  width: min(1560px, calc(100% - 16px));
+}
+
+.app-navbar-scroll {
+  max-width: 100%;
+  padding-bottom: 1px;
+}
+
+.app-navbar-list {
+  max-width: 100%;
+}
+
+.app-nav-link {
+  min-width: max-content;
+}
+
 button, a {
   transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
 }
@@ -3004,6 +3025,15 @@ button:active, a:active {
   min-height: 42px;
 }
 
+.wristband-quick-connect {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(140px, max-content));
+  gap: 12px;
+  align-items: end;
+  border-top: 1px solid var(--panel-border);
+  padding-top: 18px;
+}
+
 .wristband-preview-layout {
   display: grid;
   gap: 20px;
@@ -3038,7 +3068,40 @@ button:active, a:active {
 .wristband-preview-action-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.wristband-http-input {
+  width: 100%;
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-bg-card) 88%, black);
+  color: var(--color-text-main);
+  font-size: 0.9rem;
+  outline: none;
+  padding: 0.85rem 1rem;
+}
+
+.wristband-http-input:focus {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--panel-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.wristband-http-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.wristband-http-actions {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+@media (max-width: 860px) {
+  .wristband-quick-connect {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
 }
 
 /* Premium Button Styles */
@@ -6084,10 +6147,246 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
 
 /* ── Sign Course Page: scoped overrides ──────────────────────── */
 
+.sign-course-page {
+  min-width: 0;
+  max-width: 1560px;
+  overflow-x: clip;
+}
+
+.sign-course-page * {
+  min-width: 0;
+}
+
+.sign-course-hero-card,
+.virtual-wristband-panel {
+  background: var(--panel-bg-solid);
+  border-color: var(--panel-border);
+}
+
+.sign-course-metric-card {
+  background: color-mix(in srgb, var(--color-bg-card) 82%, transparent);
+  border-color: var(--panel-border);
+  min-height: 58px;
+}
+
+.sign-course-tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-color: var(--panel-border);
+}
+
+.sign-course-hero-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(14px, 2vw, 24px);
+  align-items: start;
+}
+
+.sign-course-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.sign-course-tab-button,
+.sign-course-start-button,
+.virtual-wristband-panel button {
+  min-height: 40px;
+}
+
+.sign-course-tab-button:focus-visible,
+.sign-course-start-button:focus-visible,
+.sign-course-toggle-button:focus-visible,
+.virtual-wristband-panel button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.sign-course-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(18px, 2vw, 28px);
+  align-items: start;
+}
+
+.sign-course-main-grid.has-wristband {
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 430px);
+}
+
+.sign-course-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sign-course-module-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.sign-course-module-card {
+  background: color-mix(in srgb, var(--color-bg-card) 88%, transparent);
+  border-color: var(--panel-border);
+  min-height: 128px;
+}
+
+.sign-course-toggle-button {
+  min-height: 40px;
+  align-self: start;
+}
+
 .sign-course-module-desc {
   overflow-wrap: anywhere;
   word-break: break-word;
   line-height: 1.6;
+}
+
+.sign-course-module-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+}
+
+.sign-course-module-body {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.sign-course-start-button {
+  align-self: center;
+  margin-inline-end: 10px;
+  max-width: 100%;
+}
+
+.sign-course-keyword-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+.sign-course-keyword-label {
+  margin-right: 2px;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.sign-course-keyword-badge {
+  min-height: 30px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.sign-course-sidebar {
+  min-width: 0;
+}
+
+.sign-course-sidebar-sticky {
+  position: sticky;
+  top: 96px;
+}
+
+.sign-practice-arena,
+.sign-practice-card {
+  min-width: 0;
+}
+
+.sign-practice-card {
+  border-color: var(--panel-border);
+}
+
+.sign-practice-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sign-practice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.sign-practice-action {
+  min-height: 40px;
+}
+
+.sign-practice-action:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.sign-practice-nav-strip {
+  min-width: 0;
+}
+
+.camera-sign-evaluator {
+  border-color: var(--panel-border);
+}
+
+.camera-evaluator-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.camera-evaluator-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.camera-evaluator-action,
+.camera-evaluator-primary {
+  min-height: 44px;
+}
+
+.camera-evaluator-action:focus-visible,
+.camera-evaluator-primary:focus-visible,
+.camera-zone-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.camera-zone-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.camera-zone-card {
+  min-width: 0;
+}
+
+.camera-zone-card span,
+.camera-zone-card p,
+.camera-feedback-card p {
+  overflow-wrap: anywhere;
+}
+
+.camera-evaluator-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 /* Hero title — responsive clamp */
@@ -6097,7 +6396,7 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
   font-size: clamp(1.35rem, 3.5vw, 2rem);
   font-weight: 800;
   line-height: 1.15;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   overflow-wrap: anywhere;
 }
 
@@ -6109,6 +6408,256 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
   line-height: 1.65;
   max-width: 60ch;
   overflow-wrap: anywhere;
+}
+
+.virtual-wristband-device {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98));
+}
+
+.virtual-wristband-panel {
+  width: 100%;
+}
+
+.virtual-wristband-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.virtual-wristband-action-button {
+  min-height: 44px;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.virtual-wristband-oled {
+  background: rgba(2, 6, 23, 0.96) !important;
+  color: #e0f2fe !important;
+}
+
+.virtual-wristband-oled * {
+  color: #bae6fd !important;
+}
+
+.virtual-wristband-oled-label {
+  color: rgba(125, 211, 252, 0.78) !important;
+}
+
+.virtual-wristband-oled-text {
+  color: #7dd3fc !important;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.75);
+}
+
+.virtual-wristband-oled-status,
+.virtual-wristband-oled-status span {
+  color: #bae6fd !important;
+}
+
+.virtual-wristband-oled-status strong {
+  color: #e0f2fe !important;
+}
+
+.virtual-wristband-oled .text-cyan-300 {
+  color: #67e8f9 !important;
+}
+
+.virtual-wristband-oled .text-cyan-400\/70 {
+  color: rgba(34, 211, 238, 0.7) !important;
+}
+
+.virtual-wristband-oled .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.virtual-wristband-oled .text-white {
+  color: #ffffff !important;
+}
+
+@media (max-width: 1280px) {
+  .sign-course-main-grid.has-wristband {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sign-course-sidebar-sticky {
+    position: static;
+  }
+
+  .virtual-wristband-panel {
+    max-width: 760px;
+  }
+
+  .virtual-wristband-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sign-practice-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-navbar-shell {
+    width: min(100%, calc(100% - 12px));
+  }
+
+  .app-navbar-list {
+    gap: 4px;
+  }
+
+  .app-nav-link {
+    padding-inline: 0.85rem !important;
+  }
+
+  .sign-course-page {
+    max-width: 980px;
+    padding-inline: 20px;
+  }
+
+  .sign-course-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .app-navbar {
+    padding-inline: 8px;
+  }
+
+  .sign-course-page {
+    padding-inline: 16px;
+  }
+
+  .sign-course-hero-row,
+  .sign-course-module-head {
+    grid-template-columns: 1fr;
+  }
+
+  .sign-course-section-header {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .sign-course-toggle-button,
+  .sign-course-start-button {
+    justify-self: start;
+    margin-inline-end: 0;
+  }
+
+  .sign-course-tab-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sign-practice-header {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .camera-evaluator-header {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .camera-evaluator-score {
+    left: 12px;
+    right: 12px;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 640px) {
+  .sign-course-hero-card {
+    border-radius: 18px;
+  }
+
+  .sign-course-hero-title {
+    font-size: 1.55rem;
+  }
+
+  .sign-course-module-card {
+    border-radius: 16px;
+  }
+
+  .sign-course-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sign-course-module-body {
+    gap: 12px;
+  }
+
+  .sign-course-keyword-label {
+    flex-basis: 100%;
+  }
+
+  .sign-practice-nav-strip {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .camera-zone-grid,
+  .camera-evaluator-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .camera-zone-grid,
+  .camera-evaluator-footer {
+    display: grid;
+  }
+}
+
+@media (max-width: 425px) {
+  .app-navbar {
+    padding-inline: 6px;
+  }
+
+  .app-navbar-shell {
+    border-radius: 18px;
+    padding: 10px;
+  }
+
+  .app-nav-link {
+    min-height: 38px;
+    padding-inline: 0.75rem !important;
+  }
+
+  .sign-course-page {
+    padding-inline: 12px;
+  }
+
+  .sign-course-hero-card,
+  .sign-course-module-card,
+  .virtual-wristband-panel {
+    padding: 14px;
+  }
+
+  .sign-course-module-body {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .sign-course-tab-button {
+    padding-inline: 12px;
+  }
+
+  .virtual-wristband-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 375px) {
+  .sign-course-page {
+    padding-inline: 10px;
+  }
+
+  .sign-course-hero-title {
+    font-size: 1.38rem;
+  }
+
+  .sign-course-module-body {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Global: tighter padding on small screens ─────────────────── */

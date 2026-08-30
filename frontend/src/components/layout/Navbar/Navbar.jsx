@@ -53,9 +53,9 @@ const Navbar = () => {
       initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32 }}
-      className="sticky top-0 z-50 flex w-full justify-center px-2 pt-2 sm:px-4 sm:pt-4"
+      className="app-navbar sticky top-0 z-50 flex w-full justify-center px-2 pt-2 sm:px-4 sm:pt-4"
     >
-      <div className="flex w-[min(1460px,100%)] flex-col gap-2.5 rounded-[24px] border border-[var(--nav-border)] bg-[var(--nav-bg)] p-3 shadow-[0_14px_34px_rgba(0,0,0,0.15)] backdrop-blur-xl sm:rounded-[28px] sm:p-4 lg:flex-row lg:items-center lg:justify-between lg:gap-4 transition-colors duration-300">
+      <div className="app-navbar-shell flex flex-col gap-2.5 rounded-[24px] border border-[var(--nav-border)] bg-[var(--nav-bg)] p-3 shadow-[0_14px_34px_rgba(0,0,0,0.15)] backdrop-blur-xl sm:rounded-[28px] sm:p-4 lg:flex-row lg:items-center lg:justify-between lg:gap-4 transition-colors duration-300">
         {/* Brand Logo & Mode Badge */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -113,15 +113,15 @@ const Navbar = () => {
         </div>
 
         {/* Navigation Items & Theme Toggle */}
-        <div className="flex min-w-0 items-center justify-between gap-2 overflow-x-auto no-scrollbar scroll-smooth">
-          <div className="flex w-full min-w-max items-center gap-1 rounded-[18px] bg-bg-card/30 p-1.5 sm:gap-1.5 lg:gap-2">
+        <div className="app-navbar-scroll flex min-w-0 items-center justify-between gap-2 overflow-x-auto no-scrollbar scroll-smooth">
+          <div className="app-navbar-list flex w-full min-w-max items-center gap-1 rounded-[18px] bg-bg-card/30 p-1.5 sm:gap-1.5 lg:gap-2">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.to === '/'}
                 className={({ isActive }) =>
-                  `relative flex items-center justify-center gap-2.5 rounded-[14px] px-4 py-2.5 text-xs font-medium transition-all min-h-[40px] sm:px-5 sm:py-2.5 sm:text-[13px] ${
+                  `app-nav-link relative flex items-center justify-center gap-2.5 rounded-[14px] px-4 py-2.5 text-xs font-medium transition-all min-h-[40px] sm:px-5 sm:py-2.5 sm:text-[13px] ${
                     isActive ? 'text-white font-semibold' : 'text-text-muted hover:text-text-main hover:bg-primary/5'
                   }`
                 }

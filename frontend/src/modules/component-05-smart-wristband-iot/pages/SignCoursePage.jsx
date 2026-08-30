@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Award,
   BookOpen,
@@ -9,15 +9,10 @@ import {
   Layers,
   Network,
   RotateCcw,
-  ShieldAlert,
   ShieldCheck,
-  Sparkles,
-  Timer,
   Vibrate,
   Watch,
-  Wifi,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 import useStore from '../../shared-app/utils/useStore';
 import SignPracticeArena from '../components/SignCourse/SignPracticeArena';
@@ -31,6 +26,10 @@ import {
   resetSignCourseProgress,
 } from '../services/signCourseApi';
 import wristbandBle from '../services/wristbandBleController';
+import {
+  getStoredWristbandEndpoint,
+  sendHttpWristbandNotification,
+} from '../services/wristbandHttpController';
 
 const ICON_MAP = {
   Cpu: Cpu,
@@ -48,16 +47,14 @@ const SignCoursePage = () => {
   const [progress, setProgress] = useState(null);
   const [activeModule, setActiveModule] = useState(null);
   const [activeKeyword, setActiveKeyword] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [activeAlert, setActiveAlert] = useState(null);
   const [isBleConnected, setIsBleConnected] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
   const [showVirtualBand, setShowVirtualBand] = useState(true);
 
   // Fetch modules and student progress
-  const loadCourseData = async () => {
+  const loadCourseData = useCallback(async () => {
     try {
-      setLoading(true);
       const [modulesData, progressData] = await Promise.all([
         getSignCourseModules(),
         getStudentSignProgress(effectiveUserId),
@@ -73,13 +70,40 @@ const SignCoursePage = () => {
       }
     } catch (err) {
       console.error('Failed to load course modules or progress:', err);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [effectiveUserId]);
 
   useEffect(() => {
-    loadCourseData();
+    let isMounted = true;
+
+    const loadInitialCourseData = async () => {
+      try {
+        const [modulesData, progressData] = await Promise.all([
+          getSignCourseModules(),
+          getStudentSignProgress(effectiveUserId),
+        ]);
+
+        if (!isMounted) return;
+
+        setModules(modulesData);
+        setProgress(progressData);
+
+        if (modulesData.length > 0) {
+          setActiveModule(modulesData[0]);
+          if (modulesData[0].keywords?.length > 0) {
+            setActiveKeyword(modulesData[0].keywords[0]);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load course modules or progress:', err);
+      }
+    };
+
+    void loadInitialCourseData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [effectiveUserId]);
 
   // Subscribe to Web Bluetooth status
@@ -119,6 +143,23 @@ const SignCoursePage = () => {
     setActiveTab('practice');
   };
 
+  const sendPhysicalWristbandAlert = async (alert) => {
+    const endpoint = getStoredWristbandEndpoint();
+    if (!endpoint) return;
+
+    try {
+      await sendHttpWristbandNotification({
+        endpoint,
+        oledMessage: alert.oledMessage,
+        vibrationPattern: alert.vibrationPattern,
+        intensity: alert.intensity,
+        duration: alert.duration,
+      });
+    } catch (err) {
+      console.warn('ESP32 wristband alert failed:', err);
+    }
+  };
+
   // Called when camera confirms student held the correct gesture
   const handlePassKeyword = async (keyword, accuracy) => {
     try {
@@ -131,18 +172,24 @@ const SignCoursePage = () => {
         durationHeldSeconds: 1.5,
       });
 
-      // Trigger Virtual Wristband Success Pulse
-      setActiveAlert({
+      const successAlert = {
         alertType: 'Sign Success Alert',
         oledMessage: 'SIGN PASSED',
         vibrationPattern: 'Short Pulse',
+        intensity: 50,
         duration: 400,
-      });
+      };
+
+      // Trigger Virtual Wristband Success Pulse
+      setActiveAlert(successAlert);
 
       // Send to physical BLE wristband if connected
       if (isBleConnected) {
         wristbandBle.triggerVibration('Short Pulse', 'SIGN PASSED', 50, 400);
       }
+
+      // Send to sketch_aug31a ESP32 Wi-Fi wristband if configured
+      void sendPhysicalWristbandAlert(successAlert);
 
       // Refresh progress
       const updatedProgress = await getStudentSignProgress(effectiveUserId);
@@ -170,18 +217,24 @@ const SignCoursePage = () => {
         mistakeReason: reason,
       });
 
-      // Trigger Virtual Wristband Error Buzz
-      setActiveAlert({
+      const errorAlert = {
         alertType: 'Wrong Sign Alert',
         oledMessage: 'RETRY SIGN',
         vibrationPattern: 'Repeated Pulse',
+        intensity: 90,
         duration: 1200,
-      });
+      };
+
+      // Trigger Virtual Wristband Error Buzz
+      setActiveAlert(errorAlert);
 
       // Send to physical BLE wristband if connected
       if (isBleConnected) {
         wristbandBle.triggerVibration('Repeated Pulse', 'RETRY SIGN', 90, 1200);
       }
+
+      // Send to sketch_aug31a ESP32 Wi-Fi wristband if configured
+      void sendPhysicalWristbandAlert(errorAlert);
 
       // Refresh progress
       const updatedProgress = await getStudentSignProgress(effectiveUserId);
@@ -205,12 +258,12 @@ const SignCoursePage = () => {
   const masteryPercentage = Math.round((completedCount / Math.max(1, totalKeywords)) * 100);
 
   return (
-    <div className="w-full pt-4 pb-16 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col gap-6">
+    <div className="sign-course-page mx-auto flex w-full flex-col gap-5 px-4 pb-16 pt-3 sm:px-6 lg:px-8">
       {/* Hero Header Card */}
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-5 sm:p-7 shadow-2xl">
+      <div className="sign-course-hero-card relative overflow-hidden rounded-2xl border p-4 shadow-2xl sm:p-6 lg:p-7">
 
         {/* Top row: label + wristband toggle */}
-        <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="sign-course-hero-row">
           <div className="dashboard-header min-w-0 flex-1">
             <div className="dashboard-label">
               <Hand size={12} />
@@ -221,14 +274,11 @@ const SignCoursePage = () => {
             </h2>
             <p className="sign-course-hero-desc">
               Learn O/L ICT sign language terms step-by-step. Practice gestures with real-time AI evaluation and wristband haptic feedback.
-              <br></br>
-              
             </p>
           </div>
-                 <br></br>
           <button
             onClick={() => setShowVirtualBand(!showVirtualBand)}
-            className={`shrink-0 flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all shadow-md whitespace-nowrap self-start sm:self-center ${
+            className={`sign-course-toggle-button shrink-0 flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all shadow-md whitespace-nowrap ${
               showVirtualBand
                 ? 'border border-primary/40 bg-primary/20 text-primary'
                 : 'border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
@@ -239,10 +289,9 @@ const SignCoursePage = () => {
             <span className="sm:hidden">{showVirtualBand ? 'Hide' : 'Show'}</span>
           </button>
         </div>
-        <br></br>
         {/* Metrics Grid: 2-col mobile → 4-col md+ */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 my-4">
-          <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3">
+        <div className="sign-course-stats-grid">
+          <div className="sign-course-metric-card flex min-w-0 items-center gap-2.5 rounded-xl border p-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/20 text-primary">
               <Flame size={18} />
             </div>
@@ -252,7 +301,7 @@ const SignCoursePage = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3">
+          <div className="sign-course-metric-card flex min-w-0 items-center gap-2.5 rounded-xl border p-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
               <CheckCircle2 size={18} />
             </div>
@@ -262,7 +311,7 @@ const SignCoursePage = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3">
+          <div className="sign-course-metric-card flex min-w-0 items-center gap-2.5 rounded-xl border p-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-500/20 text-red-400">
               <Vibrate size={18} />
             </div>
@@ -272,7 +321,7 @@ const SignCoursePage = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3">
+          <div className="sign-course-metric-card flex min-w-0 items-center gap-2.5 rounded-xl border p-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-500/20 text-cyan-400">
               <Watch size={18} />
             </div>
@@ -284,12 +333,11 @@ const SignCoursePage = () => {
             </div>
           </div>
         </div>
-          <br></br>
         {/* Tab Nav — scrollable on mobile */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar border-t border-white/10 pt-4 -mx-1 px-1">
+        <div className="sign-course-tab-bar border-t">
           <button
             onClick={() => setActiveTab('course')}
-            className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition-all ${
+            className={`sign-course-tab-button flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition-all ${
               activeTab === 'course'
                 ? 'bg-primary text-white shadow-lg shadow-primary/30'
                 : 'border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
@@ -301,7 +349,7 @@ const SignCoursePage = () => {
 
           <button
             onClick={() => setActiveTab('practice')}
-            className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition-all ${
+            className={`sign-course-tab-button flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition-all ${
               activeTab === 'practice'
                 ? 'bg-primary text-white shadow-lg shadow-primary/30'
                 : 'border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
@@ -313,7 +361,7 @@ const SignCoursePage = () => {
 
           <button
             onClick={() => setActiveTab('device')}
-            className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition-all ${
+            className={`sign-course-tab-button flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition-all ${
               activeTab === 'device'
                 ? 'bg-primary text-white shadow-lg shadow-primary/30'
                 : 'border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
@@ -326,38 +374,37 @@ const SignCoursePage = () => {
           {masteryPercentage >= 75 && (
             <button
               onClick={() => setShowCertificate(true)}
-              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3.5 py-2 text-xs font-bold text-amber-400 hover:bg-amber-500/20 transition-all ml-auto"
+              className="sign-course-tab-button flex shrink-0 items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3.5 py-2 text-xs font-bold text-amber-400 hover:bg-amber-500/20 transition-all sm:ml-auto"
             >
               <Award size={13} />
               Certificate
             </button>
           )}
         </div>
-        <br></br>
       </div>
       
       {/* Main Content Workspace Layout */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12 items-start">
+      <div className={showVirtualBand ? 'sign-course-main-grid has-wristband' : 'sign-course-main-grid'}>
         {/* Primary Content (Curriculum or Practice or Settings) */}
-        <div className={showVirtualBand ? 'xl:col-span-8 flex flex-col gap-5' : 'xl:col-span-12 flex flex-col gap-5'}>
+        <div className="min-w-0 flex flex-col gap-5">
           {/* TAB 1: CURRICULUM VIEW */}
           {activeTab === 'course' && (
             <div className="flex flex-col gap-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold text-white">Ordinary Level (O/L) ICT Sign Modules</h3>
+              <div className="sign-course-section-header">
+                <div className="min-w-0">
+                  <h3 className="text-lg font-bold text-[var(--color-text-main)]">Ordinary Level (O/L) ICT Sign Modules</h3>
                   <p className="text-xs text-slate-400">Complete each unit by mastering keywords with the camera.</p>
                 </div>
                 <button
                   onClick={handleResetCourse}
-                  className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+                  className="flex shrink-0 items-center gap-1.5 self-start rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors sm:self-auto"
                 >
                   <RotateCcw size={13} />
                   Reset Progress
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
+              <div className="sign-course-module-list">
                 {modules.map((mod) => {
                   const IconComponent = ICON_MAP[mod.iconName] || Cpu;
                   const modCompletedCount = mod.keywords.filter((k) =>
@@ -368,15 +415,15 @@ const SignCoursePage = () => {
                   return (
                     <div
                       key={mod.id}
-                      className={`group relative overflow-hidden rounded-2xl border p-5 transition-all ${isModComplete
+                      className={`sign-course-module-card group relative overflow-hidden rounded-2xl border p-4 transition-all sm:p-5 ${isModComplete
                           ? 'border-emerald-500/40 bg-emerald-950/10'
                           : 'border-white/10 bg-slate-900/60 hover:border-primary/40 hover:bg-slate-900/90'
                         }`}
                     >
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                          <div className="flex items-start gap-4 min-w-0 flex-1">
+                      <div className="sign-course-module-head">
+                          <div className="sign-course-module-body">
                             <div
-                              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${isModComplete
+                              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 sm:rounded-2xl ${isModComplete
                                   ? 'bg-emerald-500/20 text-emerald-400'
                                   : 'bg-primary/20 text-primary'
                                 }`}
@@ -398,15 +445,15 @@ const SignCoursePage = () => {
 
                         <button
                           onClick={() => handleStartModule(mod)}
-                          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+                          className="sign-course-start-button flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all whitespace-nowrap"
                         >
                           Start Unit
                         </button>
                       </div>
 
                       {/* Keywords Pill Grid */}
-                      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
-                        <span className="text-xs text-slate-400 font-semibold mr-1">Keywords:</span>
+                      <div className="sign-course-keyword-row border-t border-white/10">
+                        <span className="sign-course-keyword-label">Keywords:</span>
                         {mod.keywords.map((kw) => {
                           const isKwPassed = progress?.completedKeywords?.includes(kw.keyword);
                           return (
@@ -416,7 +463,7 @@ const SignCoursePage = () => {
                                 setActiveModule(mod);
                                 handleSelectKeyword(kw);
                               }}
-                              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${isKwPassed
+                              className={`sign-course-keyword-badge flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${isKwPassed
                                   ? 'border border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
                                   : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:border-primary/40'
                                 }`}
@@ -457,8 +504,8 @@ const SignCoursePage = () => {
 
         {/* Right Column: Virtual Smart Wristband Simulator */}
         {showVirtualBand && (
-          <div className="xl:col-span-4 flex flex-col gap-4">
-            <div className="xl:sticky xl:top-24">
+          <div className="sign-course-sidebar">
+            <div className="sign-course-sidebar-sticky">
               <VirtualWristbandModal
                 activeAlert={activeAlert}
                 isBleConnected={isBleConnected}

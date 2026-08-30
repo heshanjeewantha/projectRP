@@ -5,18 +5,11 @@ import {
   Sparkles,
   AlertTriangle,
   CheckCircle2,
-  XCircle,
-  RotateCcw,
-  Play,
   Vibrate,
-  ShieldCheck,
   Hand,
-  Zap,
-  Check,
-  Flame,
   RefreshCw,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 
 // Authentic ASL Dual-Hand Specifications (Mirrored User Perspective)
@@ -161,10 +154,8 @@ const matchesRequirement = (res, req) => res.detected && res.count === req.count
 
 const CameraSignEvaluator = ({
   keyword,
-  keywordMeta,
   onPassKeyword,
   onErrorTrigger,
-  examMode = false,
 }) => {
   const normKey = (keyword || 'computer').toLowerCase();
   const spec = DUAL_HAND_SPECS[normKey] || DUAL_HAND_SPECS.computer;
@@ -188,6 +179,7 @@ const CameraSignEvaluator = ({
   const rightInZoneRef = useRef(false);
   const leftInZoneRef = useRef(false);
 
+  const specActionRef = useRef(spec.action);
   const holdStartRef = useRef(null);
   const lastPassTimeRef = useRef(0);
   const lastStateSyncRef = useRef(0);
@@ -233,7 +225,7 @@ const CameraSignEvaluator = ({
     };
   }, []);
 
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     try {
       setCameraLoading(true);
       setCameraError(null);
@@ -269,16 +261,16 @@ const CameraSignEvaluator = ({
       setIsCameraActive(true);
       setCameraLoading(false);
       setStatusMessage('Camera active. Place hands in both boxes.');
-      setSecondaryTip(spec.action);
+      setSecondaryTip(specActionRef.current);
     } catch (err) {
       console.warn('Webcam start error:', err);
       setCameraError('Webcam unavailable or blocked. You can retry or use Virtual Hand Evaluator.');
       setCameraLoading(false);
       setIsCameraActive(false);
     }
-  };
+  }, []);
 
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -288,7 +280,7 @@ const CameraSignEvaluator = ({
     }
     setIsCameraActive(false);
     setIsSimulated(false);
-  };
+  }, []);
 
   const enableSimulationMode = () => {
     stopCamera();
@@ -307,25 +299,42 @@ const CameraSignEvaluator = ({
   }, [isCameraActive]);
 
   useEffect(() => {
-    startCamera();
-    return () => stopCamera();
-  }, []);
+    const startTimer = window.setTimeout(() => {
+      startCamera();
+    }, 0);
+    return () => {
+      window.clearTimeout(startTimer);
+      stopCamera();
+    };
+  }, [startCamera, stopCamera]);
 
   // Reset state when keyword changes
   useEffect(() => {
+    specActionRef.current = spec.action;
+  }, [spec.action]);
+
+  useEffect(() => {
+    let cancelled = false;
     holdStartRef.current = null;
-    setHoldProgress(0);
-    setCurrentAccuracy(0);
-    setIsMatching(false);
     rightInZoneRef.current = false;
     leftInZoneRef.current = false;
-    setRightInZone(false);
-    setLeftInZone(false);
-    setStatusMessage(`Perform sign: '${keyword?.toUpperCase()}'. Place hands in both boxes.`);
-    setSecondaryTip(spec.action);
+    const resetTimer = window.setTimeout(() => {
+      if (cancelled) return;
+      setHoldProgress(0);
+      setCurrentAccuracy(0);
+      setIsMatching(false);
+      setRightInZone(false);
+      setLeftInZone(false);
+      setStatusMessage(`Perform sign: '${keyword?.toUpperCase()}'. Place hands in both boxes.`);
+      setSecondaryTip(spec.action);
+    }, 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(resetTimer);
+    };
   }, [keyword, spec]);
 
-  const processFrame = useCallback(() => {
+  const processFrame = useCallback(function processFrameTick() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
@@ -385,7 +394,7 @@ const CameraSignEvaluator = ({
           try {
             const result = handLandmarkerRef.current.detectForVideo(video, performance.now());
             lastDetectResultRef.current = classifyHands(result, w, h);
-          } catch (e) {
+          } catch {
             // model not ready for this frame yet; keep last known result
           }
         }
@@ -547,7 +556,7 @@ const CameraSignEvaluator = ({
       }
     }
 
-    animationFrameRef.current = requestAnimationFrame(processFrame);
+    animationFrameRef.current = requestAnimationFrame(processFrameTick);
   }, [isCameraActive, isSimulated, spec, keyword, onPassKeyword]);
 
   useEffect(() => {
@@ -586,18 +595,18 @@ const CameraSignEvaluator = ({
   };
 
   return (
-    <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-950 p-5 sm:p-6 shadow-2xl">
+    <div className="camera-sign-evaluator relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950 p-4 shadow-2xl sm:p-5">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
-        <div className="flex items-center gap-2.5">
+      <div className="camera-evaluator-header border-b border-white/10 pb-3.5">
+        <div className="flex min-w-0 items-center gap-2.5">
           <div
             className={`flex h-10 w-10 items-center justify-center rounded-2xl ${isMatching ? 'bg-emerald-500/20 text-emerald-400' : 'bg-primary/20 text-primary'
               }`}
           >
             <Camera size={20} />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="camera-evaluator-title-row">
               <h4 className="text-sm font-bold text-white">Live Camera Evaluator</h4>
               {isCameraActive && (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
@@ -624,7 +633,7 @@ const CameraSignEvaluator = ({
 
         <button
           onClick={isCameraActive ? stopCamera : startCamera}
-          className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all shadow-sm ${isCameraActive
+          className={`camera-evaluator-action flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all shadow-sm ${isCameraActive
               ? 'border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20'
               : 'border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20'
             }`}
@@ -684,7 +693,7 @@ const CameraSignEvaluator = ({
         )}
 
         {isCameraActive && (
-          <div className="absolute top-3 right-3 flex items-center gap-2.5 rounded-xl border border-white/15 bg-black/85 px-3 py-1.5 backdrop-blur-md shadow-lg z-10">
+          <div className="camera-evaluator-score absolute top-3 right-3 z-10 flex items-center gap-2.5 rounded-xl border border-white/15 bg-black/85 px-3 py-1.5 shadow-lg backdrop-blur-md">
             <div className="text-right">
               <div className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Dual Match</div>
               <div
@@ -725,14 +734,14 @@ const CameraSignEvaluator = ({
         )}
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="camera-zone-grid mt-4">
         <button
           onClick={() => {
             const next = !leftInZone;
             leftInZoneRef.current = next;
             setLeftInZone(next);
           }}
-          className={`rounded-2xl border p-3.5 transition-all text-left ${leftInZone
+          className={`camera-zone-card rounded-2xl border p-3.5 transition-all text-left ${leftInZone
               ? 'border-emerald-500/50 bg-emerald-950/30'
               : 'border-white/10 bg-slate-900/80 hover:border-primary/40'
             }`}
@@ -752,7 +761,7 @@ const CameraSignEvaluator = ({
             rightInZoneRef.current = next;
             setRightInZone(next);
           }}
-          className={`rounded-2xl border p-3.5 transition-all text-left ${rightInZone
+          className={`camera-zone-card rounded-2xl border p-3.5 transition-all text-left ${rightInZone
               ? 'border-emerald-500/50 bg-emerald-950/30'
               : 'border-white/10 bg-slate-900/80 hover:border-primary/40'
             }`}
@@ -768,7 +777,7 @@ const CameraSignEvaluator = ({
       </div>
 
       <div
-        className={`mt-4 rounded-2xl border p-4 transition-colors ${isMatching
+        className={`camera-feedback-card mt-4 rounded-2xl border p-4 transition-colors ${isMatching
             ? 'border-emerald-500/40 bg-emerald-950/40 shadow-emerald-500/10'
             : 'border-white/10 bg-slate-900/60'
           }`}
@@ -787,10 +796,10 @@ const CameraSignEvaluator = ({
         </div>
       </div>
 
-      <div className="mt-5 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/10 pt-4">
+      <div className="camera-evaluator-footer mt-5 border-t border-white/10 pt-4">
         <button
           onClick={handleInstantPass}
-          className="flex w-full sm:w-auto flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-emerald-500/30 hover:from-emerald-500 hover:to-teal-400 transition-all active:scale-95"
+          className="camera-evaluator-primary flex w-full flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-emerald-500/30 hover:from-emerald-500 hover:to-teal-400 transition-all active:scale-95 sm:w-auto"
         >
           <Sparkles size={18} />
           PASS SIGN & ADVANCE ({keyword?.toUpperCase()})
@@ -798,7 +807,7 @@ const CameraSignEvaluator = ({
 
         <button
           onClick={handleTriggerError}
-          className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-3.5 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all active:scale-95 shadow-sm"
+          className="camera-evaluator-action flex w-full items-center justify-center gap-1.5 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-3.5 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all active:scale-95 shadow-sm sm:w-auto"
         >
           <Vibrate size={16} />
           Test Wrong Sign Vibration

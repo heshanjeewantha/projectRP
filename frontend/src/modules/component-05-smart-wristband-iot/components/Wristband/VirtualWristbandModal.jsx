@@ -24,7 +24,7 @@ const playHapticBuzzerSound = (pattern = 'Repeated Pulse') => {
           gain.connect(ctx.destination);
           osc.start();
           osc.stop(ctx.currentTime + duration);
-        } catch (e) {
+        } catch {
           // ignore
         }
       }, delay);
@@ -62,37 +62,45 @@ const VirtualWristbandModal = ({
 
   // Trigger vibration when activeAlert prop updates
   useEffect(() => {
+    let startAlertTimeout;
+
     if (activeAlert) {
       const msg = activeAlert.oledMessage || activeAlert.message || 'ALERT TRIGGERED';
       const pat = activeAlert.vibrationPattern || activeAlert.pattern || 'Repeated Pulse';
       const dur = activeAlert.duration || 1200;
 
-      setOledText(msg.toUpperCase());
-      setCurrentPattern(pat);
-      setIsVibrating(true);
+      startAlertTimeout = setTimeout(() => {
+        setOledText(msg.toUpperCase());
+        setCurrentPattern(pat);
+        setIsVibrating(true);
 
-      if (soundEnabled) {
-        playHapticBuzzerSound(pat);
-      }
+        if (soundEnabled) {
+          playHapticBuzzerSound(pat);
+        }
 
-      setVibrationHistory((prev) => [
-        {
-          id: Date.now(),
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-          message: msg,
-          pattern: pat,
-        },
-        ...prev.slice(0, 4),
-      ]);
+        setVibrationHistory((prev) => [
+          {
+            id: Date.now(),
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            message: msg,
+            pattern: pat,
+          },
+          ...prev.slice(0, 4),
+        ]);
 
-      clearTimeout(vibrationTimeoutRef.current);
-      vibrationTimeoutRef.current = setTimeout(() => {
-        setIsVibrating(false);
-        setOledText('SIGNLEARN READY');
-        setCurrentPattern('Standby');
-      }, dur + 600);
+        clearTimeout(vibrationTimeoutRef.current);
+        vibrationTimeoutRef.current = setTimeout(() => {
+          setIsVibrating(false);
+          setOledText('SIGNLEARN READY');
+          setCurrentPattern('Standby');
+        }, dur + 600);
+      }, 0);
     }
-    return () => clearTimeout(vibrationTimeoutRef.current);
+
+    return () => {
+      clearTimeout(startAlertTimeout);
+      clearTimeout(vibrationTimeoutRef.current);
+    };
   }, [activeAlert, soundEnabled]);
 
   const testTrigger = (text, pattern) => {
@@ -113,25 +121,25 @@ const VirtualWristbandModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="relative flex flex-col rounded-3xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl backdrop-blur-xl">
+    <div className="virtual-wristband-panel relative flex min-w-0 flex-col rounded-2xl border p-4 shadow-2xl backdrop-blur-xl sm:p-5">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-3">
-        <div className="flex items-center gap-2.5">
+      <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
+        <div className="flex min-w-0 items-start gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-primary">
             <Watch size={20} />
           </div>
-          <div>
-            <h4 className="text-sm font-bold text-white">Smart Haptic Wristband</h4>
+          <div className="min-w-0">
+            <h4 className="text-sm font-bold text-[var(--color-text-main)]">Smart Haptic Wristband</h4>
             <div className="flex items-center gap-2 text-[11px] text-slate-400">
-              <span className="flex items-center gap-1">
+              <span className="flex min-w-0 items-center gap-1">
                 <span className={`h-2 w-2 rounded-full ${isBleConnected ? 'bg-emerald-400 animate-pulse' : 'bg-primary'}`} />
-                {isBleConnected ? 'ESP32 BLE Connected' : 'IoT Virtual Simulation'}
+                <span className="truncate">{isBleConnected ? 'ESP32 BLE Connected' : 'IoT Virtual Simulation'}</span>
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5">
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
             className="rounded-lg border border-white/10 p-1.5 text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
@@ -151,7 +159,7 @@ const VirtualWristbandModal = ({
       </div>
 
       {/* Wristband OLED Device Body */}
-      <div className="my-4 flex flex-col items-center justify-center">
+      <div className="my-4 flex min-w-0 flex-col items-center justify-center">
         <motion.div
           animate={
             isVibrating
@@ -168,17 +176,17 @@ const VirtualWristbandModal = ({
                 }
           }
           transition={{ duration: 0.25, repeat: isVibrating ? 4 : 0 }}
-          className={`w-full rounded-2xl border p-4 transition-colors ${
+          className={`virtual-wristband-device w-full min-w-0 rounded-2xl border p-3 transition-colors sm:p-4 ${
             isVibrating
               ? 'border-red-500/80 bg-gradient-to-br from-slate-950 via-red-950/40 to-slate-950'
               : 'border-white/15 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900'
           }`}
         >
           {/* Top Bar on OLED Screen */}
-          <div className="flex items-center justify-between text-[11px] text-slate-400 mb-2">
-            <span className="flex items-center gap-1 font-mono font-semibold text-primary">
+          <div className="mb-2 flex items-center justify-between gap-3 text-[11px] text-slate-400">
+            <span className="flex min-w-0 items-center gap-1 font-mono font-semibold text-primary">
               <Wifi size={12} className={isBleConnected ? 'text-emerald-400' : 'text-primary'} />
-              ESP32-BAND
+              <span className="truncate">ESP32-BAND</span>
             </span>
             <span className="flex items-center gap-1 font-mono text-emerald-400 font-semibold">
               <BatteryCharging size={13} />
@@ -187,26 +195,26 @@ const VirtualWristbandModal = ({
           </div>
 
           {/* OLED Display Matrix */}
-          <div className="flex flex-col items-center justify-center rounded-xl border border-cyan-500/30 bg-black/90 px-4 py-4 shadow-inner">
-            <span className="font-mono text-[9px] uppercase tracking-widest text-cyan-400/70">
+          <div className="virtual-wristband-oled flex min-w-0 flex-col items-center justify-center rounded-xl border border-cyan-500/30 px-3 py-4 shadow-inner sm:px-4">
+            <span className="virtual-wristband-oled-label font-mono text-[9px] uppercase tracking-widest">
               OLED HAPTIC DISPLAY
             </span>
             <motion.div
               key={oledText}
               initial={{ scale: 0.92, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="my-1.5 font-mono text-base font-black tracking-wider text-cyan-300 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]"
+              className="virtual-wristband-oled-text my-1.5 max-w-full break-words text-center font-mono text-sm font-black tracking-wider drop-shadow-[0_0_8px_rgba(6,182,212,0.8)] sm:text-base"
             >
               {oledText}
             </motion.div>
-            <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400">
+            <div className="virtual-wristband-oled-status flex items-center gap-1.5 text-[10px] font-mono">
               <Activity size={10} className={isVibrating ? 'text-red-400 animate-spin' : 'text-slate-500'} />
-              <span>Pattern: <strong className="text-white">{currentPattern}</strong></span>
+              <span>Pattern: <strong>{currentPattern}</strong></span>
             </div>
           </div>
 
           {/* Bottom Status LED */}
-          <div className="mt-2.5 flex items-center justify-between text-[11px]">
+          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px]">
             <div className="flex items-center gap-1.5">
               <span
                 className={`h-2 w-2 rounded-full ${
@@ -222,28 +230,28 @@ const VirtualWristbandModal = ({
 
       {/* Quick Action Simulation Buttons */}
       <div className="border-t border-white/10 pt-3">
-        <div className="flex items-center justify-between text-xs text-slate-400 mb-2.5">
+        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
           <span className="font-semibold text-slate-300">Simulation Controls</span>
           {onBleConnect && (
             <button
               onClick={onBleConnect}
-              className="text-xs text-primary hover:underline font-medium"
+              className="min-h-[32px] rounded-lg px-2 text-xs font-medium text-primary hover:bg-primary/10"
             >
               {isBleConnected ? 'Disconnect BLE' : 'Pair Real ESP32 BLE'}
             </button>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="virtual-wristband-actions">
           <button
             onClick={() => testTrigger('WRONG SIGN', 'Repeated Pulse')}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all active:scale-95 shadow-sm min-h-[40px]"
+            className="virtual-wristband-action-button inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all active:scale-95 shadow-sm"
           >
             <Vibrate size={15} />
             <span>Test Error Buzz</span>
           </button>
           <button
             onClick={() => testTrigger('SIGN PASSED', 'Short Pulse')}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 transition-all active:scale-95 shadow-sm min-h-[40px]"
+            className="virtual-wristband-action-button inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 transition-all active:scale-95 shadow-sm"
           >
             <Sparkles size={15} />
             <span>Test Pass Pulse</span>
