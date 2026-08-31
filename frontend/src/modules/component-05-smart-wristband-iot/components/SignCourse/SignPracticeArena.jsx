@@ -82,8 +82,8 @@ const SignPracticeArena = ({
       <div className="sign-practice-grid">
         {/* Left Column: Avatar Demonstration & Sign Breakdown */}
         <div className="flex flex-col gap-4">
-          <div className="sign-practice-card relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950 p-4 shadow-2xl sm:p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 pb-3">
+          <div className="sign-practice-card sign-practice-avatar-card relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950 p-4 shadow-2xl sm:p-5">
+            <div className="sign-practice-panel-header flex flex-wrap items-start justify-between gap-3 border-b border-white/10 pb-3">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
                   <Hand size={16} />
@@ -94,14 +94,14 @@ const SignPracticeArena = ({
                 </div>
               </div>
 
-              <span className="shrink-0 rounded-lg bg-white/5 px-2 py-1 text-xs font-mono text-slate-300 border border-white/10">
+              <span className="sign-practice-difficulty-badge shrink-0 rounded-lg bg-white/5 px-2 py-1 text-xs font-mono text-slate-300 border border-white/10">
                 {activeKeyword?.difficulty}
               </span>
             </div>
 
             {/* Avatar Animation Player Area */}
             {!examMode ? (
-              <div className="mt-4 flex flex-col gap-3">
+              <div className="sign-practice-avatar-stage mt-4 flex flex-col gap-3">
                 <SignAvatarDemo
                   keyword={activeKeyword?.keyword}
                   playbackSpeed={playbackSpeed}
@@ -121,9 +121,9 @@ const SignPracticeArena = ({
             )}
 
             {/* Keyword Details & Instructions Card */}
-            <div className="sign-practice-card mt-4 rounded-2xl border border-white/10 bg-slate-900/80 p-4 shadow-lg sm:p-5">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                <div className="flex items-center gap-2">
+            <div className="sign-practice-card sign-practice-instruction-card mt-4 rounded-2xl border border-white/10 bg-slate-900/80 p-4 shadow-lg sm:p-5">
+              <div className="sign-practice-instruction-head flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                <div className="flex min-w-0 items-center gap-2">
                   <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/20 text-primary text-xs font-black">
                     1
                   </span>
@@ -131,17 +131,17 @@ const SignPracticeArena = ({
                     Gesture Instructions
                   </h5>
                 </div>
-                <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[11px] font-semibold text-slate-300">
+                <span className="sign-practice-meaning-badge rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[11px] font-semibold text-slate-300">
                   {activeKeyword?.englishMeaning}
                 </span>
               </div>
-              <p className="text-xs text-slate-200 leading-relaxed break-words">
+              <p className="sign-practice-instruction-copy text-xs text-slate-200 leading-relaxed break-words">
                 {activeKeyword?.gestureDescription}
               </p>
 
               {/* Handshape & Movement Tips */}
-              <div className="mt-3.5 grid grid-cols-1 sm:grid-cols-2 gap-2.5 border-t border-white/10 pt-3.5">
-                <div className="rounded-xl bg-black/40 p-3 border border-amber-500/20 shadow-inner">
+              <div className="sign-practice-tip-grid mt-3.5 grid grid-cols-1 sm:grid-cols-2 gap-2.5 border-t border-white/10 pt-3.5">
+                <div className="sign-practice-tip-card rounded-xl bg-black/40 p-3 border border-amber-500/20 shadow-inner">
                   <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1">
                     <Sparkles size={11} />
                     Handshape Tip:
@@ -150,7 +150,7 @@ const SignPracticeArena = ({
                     {activeKeyword?.handShapeTip}
                   </p>
                 </div>
-                <div className="rounded-xl bg-black/40 p-3 border border-cyan-500/20 shadow-inner">
+                <div className="sign-practice-tip-card rounded-xl bg-black/40 p-3 border border-cyan-500/20 shadow-inner">
                   <span className="text-[10px] uppercase font-bold text-cyan-400 tracking-wider flex items-center gap-1">
                     <Sparkles size={11} />
                     Movement Tip:
@@ -165,7 +165,7 @@ const SignPracticeArena = ({
         </div>
 
         {/* Right Column: Live Camera Evaluator */}
-        <div className="flex flex-col gap-4">
+        <div className="sign-practice-camera-column flex flex-col gap-4">
           <CameraSignEvaluator
             keyword={activeKeyword?.keyword}
             keywordMeta={activeKeyword}

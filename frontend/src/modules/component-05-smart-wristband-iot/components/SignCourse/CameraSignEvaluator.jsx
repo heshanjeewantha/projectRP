@@ -152,6 +152,32 @@ const classifyHands = (result, w, h) => {
 
 const matchesRequirement = (res, req) => res.detected && res.count === req.count;
 
+const wrapCanvasText = (ctx, text, maxWidth, maxLines = 2) => {
+  const words = String(text).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+
+  words.forEach((word) => {
+    const candidate = line ? `${line} ${word}` : word;
+    if (!line || ctx.measureText(candidate).width <= maxWidth) {
+      line = candidate;
+      return;
+    }
+    lines.push(line);
+    line = word;
+  });
+
+  if (line) lines.push(line);
+  if (lines.length <= maxLines) return lines;
+
+  const trimmed = lines.slice(0, maxLines);
+  while (trimmed[maxLines - 1].length > 1 && ctx.measureText(`${trimmed[maxLines - 1]}...`).width > maxWidth) {
+    trimmed[maxLines - 1] = trimmed[maxLines - 1].slice(0, -1).trim();
+  }
+  trimmed[maxLines - 1] = `${trimmed[maxLines - 1]}...`;
+  return trimmed;
+};
+
 const CameraSignEvaluator = ({
   keyword,
   onPassKeyword,
@@ -446,16 +472,21 @@ const CameraSignEvaluator = ({
         ctx.lineTo(box.x + box.w, box.y + box.h - c);
         ctx.stroke();
 
-        ctx.fillStyle = ok ? 'rgba(16, 185, 129, 0.9)' : hasHand ? 'rgba(180, 83, 9, 0.9)' : 'rgba(15, 23, 42, 0.85)';
-        ctx.fillRect(box.x + 6, box.y + 6, box.w - 12, 22);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 10px sans-serif';
+        const fontSize = box.w < 230 ? 9 : 10;
+        ctx.font = `bold ${fontSize}px sans-serif`;
         const label = !hasHand
           ? `${box.title}: ✋ RAISE HERE (${targetReq.label})`
           : ok
             ? `${box.title}: ✓ MATCHED (${targetReq.label})`
             : `${box.title}: shape ≠ target (${res.count} fingers, need ${targetReq.count})`;
-        ctx.fillText(label, box.x + 10, box.y + 20);
+        const labelLines = wrapCanvasText(ctx, label, box.w - 22, 2);
+        const labelHeight = 12 + labelLines.length * (fontSize + 3);
+        ctx.fillStyle = ok ? 'rgba(16, 185, 129, 0.9)' : hasHand ? 'rgba(180, 83, 9, 0.9)' : 'rgba(15, 23, 42, 0.85)';
+        ctx.fillRect(box.x + 6, box.y + 6, box.w - 12, labelHeight);
+        ctx.fillStyle = '#ffffff';
+        labelLines.forEach((line, lineIndex) => {
+          ctx.fillText(line, box.x + 10, box.y + 19 + lineIndex * (fontSize + 3));
+        });
       };
 
       drawBox(screenLeftBox, leftRes, spec.leftHandReq);
@@ -643,7 +674,7 @@ const CameraSignEvaluator = ({
         </button>
       </div>
 
-      <div className="relative mt-4 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-inner">
+      <div className="camera-video-frame relative mt-4 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-inner">
         <video
           ref={videoRef}
           autoPlay
@@ -675,14 +706,14 @@ const CameraSignEvaluator = ({
                 <button
                   onClick={startCamera}
                   disabled={cameraLoading}
-                  className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
+                  className="camera-evaluator-action flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
                 >
                   {cameraLoading ? <RefreshCw size={15} className="animate-spin" /> : <Camera size={15} />}
                   {cameraLoading ? 'Starting Camera...' : 'Retry Camera Feed'}
                 </button>
                 <button
                   onClick={enableSimulationMode}
-                  className="flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition-all active:scale-95"
+                  className="camera-evaluator-action flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition-all active:scale-95"
                 >
                   <Sparkles size={15} />
                   Virtual Hand Mode
@@ -715,7 +746,7 @@ const CameraSignEvaluator = ({
         )}
 
         {holdProgress > 0 && (
-          <div className="absolute bottom-4 inset-x-8 z-20">
+          <div className="camera-hold-progress absolute bottom-4 inset-x-8 z-20">
             <div className="flex justify-between text-xs font-black text-white mb-1.5 drop-shadow-md">
               <span className="flex items-center gap-1.5 text-emerald-300">
                 <Sparkles size={14} />
@@ -746,7 +777,7 @@ const CameraSignEvaluator = ({
               : 'border-white/10 bg-slate-900/80 hover:border-primary/40'
             }`}
         >
-          <div className="flex items-center justify-between text-xs font-mono font-bold mb-1">
+          <div className="camera-zone-card-head flex items-center justify-between text-xs font-mono font-bold mb-1">
             <span className="text-primary">YOUR LEFT HAND (Screen Left):</span>
             <span className={leftInZone ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
               {leftInZone ? '✓ IN ZONE' : 'EMPTY'}
@@ -766,7 +797,7 @@ const CameraSignEvaluator = ({
               : 'border-white/10 bg-slate-900/80 hover:border-primary/40'
             }`}
         >
-          <div className="flex items-center justify-between text-xs font-mono font-bold mb-1">
+          <div className="camera-zone-card-head flex items-center justify-between text-xs font-mono font-bold mb-1">
             <span className="text-cyan-400">YOUR RIGHT HAND (Screen Right):</span>
             <span className={rightInZone ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
               {rightInZone ? '✓ IN ZONE' : 'EMPTY'}
@@ -782,7 +813,7 @@ const CameraSignEvaluator = ({
             : 'border-white/10 bg-slate-900/60'
           }`}
       >
-        <div className="flex items-start gap-3">
+        <div className="camera-feedback-content flex items-start gap-3">
           <div
             className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${isMatching ? 'bg-emerald-500 text-slate-950' : 'bg-cyan-500 text-slate-950'
               }`}

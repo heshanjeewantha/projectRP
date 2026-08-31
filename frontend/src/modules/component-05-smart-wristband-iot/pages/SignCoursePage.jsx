@@ -258,7 +258,10 @@ const SignCoursePage = () => {
   const masteryPercentage = Math.round((completedCount / Math.max(1, totalKeywords)) * 100);
 
   return (
-    <div className="sign-course-page mx-auto flex w-full flex-col gap-5 px-4 pb-16 pt-3 sm:px-6 lg:px-8">
+    <div className={[
+      'sign-course-page mx-auto flex w-full flex-col gap-5 px-4 pb-16 pt-3 sm:px-6 lg:px-8',
+      activeTab === 'practice' ? 'is-practice-screen' : '',
+    ].filter(Boolean).join(' ')}>
       {/* Hero Header Card */}
       <div className="sign-course-hero-card relative overflow-hidden rounded-2xl border p-4 shadow-2xl sm:p-6 lg:p-7">
 
@@ -384,7 +387,13 @@ const SignCoursePage = () => {
       </div>
       
       {/* Main Content Workspace Layout */}
-      <div className={showVirtualBand ? 'sign-course-main-grid has-wristband' : 'sign-course-main-grid'}>
+      <div
+        className={[
+          'sign-course-main-grid',
+          showVirtualBand ? 'has-wristband' : '',
+          activeTab === 'practice' ? 'is-practice' : '',
+        ].filter(Boolean).join(' ')}
+      >
         {/* Primary Content (Curriculum or Practice or Settings) */}
         <div className="min-w-0 flex flex-col gap-5">
           {/* TAB 1: CURRICULUM VIEW */}

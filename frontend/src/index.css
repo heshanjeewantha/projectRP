@@ -6153,6 +6153,10 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
   overflow-x: clip;
 }
 
+.sign-course-page.is-practice-screen {
+  max-width: 1680px;
+}
+
 .sign-course-page * {
   min-width: 0;
 }
@@ -6216,6 +6220,10 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
 
 .sign-course-main-grid.has-wristband {
   grid-template-columns: minmax(0, 1fr) minmax(380px, 430px);
+}
+
+.sign-course-main-grid.has-wristband.is-practice {
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
 }
 
 .sign-course-section-header {
@@ -6323,6 +6331,43 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
   align-items: start;
 }
 
+.sign-practice-avatar-card,
+.sign-practice-camera-column,
+.camera-sign-evaluator,
+.sign-avatar-demo {
+  min-width: 0;
+}
+
+.sign-practice-panel-header {
+  align-items: flex-start;
+}
+
+.sign-practice-difficulty-badge,
+.sign-practice-meaning-badge {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.sign-practice-avatar-stage {
+  min-height: 0;
+}
+
+.sign-practice-instruction-card {
+  line-height: 1.55;
+}
+
+.sign-practice-instruction-head,
+.sign-practice-tip-grid,
+.sign-practice-tip-card {
+  min-width: 0;
+}
+
+.sign-practice-instruction-copy,
+.sign-practice-tip-card p {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .sign-practice-action {
   min-height: 40px;
 }
@@ -6334,6 +6379,7 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
 
 .sign-practice-nav-strip {
   min-width: 0;
+  margin-bottom: clamp(14px, 3vh, 28px);
 }
 
 .camera-sign-evaluator {
@@ -6342,6 +6388,7 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
 
 .camera-evaluator-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
@@ -6357,6 +6404,9 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
 .camera-evaluator-action,
 .camera-evaluator-primary {
   min-height: 44px;
+  max-width: 100%;
+  text-align: center;
+  white-space: normal;
 }
 
 .camera-evaluator-action:focus-visible,
@@ -6374,6 +6424,25 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
 
 .camera-zone-card {
   min-width: 0;
+  min-height: 78px;
+}
+
+.camera-zone-card-head {
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.camera-video-frame {
+  max-width: 100%;
+  min-height: 0;
+}
+
+.camera-evaluator-score {
+  max-width: min(220px, calc(100% - 24px));
+}
+
+.camera-hold-progress {
+  max-width: calc(100% - 32px);
 }
 
 .camera-zone-card span,
@@ -6382,11 +6451,79 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
   overflow-wrap: anywhere;
 }
 
+.camera-feedback-content {
+  gap: 12px;
+}
+
 .camera-evaluator-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.camera-evaluator-footer > button {
+  flex: 1 1 0;
+}
+
+.sign-avatar-demo {
+  border-color: var(--panel-border);
+}
+
+.sign-avatar-title-row,
+.sign-avatar-heading-line,
+.sign-avatar-tool-group,
+.sign-avatar-playback-bar,
+.sign-avatar-playback-controls,
+.sign-avatar-speed-controls,
+.sign-avatar-detail-head {
+  min-width: 0;
+}
+
+.sign-avatar-title-row,
+.sign-avatar-heading-line,
+.sign-avatar-tool-group,
+.sign-avatar-playback-bar,
+.sign-avatar-speed-controls,
+.sign-avatar-detail-head {
+  flex-wrap: wrap;
+}
+
+.sign-avatar-tool-button,
+.sign-avatar-playback-button,
+.sign-avatar-speed-button,
+.sign-avatar-tab {
+  min-height: 32px;
+}
+
+.sign-avatar-tab {
+  padding-inline: 6px;
+  overflow-wrap: anywhere;
+}
+
+.sign-avatar-visual-stage {
+  min-height: clamp(260px, 34vw, 340px);
+}
+
+.sign-avatar-svg-wrap {
+  max-width: min(390px, 100%);
+}
+
+.sign-avatar-hand-label {
+  max-width: calc(50% - 16px);
+}
+
+.sign-avatar-hand-label span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.sign-avatar-detail-pane {
+  max-height: none;
+}
+
+.sign-avatar-summary p {
+  overflow-wrap: anywhere;
 }
 
 /* Hero title — responsive clamp */
@@ -6474,7 +6611,8 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
 }
 
 @media (max-width: 1280px) {
-  .sign-course-main-grid.has-wristband {
+  .sign-course-main-grid.has-wristband,
+  .sign-course-main-grid.has-wristband.is-practice {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -6490,8 +6628,8 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .sign-practice-grid {
-    grid-template-columns: 1fr;
+  .sign-course-sidebar {
+    width: 100%;
   }
 }
 
@@ -6515,6 +6653,16 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
 
   .sign-course-stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .sign-practice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sign-avatar-visual-stage {
+    min-height: 300px;
   }
 }
 
@@ -6563,6 +6711,7 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
   .camera-evaluator-score {
     left: 12px;
     right: 12px;
+    max-width: none;
     justify-content: space-between;
   }
 }
@@ -6593,6 +6742,7 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
   }
 
   .sign-practice-nav-strip {
+    display: grid;
     grid-template-columns: auto 1fr auto;
   }
 
@@ -6604,6 +6754,27 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
   .camera-zone-grid,
   .camera-evaluator-footer {
     display: grid;
+  }
+
+  .camera-hold-progress {
+    inset-inline: 12px;
+  }
+
+  .sign-avatar-title-row,
+  .sign-avatar-playback-bar {
+    align-items: stretch;
+  }
+
+  .sign-avatar-tool-group,
+  .sign-avatar-speed-controls {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .sign-avatar-tool-button,
+  .sign-avatar-speed-button {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }
 
@@ -6643,6 +6814,34 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
 
   .virtual-wristband-actions {
     grid-template-columns: 1fr;
+  }
+
+  .camera-video-frame {
+    border-radius: 16px;
+  }
+
+  .camera-zone-card-head {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .sign-avatar-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .sign-avatar-hand-label {
+    position: static;
+    max-width: 100%;
+    margin-bottom: 6px;
+  }
+
+  .sign-avatar-hand-label-right {
+    margin-bottom: 0;
+  }
+
+  .sign-avatar-svg-wrap {
+    height: 230px;
   }
 }
 

@@ -276,17 +276,17 @@ const SignAvatarDemo = ({
   };
 
   return (
-    <div className="flex flex-col w-full rounded-2xl border border-white/10 bg-slate-900/95 overflow-hidden shadow-2xl backdrop-blur-xl">
+    <div className="sign-avatar-demo flex flex-col w-full rounded-2xl border border-white/10 bg-slate-900/95 overflow-hidden shadow-2xl backdrop-blur-xl">
       {/* 1. Header Toolbar */}
-      <div className="flex flex-col gap-2.5 p-3.5 sm:p-4 border-b border-white/10 bg-slate-950/80">
-        <div className="flex items-center justify-between gap-2">
+      <div className="sign-avatar-toolbar flex flex-col gap-2.5 p-3.5 sm:p-4 border-b border-white/10 bg-slate-950/80">
+        <div className="sign-avatar-title-row flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary text-base shadow-sm">
               {visual.icon}
             </span>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-wide truncate">
+              <div className="sign-avatar-heading-line flex items-center gap-2">
+                <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-wide">
                   {visual.title}
                 </h4>
                 <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 text-[9px] font-mono font-bold text-emerald-400">
@@ -294,16 +294,16 @@ const SignAvatarDemo = ({
                   ASL
                 </span>
               </div>
-              <span className="text-[10px] font-mono text-slate-400 truncate block">
+              <span className="text-[10px] font-mono text-slate-400 block overflow-wrap-anywhere">
                 Category: <span className="text-cyan-400 font-semibold">{visual.category}</span>
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="sign-avatar-tool-group flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => setIsFocusZoom(!isFocusZoom)}
-              className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-mono font-bold transition-all border ${
+              className={`sign-avatar-tool-button flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-mono font-bold transition-all border ${
                 isFocusZoom
                   ? 'border-amber-500/50 bg-amber-500/20 text-amber-300 shadow-sm shadow-amber-500/20'
                   : 'border-white/10 bg-slate-950/70 text-slate-400 hover:text-white'
@@ -315,7 +315,7 @@ const SignAvatarDemo = ({
             </button>
             <button
               onClick={() => setShowMotionGuides(!showMotionGuides)}
-              className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-mono font-bold transition-all border ${
+              className={`sign-avatar-tool-button flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-mono font-bold transition-all border ${
                 showMotionGuides
                   ? 'border-cyan-500/40 bg-cyan-500/15 text-cyan-300'
                   : 'border-white/10 bg-slate-950/70 text-slate-400 hover:text-white'
@@ -327,7 +327,7 @@ const SignAvatarDemo = ({
             </button>
             <button
               onClick={handleSpeakCoach}
-              className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-mono font-bold transition-all border ${
+              className={`sign-avatar-tool-button flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-mono font-bold transition-all border ${
                 isSpeaking
                   ? 'border-amber-500/50 bg-amber-500/20 text-amber-300 animate-pulse'
                   : 'border-white/10 bg-slate-950/70 text-slate-400 hover:text-white'
@@ -341,10 +341,10 @@ const SignAvatarDemo = ({
         </div>
 
         {/* 3-Tab Segmented Control */}
-        <div className="grid grid-cols-3 gap-1 rounded-xl bg-black/40 border border-white/5 p-1">
+        <div className="sign-avatar-tabs grid grid-cols-3 gap-1 rounded-xl bg-black/40 border border-white/5 p-1">
           <button
             onClick={() => setActiveTab('visual')}
-            className={`rounded-lg py-1 text-[11px] font-bold text-center transition-all ${
+            className={`sign-avatar-tab rounded-lg py-1 text-[11px] font-bold text-center transition-all ${
               activeTab === 'visual'
                 ? 'bg-primary text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -354,7 +354,7 @@ const SignAvatarDemo = ({
           </button>
           <button
             onClick={() => setActiveTab('anatomy')}
-            className={`rounded-lg py-1 text-[11px] font-bold text-center transition-all ${
+            className={`sign-avatar-tab rounded-lg py-1 text-[11px] font-bold text-center transition-all ${
               activeTab === 'anatomy'
                 ? 'bg-primary text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -364,7 +364,7 @@ const SignAvatarDemo = ({
           </button>
           <button
             onClick={() => setActiveTab('iot')}
-            className={`rounded-lg py-1 text-[11px] font-bold text-center transition-all ${
+            className={`sign-avatar-tab rounded-lg py-1 text-[11px] font-bold text-center transition-all ${
               activeTab === 'iot'
                 ? 'bg-primary text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -377,7 +377,7 @@ const SignAvatarDemo = ({
 
       {/* 2. Main Visual Canvas Stage */}
       {activeTab === 'visual' && (
-        <div className="relative flex flex-col items-center justify-center w-full min-h-[300px] sm:min-h-[340px] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-2 sm:p-3 overflow-hidden select-none">
+        <div className="sign-avatar-visual-stage relative flex flex-col items-center justify-center w-full min-h-[300px] sm:min-h-[340px] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-2 sm:p-3 overflow-hidden select-none">
           {/* Cybernetic Grid & Lighting Backdrop */}
           <div
             className="absolute inset-0 opacity-15 pointer-events-none"
@@ -391,14 +391,14 @@ const SignAvatarDemo = ({
           <div className="absolute top-[60%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-32 rounded-full bg-cyan-500/15 blur-2xl pointer-events-none" />
 
           {/* Floating Hand Identification Labels */}
-          <div className="absolute top-2.5 left-3 z-10 pointer-events-none">
+          <div className="sign-avatar-hand-label sign-avatar-hand-label-left absolute top-2.5 left-3 z-10 pointer-events-none">
             <span className="flex items-center gap-1.5 rounded-lg bg-slate-950/90 border border-emerald-500/40 px-2.5 py-1 text-[10px] font-mono text-emerald-300 backdrop-blur shadow-md shadow-emerald-950/50">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400" />
               Left Hand: <strong className="text-white">{visual.leftHand.label}</strong>
             </span>
           </div>
 
-          <div className="absolute top-2.5 right-3 z-10 pointer-events-none">
+          <div className="sign-avatar-hand-label sign-avatar-hand-label-right absolute top-2.5 right-3 z-10 pointer-events-none">
             <span className="flex items-center gap-1.5 rounded-lg bg-slate-950/90 border border-cyan-500/40 px-2.5 py-1 text-[10px] font-mono text-cyan-300 backdrop-blur shadow-md shadow-cyan-950/50">
               <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse shadow-sm shadow-cyan-400" />
               Right Hand: <strong className="text-white">{visual.rightHand.label}</strong>
@@ -406,7 +406,7 @@ const SignAvatarDemo = ({
           </div>
 
           {/* SVG Animated Sign Avatar Character */}
-          <div key={replayKey} className="relative w-full max-w-[390px] h-[250px] sm:h-[280px]">
+          <div key={replayKey} className="sign-avatar-svg-wrap relative w-full max-w-[390px] h-[250px] sm:h-[280px]">
             <svg
               viewBox={isFocusZoom ? '80 90 240 190' : '0 0 400 300'}
               preserveAspectRatio="xMidYMid meet"
@@ -818,8 +818,8 @@ const SignAvatarDemo = ({
 
       {/* 2b. Tab: Detailed Hand Shape Breakdown */}
       {activeTab === 'anatomy' && (
-        <div className="p-3.5 sm:p-4 flex flex-col gap-3 min-h-[290px] sm:min-h-[330px] bg-slate-950/70 overflow-y-auto">
-          <div className="flex items-center justify-between border-b border-white/10 pb-2">
+        <div className="sign-avatar-detail-pane p-3.5 sm:p-4 flex flex-col gap-3 min-h-[290px] sm:min-h-[330px] bg-slate-950/70 overflow-y-auto">
+          <div className="sign-avatar-detail-head flex items-center justify-between border-b border-white/10 pb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
               <Hand size={13} />
               Finger Joint Articulation Map
@@ -878,8 +878,8 @@ const SignAvatarDemo = ({
 
       {/* 2c. Tab: IoT Wristband Telemetry Rules */}
       {activeTab === 'iot' && (
-        <div className="p-3.5 sm:p-4 flex flex-col gap-2.5 min-h-[290px] sm:min-h-[330px] bg-slate-950/70 overflow-y-auto">
-          <div className="flex items-center justify-between border-b border-white/10 pb-2">
+          <div className="sign-avatar-detail-pane p-3.5 sm:p-4 flex flex-col gap-2.5 min-h-[290px] sm:min-h-[330px] bg-slate-950/70 overflow-y-auto">
+          <div className="sign-avatar-detail-head flex items-center justify-between border-b border-white/10 pb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
               <Watch size={13} />
               Smart Wristband Sensor Target Rules
@@ -917,18 +917,18 @@ const SignAvatarDemo = ({
       )}
 
       {/* 3. Interactive Playback Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-2 p-3 sm:px-4 sm:py-2.5 border-t border-white/10 bg-slate-950">
-        <div className="flex items-center gap-1.5">
+      <div className="sign-avatar-playback-bar flex flex-wrap items-center justify-between gap-2 p-3 sm:px-4 sm:py-2.5 border-t border-white/10 bg-slate-950">
+        <div className="sign-avatar-playback-controls flex items-center gap-1.5">
           <button
             onClick={() => setIsPlaying(!isPlaying)}
-            className="flex items-center gap-1 rounded-xl bg-primary/20 border border-primary/40 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/30 transition-all shadow-sm"
+            className="sign-avatar-playback-button flex items-center gap-1 rounded-xl bg-primary/20 border border-primary/40 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/30 transition-all shadow-sm"
           >
             {isPlaying ? <Pause size={12} /> : <Play size={12} />}
             <span>{isPlaying ? 'Pause' : 'Play'}</span>
           </button>
           <button
             onClick={handleReplay}
-            className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/10 transition-all"
+            className="sign-avatar-playback-button flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/10 transition-all"
             title="Restart animation"
           >
             <RotateCcw size={12} />
@@ -936,7 +936,7 @@ const SignAvatarDemo = ({
           </button>
         </div>
 
-        <div className="flex items-center gap-1 ml-auto">
+        <div className="sign-avatar-speed-controls flex items-center gap-1 ml-auto">
           <span className="text-[10px] font-mono text-slate-400 uppercase font-semibold mr-1 hidden sm:inline">
             Speed:
           </span>
@@ -944,7 +944,7 @@ const SignAvatarDemo = ({
             <button
               key={s}
               onClick={() => onSpeedChange ? onSpeedChange(s) : null}
-              className={`rounded-lg px-2 py-1 text-[10px] font-mono font-bold transition-all ${
+              className={`sign-avatar-speed-button rounded-lg px-2 py-1 text-[10px] font-mono font-bold transition-all ${
                 playbackSpeed === s
                   ? 'bg-primary text-white shadow-sm border border-primary/50'
                   : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-transparent'
@@ -957,7 +957,7 @@ const SignAvatarDemo = ({
       </div>
 
       {/* 4. Action Summary Footer */}
-      <div className="px-3.5 py-2 sm:px-4 border-t border-white/5 bg-slate-950/90 text-xs">
+      <div className="sign-avatar-summary px-3.5 py-2 sm:px-4 border-t border-white/5 bg-slate-950/90 text-xs">
         <p className="text-[11px] text-slate-300 leading-snug break-words">
           <strong className="text-emerald-400">{visual.handShape}</strong>
           <span className="text-slate-500 mx-1.5">•</span>
