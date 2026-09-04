@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:8000/api/attention/admin';
+const API_HOST = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
+const API_BASE_URL = `http://${API_HOST}:8000/api/attention/admin`;
 
 export const getAdminUsers = async () => {
   const response = await fetch(`${API_BASE_URL}/users`);

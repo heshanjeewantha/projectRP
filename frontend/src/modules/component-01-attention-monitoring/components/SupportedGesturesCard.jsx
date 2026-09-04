@@ -39,12 +39,25 @@ const GESTURE_ITEMS = [
     iconComp: Rewind,
   },
   {
-    id: 'TOGGLE_PLAY_PAUSE',
+    id: 'PAUSE_VIDEO',
     emoji: '✊',
-    name: 'Fist or Thumbs Up',
-    action: 'Play / Pause Video',
-    delta: 'Play / Pause',
-    keyHint: 'Toggle Play/Pause',
+    name: 'Closed Fist',
+    action: 'Stop / Pause',
+    delta: 'Pause',
+    keyHint: 'Stop Video',
+    gradient: 'from-amber-500/20 via-orange-500/10 to-transparent',
+    border: 'border-amber-500/30 hover:border-amber-400/60',
+    activeGlow: 'border-amber-400 bg-amber-500/25 shadow-lg shadow-amber-500/30 ring-1 ring-amber-400/60',
+    badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+    iconComp: Pause,
+  },
+  {
+    id: 'PLAY_VIDEO',
+    emoji: '👍',
+    name: 'Thumbs Up',
+    action: 'Play / Resume',
+    delta: 'Play',
+    keyHint: 'Resume Video',
     gradient: 'from-purple-500/20 via-indigo-500/10 to-transparent',
     border: 'border-purple-500/30 hover:border-purple-400/60',
     activeGlow: 'border-purple-400 bg-purple-500/25 shadow-lg shadow-purple-500/30 ring-1 ring-purple-400/60',
@@ -102,8 +115,8 @@ const SupportedGesturesCard = () => {
           )}
         </div>
 
-        {/* Center/Right: 3 Interactive Gesture Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 flex-1">
+        {/* Center/Right: 4 Interactive Gesture Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 flex-1">
           {GESTURE_ITEMS.map((g) => {
             const isActive = gestureAction === g.id;
             const IconComponent = g.iconComp;

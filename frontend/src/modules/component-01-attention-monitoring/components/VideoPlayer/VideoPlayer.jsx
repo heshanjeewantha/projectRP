@@ -54,7 +54,9 @@ const VideoPlayer = ({ video, transcript, onTimeUpdate, videoRef }) => {
     );
   }
 
-  const videoUrl = `http://localhost:8000/${video.storage_path.replace(/\\/g, '/')}`;
+  const apiHost = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
+  const cleanFilename = video.filename || (video.storage_path ? video.storage_path.replace(/\\/g, '/').split('/').pop() : '');
+  const videoUrl = `http://${apiHost}:8000/uploads/${cleanFilename}`;
 
   return (
     <div className="group relative w-full overflow-hidden rounded-[24px] bg-[linear-gradient(180deg,rgba(12,16,13,0.92),rgba(5,8,6,0.96))]">
@@ -63,6 +65,7 @@ const VideoPlayer = ({ video, transcript, onTimeUpdate, videoRef }) => {
         src={videoUrl}
         className="aspect-video w-full bg-black object-cover"
         onTimeUpdate={handleTimeUpdate}
+        onSeeked={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => setIsPlaying(false)}
         onPlay={() => setIsPlaying(true)}

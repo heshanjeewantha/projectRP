@@ -31,6 +31,7 @@ const studentNavItems = [
 
 const adminNavItems = [
   { to: '/admin', icon: ShieldCheck, label: 'Dashboard' },
+  { to: '/lesson', icon: BookOpen, label: 'Lesson' },
   { to: '/admin/analytics', icon: ChartColumnBig, label: 'Analytics' },
   { to: '/admin/attention-reports', icon: Activity, label: 'Reports' },
   { to: '/admin/repeated-alerts', icon: History, label: 'Alerts' },

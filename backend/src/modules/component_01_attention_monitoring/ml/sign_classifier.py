@@ -25,8 +25,8 @@ SIGN_LABELS = [
 SIGN_EXPLANATIONS = {
     "PALM":        "Open Palm 🖐️ — Skip forward +10 seconds.",
     "PEACE":       "Peace Sign ✌️ — Rewind -10 seconds.",
-    "FIST":        "Closed Fist ✊ — Toggle Play / Pause.",
-    "THUMBS_UP":   "Thumbs Up 👍 — Toggle Play / Pause.",
+    "FIST":        "Closed Fist ✊ — Stop / Pause Video.",
+    "THUMBS_UP":   "Thumbs Up 👍 — Play / Resume Video.",
     "COMPUTER":    "Computer — Type on an invisible keyboard.",
     "SOFTWARE":    "Software — Hand sliding over the other hand.",
     "HARDWARE":    "Hardware — Knocking on the back of the hand.",
@@ -103,12 +103,13 @@ class SignClassifier:
         if index_ext and middle_ext and not ring_ext and not pinky_ext:
             return self._result("PEACE", 0.92, gesture_action="SKIP_BACKWARD_10S")
 
-        # 3. 👍 Thumbs Up / ✊ Closed Fist -> Unified ONE sign for Play / Pause Toggle
+        # 3. 👍 Thumbs Up -> Play / Resume Video
         if thumb_ext and not index_ext and not middle_ext and not ring_ext and not pinky_ext:
-            return self._result("THUMBS_UP", 0.92, gesture_action="TOGGLE_PLAY_PAUSE")
+            return self._result("THUMBS_UP", 0.92, gesture_action="PLAY_VIDEO")
 
+        # 4. ✊ Closed Fist -> Stop / Pause Video
         if not index_ext and not middle_ext and not ring_ext and not pinky_ext:
-            return self._result("FIST", 0.90, gesture_action="TOGGLE_PLAY_PAUSE")
+            return self._result("FIST", 0.90, gesture_action="PAUSE_VIDEO")
 
         # ── Curriculum Sign Heuristics ──────────────────────────────────
         if thumb_ext and index_ext and not middle_ext and not ring_ext and pinky_ext:

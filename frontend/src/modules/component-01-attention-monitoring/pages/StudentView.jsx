@@ -375,33 +375,39 @@ const StudentView = () => {
   useEffect(() => {
     if (!gestureAction || !videoRef.current) return;
     const now = Date.now();
-    if (now - lastGestureTimeRef.current < 1600) return; // 1.6s cooldown
+    if (now - lastGestureTimeRef.current < 1400) return; // 1.4s cooldown
 
     const videoEl = videoRef.current;
+    const duration = Number.isFinite(videoEl.duration) && videoEl.duration > 0
+      ? videoEl.duration
+      : (currentVideo?.duration_seconds || 9999);
+
     if (gestureAction === 'SKIP_FORWARD_10S') {
       lastGestureTimeRef.current = now;
-      const targetTime = Math.min(videoEl.duration || 9999, videoEl.currentTime + 10);
+      const targetTime = Math.min(Math.max(0, duration - 1), (videoEl.currentTime || 0) + 10);
       videoEl.currentTime = targetTime;
+      setCurrentPlaybackTime(targetTime);
       setActiveGesture({ action: 'SKIP_FORWARD_10S', label: '+10s Skipped' });
     } else if (gestureAction === 'SKIP_BACKWARD_10S') {
       lastGestureTimeRef.current = now;
-      const targetTime = Math.max(0, videoEl.currentTime - 10);
+      const targetTime = Math.max(0, (videoEl.currentTime || 0) - 10);
       videoEl.currentTime = targetTime;
+      setCurrentPlaybackTime(targetTime);
       setActiveGesture({ action: 'SKIP_BACKWARD_10S', label: '-10s Rewound' });
     } else if (gestureAction === 'PLAY_VIDEO') {
       lastGestureTimeRef.current = now;
-      videoEl.play?.();
+      videoEl.play?.().catch(() => {});
       setIsLessonPlaying(true);
       setActiveGesture({ action: 'PLAY_VIDEO', label: '▶️ Play Video' });
     } else if (gestureAction === 'PAUSE_VIDEO') {
       lastGestureTimeRef.current = now;
       videoEl.pause?.();
       setIsLessonPlaying(false);
-      setActiveGesture({ action: 'PAUSE_VIDEO', label: '⏸️ Video Paused' });
+      setActiveGesture({ action: 'PAUSE_VIDEO', label: '⏸️ Video Stopped' });
     } else if (gestureAction === 'TOGGLE_PLAY_PAUSE') {
       lastGestureTimeRef.current = now;
-      if (videoEl.paused) {
-        videoEl.play?.();
+      if (videoEl.paused || videoEl.ended) {
+        videoEl.play?.().catch(() => {});
         setIsLessonPlaying(true);
         setActiveGesture({ action: 'PLAY_VIDEO', label: '▶️ Play Video' });
       } else {
@@ -411,9 +417,12 @@ const StudentView = () => {
       }
     }
 
-    const timer = setTimeout(() => setActiveGesture(null), 2500);
+    const timer = setTimeout(() => {
+      setActiveGesture(null);
+      useStore.setState({ gestureAction: null });
+    }, 2000);
     return () => clearTimeout(timer);
-  }, [gestureAction]);
+  }, [gestureAction, currentVideo?.duration_seconds]);
 
   const attentionStatusRef = useRef(attentionStatus);
   attentionStatusRef.current = attentionStatus;
@@ -860,25 +869,27 @@ const StudentView = () => {
               )}
             </div>
 
-            {videos.length > 1 && (
+            {videos.length > 0 && (
               <div className="mt-6 rounded-[20px] bg-black/18 p-4">
-                <div className="mb-3 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-text-muted">
-                  <Video size={12} />
-                  Library
+                <div className="mb-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.16em] text-text-muted">
+                  <div className="inline-flex items-center gap-2">
+                    <Video size={12} />
+                    Library ({videos.length})
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  {videos.slice(0, 4).map((video) => (
+                <div className="grid gap-2 max-h-72 overflow-y-auto pr-1">
+                  {videos.map((video) => (
                     <button
                       key={video.id}
                       onClick={() => handleSelectVideo(video)}
                       className={`flex min-w-0 items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition ${
                         currentVideo?.id === video.id
-                          ? 'bg-primary/10 text-white'
+                          ? 'bg-primary/15 text-white border border-primary/30 font-medium'
                           : 'bg-white/[0.03] text-text-muted hover:bg-white/[0.05]'
                       }`}
                     >
                       <span className="truncate">{video.title}</span>
-                      <span className="shrink-0 text-xs">
+                      <span className="shrink-0 text-xs font-mono">
                         {video.duration_seconds ? `${Math.floor(video.duration_seconds)}s` : '--'}
                       </span>
                     </button>
