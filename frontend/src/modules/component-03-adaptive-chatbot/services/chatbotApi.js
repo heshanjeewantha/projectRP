@@ -154,4 +154,13 @@ export const submitMockExam = async (payload) => {
   return response.data;
 };
 
+// ── EARA: Explainability concept diagram ──
+export const getEaraDiagram = async (topicId, learningState = 'bored', question = '') => {
+  const params = new URLSearchParams({ learning_state: learningState });
+  if (question) params.append('question', question);
+  const response = await axios.get(
+    `${API_BASE}/eara/${encodeURIComponent(topicId || 'computer_system')}?${params.toString()}`
+  );
+  return response.data;
+};
 

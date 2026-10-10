@@ -49,6 +49,8 @@ import FlashcardDeckModal from '../components/Chatbot/FlashcardDeckModal';
 import MockExamModal from '../components/Chatbot/MockExamModal';
 import ChatbotFormattedAnswer from '../components/Chatbot/ChatbotFormattedAnswer';
 import { SignWordBadge, SignWordModal, getDetectedSignWords, SIGN_DICTIONARY } from '../components/Chatbot/SignWordBadge';
+import EARAPanel from '../components/Chatbot/EARAPanel';
+import EARAConceptMap from '../components/Chatbot/EARAConceptMap';
 
 const MODE_OPTIONS = [
   { value: 'learning', label: 'Learning Mode', icon: BookOpen },
@@ -62,21 +64,69 @@ const STATE_OPTIONS = [
   { value: 'distracted', label: 'Distracted' },
 ];
 
-const DEFAULT_TOPIC_OPTIONS = [
-  { id: 'computer_system', name: 'Computer System', prerequisites: [] },
-  { id: 'data_information', name: 'Data and Information', prerequisites: ['Computer System'] },
-  { id: 'operating_systems', name: 'Operating Systems', prerequisites: ['Computer System'] },
-  { id: 'word_processing', name: 'Word Processing', prerequisites: ['Operating Systems'] },
-  { id: 'spreadsheets', name: 'Spreadsheets', prerequisites: ['Data and Information'] },
-  { id: 'databases', name: 'Databases', prerequisites: ['Data and Information', 'Spreadsheets'] },
-  { id: 'dbms', name: 'DBMS', prerequisites: ['Databases'] },
-  { id: 'normalization', name: 'Normalization', prerequisites: ['Databases', 'DBMS'] },
-  { id: 'internet_email', name: 'Internet and Email', prerequisites: ['Computer System'] },
-  { id: 'networking', name: 'Networking', prerequisites: ['Internet and Email'] },
-  { id: 'programming_basics', name: 'Programming Basics', prerequisites: ['Data and Information'] },
-  { id: 'flowcharts', name: 'Flowcharts', prerequisites: ['Programming Basics'] },
-  { id: 'cyber_security', name: 'Cyber Security', prerequisites: ['Internet and Email'] },
+// ── Graded topic curriculum: Grade 10 + Grade 11, split by Term ──────────────
+const GRADE_TOPIC_CURRICULUM = [
+  {
+    grade: 'Grade 10',
+    terms: [
+      {
+        term: 'Term 1',
+        topics: [
+          { id: 'computer_system', name: 'Computer System', prerequisites: [] },
+          { id: 'data_information', name: 'Data and Information', prerequisites: ['Computer System'] },
+          { id: 'operating_systems', name: 'Operating Systems', prerequisites: ['Computer System'] },
+        ],
+      },
+      {
+        term: 'Term 2',
+        topics: [
+          { id: 'word_processing', name: 'Word Processing', prerequisites: ['Operating Systems'] },
+          { id: 'spreadsheets', name: 'Spreadsheets', prerequisites: ['Data and Information'] },
+          { id: 'internet_email', name: 'Internet and Email', prerequisites: ['Computer System'] },
+        ],
+      },
+      {
+        term: 'Term 3',
+        topics: [
+          { id: 'networking', name: 'Networking', prerequisites: ['Internet and Email'] },
+          { id: 'cyber_security', name: 'Cyber Security', prerequisites: ['Internet and Email'] },
+          { id: 'programming_basics', name: 'Programming Basics', prerequisites: ['Data and Information'] },
+        ],
+      },
+    ],
+  },
+  {
+    grade: 'Grade 11',
+    terms: [
+      {
+        term: 'Term 1',
+        topics: [
+          { id: 'databases', name: 'Databases', prerequisites: ['Data and Information', 'Spreadsheets'] },
+          { id: 'dbms', name: 'DBMS', prerequisites: ['Databases'] },
+        ],
+      },
+      {
+        term: 'Term 2',
+        topics: [
+          { id: 'normalization', name: 'Normalization', prerequisites: ['Databases', 'DBMS'] },
+          { id: 'flowcharts', name: 'Flowcharts', prerequisites: ['Programming Basics'] },
+        ],
+      },
+      {
+        term: 'Term 3',
+        topics: [
+          { id: 'system_development', name: 'System Development', prerequisites: ['Databases', 'DBMS'] },
+          { id: 'social_ethics', name: 'Social & Ethical Issues', prerequisites: ['Internet and Email', 'Cyber Security'] },
+        ],
+      },
+    ],
+  },
 ];
+
+// Flat list derived from curriculum (for backwards-compat with existing logic)
+const DEFAULT_TOPIC_OPTIONS = GRADE_TOPIC_CURRICULUM.flatMap((g) =>
+  g.terms.flatMap((t) => t.topics)
+);
 
 const deriveStateFromAttention = (attentionStatus) =>
   attentionStatus === 'not_attentive' ? 'distracted' : 'understanding';
@@ -189,6 +239,13 @@ const ChatbotPage = () => {
   const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
   const [isMockExamModalOpen, setIsMockExamModalOpen] = useState(false);
   const [activeSignModalInfo, setActiveSignModalInfo] = useState(null);
+
+  // EARA explainability panel state
+  const [earaMessage, setEaraMessage] = useState(null);
+
+  // Grouped topic UI state
+  const [topicGrade, setTopicGrade] = useState('Grade 10');
+  const [topicTerm, setTopicTerm] = useState('Term 1');
 
   const chatScrollRef = useRef(null);
   const learningState = manualLearningState || deriveStateFromAttention(attentionStatus);
@@ -602,7 +659,7 @@ const ChatbotPage = () => {
                       </div>
 
                       <div className="chatbot-bot-row">
-                        <div className="chatbot-bot-bubble">
+                        <div className={`chatbot-bot-bubble ${(item.learningState === 'bored' || item.learningState === 'not_understanding') ? 'has-diagram' : ''}`}>
                           <div className="chatbot-bot-meta">
                             <Bot size={12} />
                             Chatbot
@@ -612,6 +669,18 @@ const ChatbotPage = () => {
                             {item.compressedAnswer ? (
                               <span className="chatbot-meta-tag is-exam">Exam Mode</span>
                             ) : null}
+                          </div>
+
+                          {/* ── EARA explainability button ── */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <button
+                              type="button"
+                              onClick={() => setEaraMessage(item)}
+                              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border border-primary/25 bg-primary/10 text-primary hover:bg-primary/20 transition-all"
+                            >
+                              <BrainCircuit size={11} />
+                              EARA
+                            </button>
                           </div>
 
                           {item.conceptReEntry && item.conceptRefreshPoints?.length > 0 ? (
@@ -629,6 +698,15 @@ const ChatbotPage = () => {
                           ) : null}
 
                           <ChatbotFormattedAnswer content={item.answer} />
+
+                          {/* ── Inline EARA concept diagram for bored / not_understanding ── */}
+                          {(item.learningState === 'bored' || item.learningState === 'not_understanding') && (
+                            <EARAConceptMap
+                              topicId={item.topicId || item.currentTopic || item.topic || selectedTopicId}
+                              learningState={item.learningState}
+                              question={item.question}
+                            />
+                          )}
                           {item.sourceType === 'LOCAL_DATASET' ? (
                             <p className="chatbot-source-note">
                               Answered using local lesson dataset.
@@ -886,22 +964,37 @@ const ChatbotPage = () => {
                 <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
                   Current Topic
                 </div>
+
+                {/* Grouped select with Grade 10 / Grade 11 optgroups + Terms */}
                 <select
                   value={selectedTopicId}
-                  onChange={(event) => {
-                    const newTopic = event.target.value;
-                    setSelectedTopicId(newTopic);
-                    if (activeViewTab === 'notes') {
-                      handleOpenShortNote(newTopic);
+                  onChange={(e) => {
+                    const newId = e.target.value;
+                    setSelectedTopicId(newId);
+                    // sync grade+term highlight to the chosen topic
+                    for (const g of GRADE_TOPIC_CURRICULUM) {
+                      for (const t of g.terms) {
+                        if (t.topics.some((tp) => tp.id === newId)) {
+                          setTopicGrade(g.grade);
+                          setTopicTerm(t.term);
+                        }
+                      }
                     }
+                    if (activeViewTab === 'notes') handleOpenShortNote(newId);
                   }}
-                  className="chatbot-topic-select"
+                  className="chatbot-topic-select w-full"
                 >
-                  {topicOptions.map((topic) => (
-                    <option key={topic.id} value={topic.id}>
-                      {topic.name}
-                    </option>
-                  ))}
+                  {GRADE_TOPIC_CURRICULUM.map((g) =>
+                    g.terms.map((t) => (
+                      <optgroup key={`${g.grade}-${t.term}`} label={`${g.grade} · ${t.term}`}>
+                        {t.topics.map((topic) => (
+                          <option key={topic.id} value={topic.id}>
+                            {topic.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))
+                  )}
                 </select>
 
                 <div className="mt-3 flex flex-col gap-2">
@@ -1097,6 +1190,15 @@ const ChatbotPage = () => {
         isOpen={Boolean(activeSignModalInfo)}
         signInfo={activeSignModalInfo}
         onClose={() => setActiveSignModalInfo(null)}
+      />
+
+      {/* EARA Explainability Panel */}
+      <EARAPanel
+        isOpen={Boolean(earaMessage)}
+        onClose={() => setEaraMessage(null)}
+        messageData={earaMessage}
+        attentionStatus={attentionStatus}
+        growthData={growthData}
       />
     </div>
   );

@@ -224,7 +224,7 @@ async def initialize_chatbot_data() -> None:
     await _sync_uploaded_dataset_topics(seeded_at)
 
 
-async def ask_chatbot(payload: dict[str, Any]) -> dict[str, Any]:
+async def _ask_chatbot_internal(payload: dict[str, Any]) -> dict[str, Any]:
     """Generate, persist, and score an adaptive chatbot answer."""
     db = get_db()
     question = payload["question"].strip()
@@ -308,6 +308,7 @@ async def ask_chatbot(payload: dict[str, Any]) -> dict[str, Any]:
         "intent": detected_intent,
         "learningState": learning_state,
         "topic": topic_name,
+        "topicId": topic_id,
         "inferredTopic": topic_name if topic_doc else None,
         "prerequisiteTopics": prerequisites,
         "prerequisites": prerequisites,
@@ -356,17 +357,53 @@ async def ask_chatbot(payload: dict[str, Any]) -> dict[str, Any]:
     return _serialize_message(saved_doc)
 
 
+async def ask_chatbot(payload: dict[str, Any]) -> dict[str, Any]:
+    """Generate, persist, and score an adaptive chatbot answer with AutoReconnect resilience."""
+    from pymongo.errors import AutoReconnect, ConnectionFailure
+    from src.common.database.connection import reset_client
+
+    last_err = None
+    for attempt in range(3):
+        try:
+            return await _ask_chatbot_internal(payload)
+        except (AutoReconnect, ConnectionFailure) as exc:
+            last_err = exc
+            if attempt == 2:
+                reset_client()
+                raise
+            reset_client()
+            await asyncio.sleep(0.5 * (attempt + 1))
+    if last_err:
+        raise last_err
+
+
 async def askChatbot(payload: dict[str, Any]) -> dict[str, Any]:
     return await ask_chatbot(payload)
 
 
 async def get_chatbot_history(student_id: str) -> list[dict[str, Any]]:
-    db = get_db()
-    cursor = db[CHATBOT_MESSAGES_COLLECTION].find({"studentId": student_id}).sort("createdAt", 1)
-    history = []
-    async for doc in cursor:
-        history.append(_serialize_message(doc))
-    return history
+    from pymongo.errors import AutoReconnect, ConnectionFailure
+    from src.common.database.connection import reset_client
+
+    last_err = None
+    for attempt in range(3):
+        try:
+            db = get_db()
+            cursor = db[CHATBOT_MESSAGES_COLLECTION].find({"studentId": student_id}).sort("createdAt", 1)
+            history = []
+            async for doc in cursor:
+                history.append(_serialize_message(doc))
+            return history
+        except (AutoReconnect, ConnectionFailure) as exc:
+            last_err = exc
+            if attempt == 2:
+                reset_client()
+                raise
+            reset_client()
+            await asyncio.sleep(0.5 * (attempt + 1))
+    if last_err:
+        raise last_err
+
 
 
 async def clear_chatbot_history(student_id: str) -> dict[str, Any]:
@@ -1223,14 +1260,35 @@ def generateEARAPrompt(
     prerequisites: list[str],
 ) -> str:
     prerequisites_text = ", ".join(prerequisites) if prerequisites else "none"
+    state_instructions = {
+        "bored": (
+            "CRITICAL: The student is BORED/disengaged. Hook them immediately with a cool, energetic real-world application "
+            "(e.g., video games, smartphones, TikTok algorithms, or robotics). Keep paragraphs short, lively, and punchy. "
+            "End with a 1-sentence mini '⚡ Brain Check' challenge question to stimulate their mind."
+        ),
+        "not_understanding": (
+            "CRITICAL: The student is STRUGGLING to understand this concept. Do NOT give heavy technical text. Use a relatable "
+            "everyday Sri Lankan analogy (e.g., school library, kitchen recipe, bus ticket system). Break the core concept into "
+            "3 simple numbered steps (Step 1, Step 2, Step 3). Use warm, patient, encouraging words."
+        ),
+        "distracted": (
+            "The student is distracted. Keep the answer ultra-concise, direct, and under 3 bullet points to rebuild focus."
+        ),
+        "understanding": (
+            "The student understands well. Provide a clear, thorough O/L ICT syllabus explanation with examination keywords."
+        ),
+    }.get(learningState, "")
+
     return (
         f"Student question: {question}\n"
         f"Detected intent: {intent}\n"
         f"Learning state: {learningState}\n"
         f"Topic: {topic}\n"
         f"Prerequisites: {prerequisites_text}\n"
-        "Adapt the answer to O/L ICT level. Use emotion-aware explanation style, mention prerequisite knowledge when helpful, compress answers in exam mode, and prefer revision support when the learner is struggling. If the learning state is not_understanding, use very simple words, short gentle sentences, and one small example."
+        f"{state_instructions}\n"
+        "Adapt the answer to O/L ICT level. Use emotion-aware explanation style, mention prerequisite knowledge when helpful, compress answers in exam mode, and prefer revision support when the learner is struggling."
     )
+
 
 
 def generateAdaptivePrompt(
@@ -1298,17 +1356,21 @@ def formatLearningAnswer(
         return "\n\n".join(parts)
 
     if learning_state == "not_understanding":
-        if key_points:
-            step_lines = "\n".join(f"{i+1}. {pt}" for i, pt in enumerate(_clean_list_points(key_points[:3])))
-            parts.append("Key points:\n" + step_lines)
         if example:
-            parts.append(f"Small example: {_ensure_sentence(example)}")
+            parts.append(f"💡 Everyday Analogy: {_ensure_sentence(example)}")
+        else:
+            parts.append("💡 Everyday Analogy: Think of this like items in a school library — each has a specific role to help you find and use knowledge.")
+        if key_points:
+            step_lines = "\n".join(f"Step {i+1}: {pt}" for i, pt in enumerate(_clean_list_points(key_points[:3])))
+            parts.append("Key steps to understand:\n" + step_lines)
         if refresh_points:
             parts.append("Quick reminder:\n" + "\n".join(f"• {pt}" for pt in _clean_list_points(refresh_points[:2])))
         return "\n\n".join(parts)
 
-    if learning_state == "bored" and example:
-        parts.append(f"Interesting example: {_ensure_sentence(example)}")
+    if learning_state == "bored":
+        if example:
+            parts.append(f"⚡ Real-World Hook: {_ensure_sentence(example)}")
+        parts.append("⚡ Brain Check: Can you spot where this runs inside your smartphone or favourite app?")
     elif example:
         parts.append(f"Example: {_ensure_sentence(example)}")
 
@@ -1466,6 +1528,21 @@ def _build_llm_user_prompt(
     reference_sentences = "; ".join(_clean_list_points(topic_doc.get("referenceSentences", [])[:3])) if topic_doc else ""
     prerequisites_text = ", ".join(prerequisites[:3]) if prerequisites else "none"
     refresh_text = "; ".join(_clean_list_points(refresh_points[:3])) if refresh_points else "none"
+    state_guidance = ""
+    if learning_state == "bored":
+        state_guidance = (
+            "- STUDENT IS BORED: Start with an exciting real-world hook (gaming, smartphone cameras, AI, social media). "
+            "Keep paragraphs short and punchy (under 3 paragraphs total). Conclude with a 1-sentence mini '⚡ Brain Check' challenge question.\n"
+        )
+    elif learning_state == "not_understanding":
+        state_guidance = (
+            "- STUDENT IS STRUGGLING TO UNDERSTAND: Avoid heavy jargon. Provide a simple everyday Sri Lankan analogy (library, kitchen recipe, bus ticket). "
+            "Break the concept down into 3 numbered steps ('1. ...', '2. ...', '3. ...'). Keep the tone patient and reassuring.\n"
+        )
+    elif learning_state == "distracted":
+        state_guidance = (
+            "- STUDENT IS DISTRACTED: Keep the explanation short, direct, and under 3 sharp bullet points.\n"
+        )
 
     return (
         f"{prompt}\n"
@@ -1482,6 +1559,7 @@ def _build_llm_user_prompt(
         f"Exam questions: {exam_questions or 'none'}\n"
         f"Refresh points: {refresh_text}\n"
         "Instructions for answer format & presentation:\n"
+        f"{state_guidance}"
         "- Format clearly for Sri Lankan G.C.E. O/L ICT students with clean paragraphs and line breaks.\n"
         "- Structure multi-part questions or definitions with clear question tags, e.g. '(a) What is ...? (2 marks)' and '(b) Name the three levels... (3 marks)'.\n"
         "- Present lists and levels cleanly as numbered items (e.g. '1. External Level – View of the database seen by individual users.') or clean bullet points.\n"
@@ -3286,6 +3364,7 @@ def _serialize_message(doc: dict[str, Any]) -> dict[str, Any]:
         "intent": doc.get("intent", doc.get("detectedIntent")),
         "learningState": doc["learningState"],
         "topic": doc["topic"],
+        "topicId": doc.get("topicId") or _slugify(doc.get("topic", "computer_system")),
         "prerequisiteTopics": doc.get("prerequisiteTopics", []),
         "prerequisites": doc.get("prerequisites", doc.get("prerequisiteTopics", [])),
         "prompt": doc["prompt"],
@@ -4397,7 +4476,7 @@ async def evaluate_past_paper_answer(student_id: str, question_id: str, student_
             missing_rubrics.append(rubric_item)
 
     # Award marks proportionally
-    awarded_marks = max(1, min(question["maxMarks"], len(matched_rubrics)))
+    awarded_marks = max(0, min(question["maxMarks"], len(matched_rubrics)))
     percentage = int((awarded_marks / question["maxMarks"]) * 100)
 
     if percentage >= 80:
@@ -5799,4 +5878,493 @@ async def submit_mock_exam(exam_id: str, student_id: str, answers: dict[str, str
         "studyPrescription": study_prescription,
     }
 
+
+# ── EARA: Explainability of Adaptive Response Architecture ───────────────────
+
+# Concept diagram data per topic — nodes + edges + visual schematic + analogy + brain challenge
+_EARA_DIAGRAMS: dict[str, dict] = {
+    "computer_system": {
+        "title": "Computer System",
+        "schematicType": "bus_architecture",
+        "nodes": [
+            {"id": "cpu", "label": "CPU", "type": "core", "description": "Central Processing Unit — brain executing instructions"},
+            {"id": "alu", "label": "ALU", "type": "sub", "description": "Arithmetic Logic Unit — performs arithmetic & boolean logic"},
+            {"id": "cu", "label": "CU", "type": "sub", "description": "Control Unit — fetches, decodes, and directs signals"},
+            {"id": "registers", "label": "Registers", "type": "memory", "description": "High-speed temporary storage inside the CPU (PC, MAR, MDR, ACC)"},
+            {"id": "ram", "label": "RAM", "type": "memory", "description": "Volatile main memory — holds active programs and data"},
+            {"id": "rom", "label": "ROM", "type": "memory", "description": "Non-volatile read-only memory — holds startup BIOS/firmware"},
+            {"id": "bus", "label": "System Bus", "type": "connector", "description": "Data, Address, and Control buses linking CPU and memory"},
+            {"id": "storage", "label": "Secondary Storage", "type": "memory", "description": "HDD, SSD, Flash drive — permanent data persistence"},
+        ],
+        "edges": [
+            {"from": "cu", "to": "alu", "label": "controls"},
+            {"from": "cu", "to": "registers", "label": "coordinates"},
+            {"from": "cpu", "to": "bus", "label": "connects to"},
+            {"from": "bus", "to": "ram", "label": "reads/writes"},
+            {"from": "bus", "to": "rom", "label": "reads bootstrap"},
+            {"from": "bus", "to": "storage", "label": "loads from"},
+        ],
+        "summary": "Von Neumann Architecture: CPU (ALU + CU + Registers) communicates with RAM, ROM, and Storage across the System Bus.",
+        "keyFact": "RAM is volatile (lost on power-off). ROM is non-volatile. Bus width determines speed and memory addressing.",
+        "analogy": "A computer is like a restaurant kitchen: The Chef is the CPU, the Prep Countertop is RAM (active space), and the Pantry Cabinet is Secondary Storage (permanent).",
+        "brainChallenge": "Can a computer run a program directly from a USB stick without loading it into RAM first? (Why?)",
+    },
+    "data_information": {
+        "title": "Data and Information",
+        "schematicType": "pipeline",
+        "nodes": [
+            {"id": "data", "label": "Raw Data", "type": "core", "description": "Unprocessed facts, figures, and symbols lacking context"},
+            {"id": "process", "label": "Processing", "type": "action", "description": "Calculations, sorting, classifying, and validating data"},
+            {"id": "info", "label": "Information", "type": "output", "description": "Processed, meaningful data used for decision-making"},
+            {"id": "binary", "label": "Binary Bits (0/1)", "type": "sub", "description": "Smallest unit of digital data representation"},
+            {"id": "encoding", "label": "Character Sets", "type": "sub", "description": "ASCII (7-bit, 128 chars), Unicode (UTF-8 worldwide scripts)"},
+            {"id": "units", "label": "Storage Units", "type": "memory", "description": "Bit → Byte (8 bits) → KB (1024B) → MB → GB → TB"},
+        ],
+        "edges": [
+            {"from": "data", "to": "process", "label": "inputs to"},
+            {"from": "process", "to": "info", "label": "transforms into"},
+            {"from": "binary", "to": "data", "label": "encodes"},
+            {"from": "encoding", "to": "binary", "label": "maps to bits"},
+            {"from": "units", "to": "binary", "label": "quantifies"},
+        ],
+        "summary": "Data is converted into Information through processing. At the hardware level, all data exists as binary bits grouped into bytes.",
+        "keyFact": "1 Byte = 8 bits. 1 KB = 1024 Bytes. Information must be accurate, timely, complete, and relevant.",
+        "analogy": "Data is raw ingredients (eggs, flour, sugar). Processing is baking in an oven. Information is the delicious birthday cake ready to serve!",
+        "brainChallenge": "If a file is 2 Megabytes, exactly how many Bytes does it contain? (Hint: 2 × 1024 × 1024)",
+    },
+    "operating_systems": {
+        "title": "Operating Systems",
+        "schematicType": "hierarchy",
+        "nodes": [
+            {"id": "os", "label": "OS Kernel", "type": "core", "description": "Core system software managing all hardware and applications"},
+            {"id": "pm", "label": "Process Management", "type": "function", "description": "CPU scheduling algorithms (FIFO, Round Robin, Priority)"},
+            {"id": "mm", "label": "Memory Management", "type": "function", "description": "RAM allocation, paging, and virtual memory swap"},
+            {"id": "fm", "label": "File Management", "type": "function", "description": "Hierarchical directory structure, FAT32/NTFS file systems"},
+            {"id": "dm", "label": "Device Management", "type": "function", "description": "Hardware drivers, buffering, spooling (e.g. print queue)"},
+            {"id": "ui", "label": "User Interface", "type": "interface", "description": "GUI (windows, icons) vs CLI (command line shell)"},
+        ],
+        "edges": [
+            {"from": "os", "to": "pm", "label": "schedules"},
+            {"from": "os", "to": "mm", "label": "allocates"},
+            {"from": "os", "to": "fm", "label": "organises"},
+            {"from": "os", "to": "dm", "label": "coordinates"},
+            {"from": "ui", "to": "os", "label": "commands"},
+        ],
+        "summary": "The OS acts as the bridge between user applications and hardware through Process, Memory, File, and Device management.",
+        "keyFact": "5 Core OS Functions: Process, Memory, Device, File, and Security/User management.",
+        "analogy": "The OS is like a School Principal: allocating classrooms (RAM), creating class timetables (Process Scheduling), and managing library books (Files).",
+        "brainChallenge": "When your RAM is 100% full, why does your computer slow down instead of crashing immediately? (Hint: Virtual Memory / Paging file on HDD).",
+    },
+    "word_processing": {
+        "title": "Word Processing",
+        "schematicType": "hierarchy",
+        "nodes": [
+            {"id": "doc", "label": "Main Document", "type": "core", "description": "Standard letter, report, or certificate template"},
+            {"id": "format", "label": "Formatting", "type": "action", "description": "Font family, size, line spacing, margins, orientation"},
+            {"id": "mail", "label": "Mail Merge", "type": "feature", "description": "Merges template with recipient data source for mass personalized letters"},
+            {"id": "source", "label": "Data Source", "type": "sub", "description": "Spreadsheet or table containing name, address, marks"},
+            {"id": "table", "label": "Tables & Columns", "type": "layout", "description": "Organised grids of rows and columns with cell borders"},
+            {"id": "header", "label": "Header & Footer", "type": "layout", "description": "Repeating page numbers, dates, titles at margins"},
+        ],
+        "edges": [
+            {"from": "doc", "to": "format", "label": "styled with"},
+            {"from": "doc", "to": "mail", "label": "combined via"},
+            {"from": "source", "to": "mail", "label": "provides recipient data"},
+            {"from": "doc", "to": "table", "label": "embeds"},
+            {"from": "doc", "to": "header", "label": "includes"},
+        ],
+        "summary": "Word processing tools enable structured document formatting, table generation, and automated mass mail merges.",
+        "keyFact": "Mail Merge Formula: Main Document (Template) + Data Source (Recipients) = Merged Documents.",
+        "analogy": "Mail Merge is like filling blank examination certificates with student names from a master mark sheet automatically.",
+        "brainChallenge": "If you need to send 200 customized admission letters, which word processing feature avoids typing each letter by hand?",
+    },
+    "spreadsheets": {
+        "title": "Spreadsheets",
+        "schematicType": "grid_eval",
+        "nodes": [
+            {"id": "cell", "label": "Cell Reference", "type": "core", "description": "Intersection of column (letter) and row (number) e.g., B4"},
+            {"id": "formula", "label": "Formula (=)", "type": "action", "description": "Custom math expression starting with = e.g., =A1+B1"},
+            {"id": "func", "label": "Built-in Functions", "type": "action", "description": "SUM, AVERAGE, MAX, MIN, COUNT, IF, VLOOKUP"},
+            {"id": "rel", "label": "Relative Ref (A1)", "type": "reference", "description": "Shifts coordinates dynamically when copied or filled"},
+            {"id": "abs", "label": "Absolute Ref ($A$1)", "type": "reference", "description": "Locks row, column, or both using $ symbol"},
+            {"id": "chart", "label": "Charts & Graphs", "type": "output", "description": "Visual data representation (Bar, Column, Pie, Line)"},
+        ],
+        "edges": [
+            {"from": "cell", "to": "formula", "label": "stored in"},
+            {"from": "formula", "to": "func", "label": "utilises"},
+            {"from": "cell", "to": "rel", "label": "references as"},
+            {"from": "cell", "to": "abs", "label": "locked with"},
+            {"from": "func", "to": "chart", "label": "feeds visual data"},
+        ],
+        "summary": "Spreadsheets compute cell data using formulas and functions. Cell referencing determines how values adapt across copies.",
+        "keyFact": "$A$1 locks row and column. A$1 locks row only. $A1 locks column only. All formulas must start with '='.",
+        "analogy": "A spreadsheet is like an automated shop ledger: enter prices and quantities, and the total and tax recalculate in a split second.",
+        "brainChallenge": "If cell C1 has formula '=A1*2' and you copy it down to cell C2, what does the formula in C2 become?",
+    },
+    "internet_email": {
+        "title": "Internet and Email",
+        "schematicType": "client_server",
+        "nodes": [
+            {"id": "internet", "label": "Internet", "type": "core", "description": "Global network of interconnected networks running on TCP/IP"},
+            {"id": "url", "label": "URL Structure", "type": "address", "description": "Protocol (https://) + Domain (moe.gov.lk) + Path (/ict/notes)"},
+            {"id": "smtp", "label": "SMTP", "type": "protocol", "description": "Simple Mail Transfer Protocol — transmits outgoing email"},
+            {"id": "imap", "label": "IMAP / POP3", "type": "protocol", "description": "Incoming mail protocols: IMAP syncs with server, POP3 downloads locally"},
+            {"id": "fields", "label": "Email Headers", "type": "service", "description": "To (direct), CC (Carbon Copy), BCC (Blind Carbon Copy — private)"},
+            {"id": "http", "label": "HTTP / HTTPS", "type": "protocol", "description": "Hypertext Transfer Protocol — HTTPS adds TLS/SSL encryption"},
+        ],
+        "edges": [
+            {"from": "internet", "to": "url", "label": "locates resources via"},
+            {"from": "smtp", "to": "internet", "label": "sends mail across"},
+            {"from": "imap", "to": "internet", "label": "retrieves mail from"},
+            {"from": "fields", "to": "smtp", "label": "packaged for"},
+            {"from": "http", "to": "url", "label": "specifies protocol in"},
+        ],
+        "summary": "The Internet connects distributed clients and servers. Email uses SMTP to send and IMAP/POP3 to retrieve messages.",
+        "keyFact": "BCC hides recipient addresses from everyone else. SMTP sends mail. IMAP keeps mail synced on the server.",
+        "analogy": "Sending an email is like postal mail: SMTP is the postal truck delivering letters, while IMAP is your private post office box.",
+        "brainChallenge": "If a teacher sends an exam paper via email to 40 students and doesn't want students to see each other's email addresses, which field must be used?",
+    },
+    "networking": {
+        "title": "Networking",
+        "schematicType": "star_network",
+        "nodes": [
+            {"id": "lan", "label": "LAN", "type": "core", "description": "Local Area Network — within a single room, school lab, or building"},
+            {"id": "wan", "label": "WAN", "type": "core", "description": "Wide Area Network — spans cities or continents (Internet is the largest WAN)"},
+            {"id": "switch", "label": "Switch", "type": "device", "description": "Intelligent device connecting nodes in a LAN using MAC addresses"},
+            {"id": "router", "label": "Router", "type": "device", "description": "Directs packets between different networks using IP routing tables"},
+            {"id": "topology", "label": "Topologies", "type": "structure", "description": "Star (central switch), Bus (backbone cable), Ring, Mesh"},
+            {"id": "ip", "label": "IP & Protocols", "type": "protocol", "description": "IPv4 (32-bit), IPv6 (128-bit), and TCP reliable packet delivery"},
+        ],
+        "edges": [
+            {"from": "lan", "to": "switch", "label": "connected by"},
+            {"from": "switch", "to": "router", "label": "uplinks to"},
+            {"from": "router", "to": "wan", "label": "routes traffic to"},
+            {"from": "topology", "to": "lan", "label": "organises physical layout of"},
+            {"from": "ip", "to": "router", "label": "guides packet paths"},
+        ],
+        "summary": "Networks link devices into LANs and WANs. Switches handle local node connections, while routers navigate global network packets.",
+        "keyFact": "In a Star topology, single workstation cable failure does NOT bring down the network. Bus topology uses a single shared backbone.",
+        "analogy": "A LAN switch is like a classroom corridor connecting rooms. A router is like the airport terminal connecting you to international destinations.",
+        "brainChallenge": "In a bus topology, what happens to the entire network if the main backbone cable gets cut in the middle?",
+    },
+    "cyber_security": {
+        "title": "Cyber Security",
+        "schematicType": "cia_triad",
+        "nodes": [
+            {"id": "cia", "label": "CIA Triad", "type": "core", "description": "Core security foundation: Confidentiality, Integrity, Availability"},
+            {"id": "conf", "label": "Confidentiality", "type": "pillar", "description": "Information is accessible only to authorised individuals"},
+            {"id": "integ", "label": "Integrity", "type": "pillar", "description": "Data remains accurate, unaltered, and trustworthy"},
+            {"id": "avail", "label": "Availability", "type": "pillar", "description": "Systems and data are accessible to users whenever needed"},
+            {"id": "malware", "label": "Malware Threats", "type": "danger", "description": "Virus (needs host), Worm (self-propagating), Trojan (disguised), Ransomware"},
+            {"id": "firewall", "label": "Security Controls", "type": "defence", "description": "Firewalls (packet filter), Strong Passwords, Encryption, 2FA"},
+        ],
+        "edges": [
+            {"from": "cia", "to": "conf", "label": "pillar"},
+            {"from": "cia", "to": "integ", "label": "pillar"},
+            {"from": "cia", "to": "avail", "label": "pillar"},
+            {"from": "malware", "to": "cia", "label": "attacks"},
+            {"from": "firewall", "to": "malware", "label": "blocks & defends against"},
+        ],
+        "summary": "Security defends the CIA Triad (Confidentiality, Integrity, Availability) against malware, phishing, and unauthorized intrusions.",
+        "keyFact": "A Virus needs a host file to execute. A Worm self-replicates across networks without user action. Phishing steals credentials via deceptive emails.",
+        "analogy": "Cyber security is like protecting a bank: Confidentiality = Vault with combination lock, Integrity = Tamper-evident seals on cash bags, Availability = Bank doors open during business hours.",
+        "brainChallenge": "If a hacker alters your exam marks on the database server from 45 to 95 without permission, which element of the CIA Triad was violated?",
+    },
+    "programming_basics": {
+        "title": "Programming Basics",
+        "schematicType": "control_flow",
+        "nodes": [
+            {"id": "prog", "label": "Algorithm & Logic", "type": "core", "description": "Step-by-step procedure to solve a computational problem"},
+            {"id": "var", "label": "Variables & Types", "type": "sub", "description": "Named memory storage: Integer, Float, String, Boolean"},
+            {"id": "seq", "label": "Sequence", "type": "control", "description": "Instructions executed sequentially in top-to-bottom order"},
+            {"id": "sel", "label": "Selection (IF-ELSE)", "type": "control", "description": "Conditional branching based on true/false evaluation"},
+            {"id": "iter", "label": "Iteration (Loops)", "type": "control", "description": "Repetition structures: Count-controlled (FOR) and Condition-controlled (WHILE)"},
+            {"id": "pseudo", "label": "Pseudocode", "type": "tool", "description": "Structured English representation of algorithm logic"},
+        ],
+        "edges": [
+            {"from": "prog", "to": "var", "label": "declares & updates"},
+            {"from": "prog", "to": "seq", "label": "executes in"},
+            {"from": "seq", "to": "sel", "label": "branches via"},
+            {"from": "seq", "to": "iter", "label": "repeats via"},
+            {"from": "pseudo", "to": "prog", "label": "models"},
+        ],
+        "summary": "Every program combines three fundamental control structures: Sequence, Selection (IF), and Iteration (Loops), manipulating typed variables.",
+        "keyFact": "3 Control Structures: Sequence, Selection (Decision), Iteration (Repetition). Variables change value; constants remain fixed.",
+        "analogy": "Programming is like following a cooking recipe: Step 1, 2, 3 in order (Sequence); if milk is hot, turn off heat (Selection); stir 10 times (Iteration).",
+        "brainChallenge": "If a WHILE loop condition is initially False before entering the loop, how many times will the loop body execute? (Hint: 0 times!).",
+    },
+    "databases": {
+        "title": "Databases",
+        "schematicType": "table_rel",
+        "nodes": [
+            {"id": "db", "label": "Relational DB", "type": "core", "description": "Organised collection of related tables linked by key constraints"},
+            {"id": "table", "label": "Table (Relation)", "type": "sub", "description": "Rows represent Records (Tuples), Columns represent Fields (Attributes)"},
+            {"id": "pk", "label": "Primary Key", "type": "key", "description": "Unique identifier for every record in a table — never NULL"},
+            {"id": "fk", "label": "Foreign Key", "type": "key", "description": "Field that references the Primary Key of another table, forming relationships"},
+            {"id": "rel", "label": "Relationships", "type": "connector", "description": "One-to-One (1:1), One-to-Many (1:M), Many-to-Many (M:N)"},
+            {"id": "sql", "label": "SQL Queries", "type": "action", "description": "SELECT fields FROM table WHERE condition ORDER BY field"},
+        ],
+        "edges": [
+            {"from": "db", "to": "table", "label": "contains"},
+            {"from": "table", "to": "pk", "label": "uniquely indexed by"},
+            {"from": "fk", "to": "pk", "label": "references foreign"},
+            {"from": "rel", "to": "fk", "label": "established using"},
+            {"from": "sql", "to": "table", "label": "retrieves data from"},
+        ],
+        "summary": "Relational databases store records in tables. Primary Keys uniquely identify records, Foreign Keys link related tables, and SQL queries extract insights.",
+        "keyFact": "A Primary Key cannot be NULL or duplicate. A Foreign Key in a child table points to the Primary Key in the parent table.",
+        "analogy": "A relational database is like a school index: Student ID is the Primary Key. When recording library loans, recording Student ID links to their full profile.",
+        "brainChallenge": "Can a table have two different Primary Keys? (Hint: A table has exactly ONE Primary Key, but it may consist of multiple combined columns called a Composite Key).",
+    },
+    "dbms": {
+        "title": "DBMS",
+        "schematicType": "hierarchy",
+        "nodes": [
+            {"id": "dbms", "label": "DBMS Engine", "type": "core", "description": "Software managing database storage, queries, access security, and backup"},
+            {"id": "ddl", "label": "DDL (Structure)", "type": "sql", "description": "Data Definition Language: CREATE, ALTER, DROP database structures"},
+            {"id": "dml", "label": "DML (Data)", "type": "sql", "description": "Data Manipulation Language: SELECT, INSERT, UPDATE, DELETE records"},
+            {"id": "indep", "label": "Data Independence", "type": "property", "description": "Physical & logical separation between stored data and application code"},
+            {"id": "integrity", "label": "Data Integrity", "type": "benefit", "description": "Ensures accuracy and consistency through validation rules and constraints"},
+            {"id": "redundancy", "label": "No Redundancy", "type": "benefit", "description": "Centralized storage removes duplicate data and sync inconsistencies"},
+        ],
+        "edges": [
+            {"from": "dbms", "to": "ddl", "label": "defines schema with"},
+            {"from": "dbms", "to": "dml", "label": "processes records with"},
+            {"from": "dbms", "to": "indep", "label": "guarantees"},
+            {"from": "dbms", "to": "integrity", "label": "enforces"},
+            {"from": "dbms", "to": "redundancy", "label": "eliminates data"},
+        ],
+        "summary": "DBMS manages database access through DDL (schema) and DML (records), providing data independence and eliminating redundancy.",
+        "keyFact": "DDL defines schema structure (CREATE/ALTER/DROP). DML queries and edits records (SELECT/INSERT/UPDATE/DELETE).",
+        "analogy": "A DBMS is like a professional bank vault manager: users don't touch the physical cash shelves directly; the manager securely accepts deposits and withdrawals.",
+        "brainChallenge": "Is the command 'INSERT INTO Student VALUES (...)' classified as DDL or DML?",
+    },
+    "normalization": {
+        "title": "Normalization",
+        "schematicType": "pipeline",
+        "nodes": [
+            {"id": "unf", "label": "Unnormalized (UNF)", "type": "start", "description": "Raw table with repeating groups, multiple values per cell, and duplicate data"},
+            {"id": "1nf", "label": "1NF (First Normal Form)", "type": "step", "description": "Every cell contains atomic (indivisible) values. No repeating groups. Primary Key defined"},
+            {"id": "2nf", "label": "2NF (Second Normal Form)", "type": "step", "description": "Must be in 1NF and eliminate partial functional dependencies on composite keys"},
+            {"id": "3nf", "label": "3NF (Third Normal Form)", "type": "step", "description": "Must be in 2NF and eliminate transitive dependencies (non-key attribute depending on non-key)"},
+            {"id": "anomalies", "label": "No Anomalies", "type": "benefit", "description": "Prevents insertion, deletion, and update update inconsistencies in databases"},
+        ],
+        "edges": [
+            {"from": "unf", "to": "1nf", "label": "make atomic & add PK"},
+            {"from": "1nf", "to": "2nf", "label": "remove partial dependencies"},
+            {"from": "2nf", "to": "3nf", "label": "remove transitive dependencies"},
+            {"from": "3nf", "to": "anomalies", "label": "prevents database"},
+        ],
+        "summary": "Normalization systematically decomposes complex tables to remove redundancy and prevent update, insert, and delete anomalies.",
+        "keyFact": "1NF = Atomic values only. 2NF = No partial key dependency. 3NF = No transitive (non-key to non-key) dependency.",
+        "analogy": "Normalization is like organizing your wardrobe: instead of dumping shoes, shirts, and books in one giant messy bin, you assign them to clean individual drawers.",
+        "brainChallenge": "If a table has a single-column Primary Key (not composite) and is already in 1NF, is it automatically in 2NF? (Hint: YES, because partial key dependencies cannot exist on a single-column key!).",
+    },
+    "flowcharts": {
+        "title": "Flowcharts",
+        "schematicType": "flowchart_tree",
+        "nodes": [
+            {"id": "oval", "label": "Oval (Terminator)", "type": "symbol", "description": "Start and Stop/End markers of the algorithm execution"},
+            {"id": "rect", "label": "Rectangle (Process)", "type": "symbol", "description": "Data processing, math operations, and variable assignment (e.g., Total = A + B)"},
+            {"id": "para", "label": "Parallelogram (I/O)", "type": "symbol", "description": "Input / Output operations (e.g., Read Mark, Print Grade)"},
+            {"id": "diamond", "label": "Diamond (Decision)", "type": "symbol", "description": "Condition check resulting in branching paths: Yes/No or True/False"},
+            {"id": "circle", "label": "Connector (Circle)", "type": "symbol", "description": "Connects interrupted flowlines across the page without crossing lines"},
+            {"id": "trace", "label": "Trace Table", "type": "tool", "description": "Tabular dry-run manual test tracking variable values step-by-step"},
+        ],
+        "edges": [
+            {"from": "oval", "to": "para", "label": "Start → Input"},
+            {"from": "para", "to": "rect", "label": "Input → Process"},
+            {"from": "rect", "to": "diamond", "label": "Process → Decision"},
+            {"from": "diamond", "to": "rect", "label": "Yes/No branches to"},
+            {"from": "trace", "to": "diamond", "label": "verifies logic of"},
+        ],
+        "summary": "Flowcharts use standardized geometric symbols to represent algorithmic logic visually before code implementation.",
+        "keyFact": "The Diamond (Decision) symbol is the only symbol that must have more than one outgoing arrow (typically True/False).",
+        "analogy": "A flowchart is like an airport directional sign system: green arrows guide your path, and at passport check (Diamond), you either proceed to gates or detour for inspection.",
+        "brainChallenge": "Which flowchart symbol would you draw for the instruction 'Calculate Average = Total / 5'?",
+    },
+    "system_development": {
+        "title": "System Development Life Cycle (SDLC)",
+        "schematicType": "sdlc_cycle",
+        "nodes": [
+            {"id": "ident", "label": "1. Identification", "type": "step", "description": "Identify problem, define objectives, preliminary scope"},
+            {"id": "feas", "label": "2. Feasibility Study", "type": "step", "description": "Assess Technical, Economic, Operational, and Schedule feasibility"},
+            {"id": "anal", "label": "3. System Analysis", "type": "step", "description": "Gather requirements (interviews, questionnaires, observation), data flow diagrams"},
+            {"id": "des", "label": "4. System Design", "type": "step", "description": "Architecture, database ER diagrams, user interface mockups, algorithm logic"},
+            {"id": "dev", "label": "5. Coding & Dev", "type": "step", "description": "Source code implementation, unit testing in target programming language"},
+            {"id": "test", "label": "6. Testing", "type": "step", "description": "Integration, System, and User Acceptance Testing (UAT)"},
+            {"id": "deploy", "label": "7. Deployment", "type": "step", "description": "Direct, Parallel, Phased, or Pilot conversion to production"},
+            {"id": "maint", "label": "8. Maintenance", "type": "step", "description": "Corrective, adaptive, perfective, and preventive ongoing support"},
+        ],
+        "edges": [
+            {"from": "ident", "to": "feas", "label": "triggers"},
+            {"from": "feas", "to": "anal", "label": "approves"},
+            {"from": "anal", "to": "des", "label": "specifies"},
+            {"from": "des", "to": "dev", "label": "guides"},
+            {"from": "dev", "to": "test", "label": "verifies via"},
+            {"from": "test", "to": "deploy", "label": "releases to"},
+            {"from": "deploy", "to": "maint", "label": "transitions into"},
+        ],
+        "summary": "SDLC provides a disciplined engineering lifecycle from problem identification and analysis through coding, testing, and deployment.",
+        "keyFact": "Parallel deployment runs old and new systems simultaneously for safety. Direct cutover replaces immediately but carries highest risk.",
+        "analogy": "SDLC is like building a family home: identify family needs, feasibility budget, architect blueprints, builder construction, inspection, move-in day, and home repairs.",
+        "brainChallenge": "Which deployment method runs both the old manual paper system and new computerized system side-by-side until the new system is proven bug-free?",
+    },
+    "social_ethics": {
+        "title": "Social and Ethical Issues in ICT",
+        "schematicType": "pillar",
+        "nodes": [
+            {"id": "divide", "label": "Digital Divide", "type": "pillar", "description": "The gap between individuals and regions having access to ICT and those without"},
+            {"id": "ethics", "label": "Intellectual Property", "type": "pillar", "description": "Copyright, software piracy, open source vs proprietary licensing, plagiarism"},
+            {"id": "privacy", "label": "Privacy & Data Protection", "type": "pillar", "description": "Protection of personal information, surveillance, cookies, identity theft"},
+            {"id": "ewaste", "label": "E-Waste Management", "type": "danger", "description": "Toxic electronic waste disposal (lead, mercury) and the 3Rs: Reduce, Reuse, Recycle"},
+            {"id": "law", "label": "Cyber Law", "type": "defence", "description": "Sri Lanka Computer Crimes Act No. 24 of 2007 punishing unauthorized computer access"},
+        ],
+        "edges": [
+            {"from": "ethics", "to": "law", "label": "enforced by"},
+            {"from": "privacy", "to": "law", "label": "protected by"},
+            {"from": "divide", "to": "ethics", "label": "demands fair access"},
+            {"from": "ewaste", "to": "ethics", "label": "environmental responsibility"},
+        ],
+        "summary": "ICT ethics govern intellectual property rights, personal privacy protection, e-waste environmental care, and bridging the digital divide under cyber law.",
+        "keyFact": "Computer Crimes Act No. 24 of 2007 penalizes unauthorized access and computer sabotage in Sri Lanka. 3Rs of E-Waste: Reduce, Reuse, Recycle.",
+        "analogy": "ICT ethics are the traffic rules of cyberspace: just like running a red light endangers drivers, pirating software and invading privacy harms digital society.",
+        "brainChallenge": "What term describes the socioeconomic inequality between rural communities with no internet access and urban communities with high-speed fiber?",
+    },
+    "logic_gates": {
+        "title": "Logic Gates and Boolean Logic",
+        "schematicType": "logic_circuit",
+        "nodes": [
+            {"id": "and", "label": "AND Gate", "type": "symbol", "description": "Output is 1 ONLY if ALL inputs are 1 (A · B)"},
+            {"id": "or", "label": "OR Gate", "type": "symbol", "description": "Output is 1 if AT LEAST ONE input is 1 (A + B)"},
+            {"id": "not", "label": "NOT Gate (Inverter)", "type": "symbol", "description": "Inverts the input signal: 0 becomes 1, 1 becomes 0 (A')"},
+            {"id": "nand", "label": "NAND Gate", "type": "symbol", "description": "Universal gate: AND gate followed by inverter (NOT AND)"},
+            {"id": "nor", "label": "NOR Gate", "type": "symbol", "description": "Universal gate: OR gate followed by inverter (NOT OR)"},
+            {"id": "truth", "label": "Truth Table", "type": "tool", "description": "Table listing all possible input binary combinations and their corresponding outputs"},
+        ],
+        "edges": [
+            {"from": "and", "to": "truth", "label": "evaluated in"},
+            {"from": "or", "to": "truth", "label": "evaluated in"},
+            {"from": "not", "to": "truth", "label": "evaluated in"},
+            {"from": "nand", "to": "and", "label": "inverts"},
+            {"from": "nor", "to": "or", "label": "inverts"},
+        ],
+        "summary": "Logic gates are the basic building blocks of digital integrated circuits executing Boolean algebra operations.",
+        "keyFact": "NAND and NOR are Universal Gates because any Boolean logic circuit can be constructed using only NAND or only NOR gates.",
+        "analogy": "An AND gate is like a safe requiring two keys turned at the exact same moment. An OR gate is like a classroom with two doors — opening either door lets you in.",
+        "brainChallenge": "If Input A = 1 and Input B = 0, what is the output of an AND gate vs a NAND gate?",
+    },
+}
+
+# Fallback diagram for topics not in the above map
+_EARA_FALLBACK_DIAGRAM = {
+    "title": "O/L ICT Concept",
+    "schematicType": "pipeline",
+    "nodes": [
+        {"id": "concept", "label": "Core ICT Concept", "type": "core", "description": "Central principle grounded in G.C.E. O/L ICT syllabus"},
+        {"id": "input", "label": "Input Data", "type": "sub", "description": "Raw inputs, parameters, or signals entered into the system"},
+        {"id": "process", "label": "Processing Logic", "type": "action", "description": "Arithmetic calculations, algorithms, or transformations executed"},
+        {"id": "output", "label": "Resulting Output", "type": "output", "description": "Meaningful information, visual display, or stored output generated"},
+    ],
+    "edges": [
+        {"from": "input", "to": "process", "label": "flows into"},
+        {"from": "process", "to": "output", "label": "produces"},
+        {"from": "concept", "to": "process", "label": "governs"},
+    ],
+    "summary": "All digital ICT systems operate on the Input → Process → Output (IPO) architecture.",
+    "keyFact": "Input + Processing = Output. Storage preserves data across sessions.",
+    "analogy": "Every computer process works like an automatic vending machine: insert money (Input), machine computes change and drops can (Process), drink dispensed (Output).",
+    "brainChallenge": "Can you identify what counts as the Input, Process, and Output for an ATM cash withdrawal?",
+}
+
+# State-specific engagement tips added to the EARA response
+_STATE_TIPS: dict[str, str] = {
+    "bored": "⚡ Visual Aid: You seemed disengaged! Check the Brain Challenge below and see if you can answer it in chat.",
+    "not_understanding": "🧩 Step-by-Step Breakdown: We've simplified this concept! Follow the connected nodes and everyday analogy below.",
+    "distracted": "🎯 Focus Boost: Review the Key Fact and central core node to lock down the must-know exam points.",
+    "understanding": "🌟 Mastery Track: You understand this well! Challenge yourself with an Exam Mode past paper question on this topic.",
+}
+
+# Keyword map to identify the most accurate syllabus topic from questions
+_QUESTION_TOPIC_KEYWORDS: list[tuple[list[str], str]] = [
+    (["system bus", "data bus", "address bus", "control bus", "cpu", "alu", "cu", "processor", "register", "ram", "rom", "hardware", "motherboard", "bios", "cache", "von neumann"], "computer_system"),
+    (["binary", "bit", "byte", "ascii", "unicode", "kilobyte", "megabyte", "gigabyte", "data and information", "raw data", "data representation"], "data_information"),
+    (["operating system", "process management", "scheduling", "paging", "virtual memory", "gui", "cli", "kernel", "device driver"], "operating_systems"),
+    (["word processing", "mail merge", "header", "footer", "page setup", "formatting", "watermark", "macro"], "word_processing"),
+    (["spreadsheet", "excel", "formula", "cell", "vlookup", "sum", "average", "absolute reference", "$a$1", "chart"], "spreadsheets"),
+    (["internet", "email", "smtp", "imap", "pop3", "url", "http", "https", "domain", "bcc", "cc", "www"], "internet_email"),
+    (["bus topology", "star topology", "ring topology", "mesh topology", "network", "lan", "wan", "router", "switch", "topology", "star", "ip address", "tcp/ip", "packet"], "networking"),
+    (["security", "cyber", "cia triad", "virus", "worm", "trojan", "malware", "phishing", "firewall", "encryption", "ransomware", "spyware"], "cyber_security"),
+    (["programming", "variable", "constant", "sequence", "selection", "iteration", "loop", "for loop", "while loop", "pseudocode", "algorithm"], "programming_basics"),
+    (["database", "table", "primary key", "foreign key", "relation", "tuple", "attribute", "sql", "select *", "query", "record", "field"], "databases"),
+    (["dbms", "ddl", "dml", "data independence", "data dictionary", "concurrency", "redundancy"], "dbms"),
+    (["normalization", "normalisation", "1nf", "2nf", "3nf", "atomic", "partial dependency", "transitive dependency"], "normalization"),
+    (["flowchart", "diamond", "parallelogram", "oval", "trace table", "flow line", "terminator", "decision symbol"], "flowcharts"),
+    (["sdlc", "system development", "waterfall", "feasibility", "system analysis", "system design", "deployment", "parallel deployment", "testing", "uat"], "system_development"),
+    (["ethics", "e-waste", "digital divide", "copyright", "piracy", "plagiarism", "computer crime", "privacy", "act no 24"], "social_ethics"),
+    (["logic gate", "truth table", "boolean", "nand", "nor", "and gate", "or gate", "not gate", "inverter"], "logic_gates"),
+]
+
+
+def _match_eara_topic_key(topic_id: str, question: str | None = None) -> str:
+    """Find the best matching topic key in _EARA_DIAGRAMS."""
+    raw_slug = _slugify(topic_id or "")
+
+    # Priority 1: Check question text for specific keywords sorted by longest phrase first
+    if question:
+        q_lower = question.lower()
+        all_kw = []
+        for keywords, target_topic in _QUESTION_TOPIC_KEYWORDS:
+            for kw in keywords:
+                all_kw.append((len(kw), kw, target_topic))
+        all_kw.sort(key=lambda x: x[0], reverse=True)
+        for _, kw, target_topic in all_kw:
+            if re.search(r"\b" + re.escape(kw) + r"\b", q_lower):
+                if target_topic in _EARA_DIAGRAMS:
+                    return target_topic
+
+    # Priority 2: Direct match on topic slug if not generic
+    if raw_slug in _EARA_DIAGRAMS and raw_slug not in ("topic", "general_ict", "general_o_l_ict"):
+        return raw_slug
+
+    # Priority 3: Substring match on topic slug if not generic
+    if raw_slug not in ("topic", "general_ict", "general_o_l_ict"):
+        for k in _EARA_DIAGRAMS:
+            if k in raw_slug or raw_slug in k:
+                return k
+
+    return "computer_system"
+
+
+async def get_eara_diagram(
+    topic_id: str,
+    learning_state: str = "bored",
+    question: str | None = None,
+) -> dict[str, Any]:
+    """
+    EARA — Explainability of Adaptive Response Architecture.
+
+    Returns a structured concept diagram (nodes + edges + visual schematic),
+    enriched with state-specific engagement guidance, real-world analogies,
+    and brain challenges.
+    """
+    matched_key = _match_eara_topic_key(topic_id, question)
+    diagram = _EARA_DIAGRAMS.get(matched_key, _EARA_FALLBACK_DIAGRAM).copy()
+    state_tip = _STATE_TIPS.get(learning_state, _STATE_TIPS["understanding"])
+
+    return {
+        "topicId": matched_key,
+        "topicName": diagram.get("title", topic_id),
+        "learningState": learning_state,
+        "schematicType": diagram.get("schematicType", "pipeline"),
+        "diagram": {
+            "nodes": diagram.get("nodes", []),
+            "edges": diagram.get("edges", []),
+        },
+        "summary": diagram.get("summary", ""),
+        "keyFact": diagram.get("keyFact", ""),
+        "analogy": diagram.get("analogy", ""),
+        "brainChallenge": diagram.get("brainChallenge", ""),
+        "stateTip": state_tip,
+    }
 

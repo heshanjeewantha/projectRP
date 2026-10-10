@@ -3741,19 +3741,42 @@ button:active, a:active {
 
 .chatbot-topic-select {
   width: 100%;
-  min-height: 46px;
+  min-height: 48px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(6, 11, 8, 0.9);
-  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(6, 14, 9, 0.95);
+  padding: 0 42px 0 16px;
   color: var(--color-text-main);
   font-size: 0.94rem;
+  font-weight: 500;
   line-height: 1.4;
   outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236bc29c' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 16px;
+  transition: all 0.2s ease;
 }
 
-.chatbot-topic-select:focus {
-  border-color: rgba(107, 194, 156, 0.18);
+.chatbot-topic-select:focus,
+.chatbot-topic-select:hover {
+  border-color: rgba(107, 194, 156, 0.35);
+  box-shadow: 0 0 0 3px rgba(107, 194, 156, 0.12);
+}
+
+.chatbot-topic-select option,
+.chatbot-topic-select optgroup {
+  background: #08160e;
+  color: #f3fbf6;
+}
+
+.chatbot-topic-select optgroup {
+  font-weight: 700;
+  color: #6bc29c;
+  padding: 6px 4px;
 }
 
 .chatbot-scroll-area {
@@ -3820,6 +3843,12 @@ button:active, a:active {
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.03);
   border-top-left-radius: 14px;
+}
+
+.chatbot-bot-bubble.has-diagram,
+.chatbot-bot-bubble:has(.eara-diagram-container) {
+  max-width: min(96%, 880px);
+  width: 100%;
 }
 
 .chatbot-user-meta,
