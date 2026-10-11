@@ -4,9 +4,13 @@ import {
   BookOpen,
   CheckCircle2,
   Cpu,
+  Database,
   Flame,
+  Globe,
+  GraduationCap,
   Hand,
   Layers,
+  Mail,
   Network,
   RotateCcw,
   ShieldCheck,
@@ -18,10 +22,12 @@ import useStore from '../../shared-app/utils/useStore';
 import SignPracticeArena from '../components/SignCourse/SignPracticeArena';
 import VirtualWristbandModal from '../components/Wristband/VirtualWristbandModal';
 import CourseCertificateModal from '../components/SignCourse/CourseCertificateModal';
+import SignLearningPlanModal from '../components/SignCourse/SignLearningPlanModal';
 import WristbandPage from './WristbandPage';
 import {
   getSignCourseModules,
   getStudentSignProgress,
+  getSignLearningPlan,
   evaluateSignAttempt,
   resetSignCourseProgress,
 } from '../services/signCourseApi';
@@ -35,6 +41,9 @@ const ICON_MAP = {
   Cpu: Cpu,
   Layers: Layers,
   Network: Network,
+  Globe: Globe,
+  Mail: Mail,
+  Database: Database,
   ShieldCheck: ShieldCheck,
 };
 
@@ -51,6 +60,34 @@ const SignCoursePage = () => {
   const [isBleConnected, setIsBleConnected] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
   const [showVirtualBand, setShowVirtualBand] = useState(true);
+  const [showLearningPlan, setShowLearningPlan] = useState(false);
+  const [learningPlanData, setLearningPlanData] = useState(null);
+  const [curriculumGradeFilter, setCurriculumGradeFilter] = useState('ALL'); // 'ALL' | 'Grade 10' | 'Grade 11'
+
+  const handleOpenLearningPlan = async () => {
+    setShowLearningPlan(true);
+    try {
+      const data = await getSignLearningPlan(effectiveUserId);
+      setLearningPlanData(data);
+    } catch (err) {
+      console.error('Failed to load learning plan:', err);
+    }
+  };
+
+  const handleStartKeywordFromPlan = (kwString) => {
+    setShowLearningPlan(false);
+    const targetModule = modules.find((m) =>
+      m.keywords?.some((k) => k.keyword.toLowerCase() === kwString.toLowerCase())
+    );
+    if (targetModule) {
+      const targetKw = targetModule.keywords.find(
+        (k) => k.keyword.toLowerCase() === kwString.toLowerCase()
+      );
+      setActiveModule(targetModule);
+      setActiveKeyword(targetKw);
+      setActiveTab('practice');
+    }
+  };
 
   // Fetch modules and student progress
   const loadCourseData = useCallback(async () => {
@@ -374,6 +411,14 @@ const SignCoursePage = () => {
             IoT Settings
           </button>
 
+          <button
+            onClick={handleOpenLearningPlan}
+            className="sign-course-tab-button flex shrink-0 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-3.5 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition-all shadow-sm"
+          >
+            <GraduationCap size={13} />
+            O/L ICT Learning Plan
+          </button>
+
           {masteryPercentage >= 75 && (
             <button
               onClick={() => setShowCertificate(true)}
@@ -401,48 +446,120 @@ const SignCoursePage = () => {
             <div className="flex flex-col gap-5">
               <div className="sign-course-section-header">
                 <div className="min-w-0">
-                  <h3 className="text-lg font-bold text-[var(--color-text-main)]">Ordinary Level (O/L) ICT Sign Modules</h3>
-                  <p className="text-xs text-slate-400">Complete each unit by mastering keywords with the camera.</p>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-[var(--color-text-main)]">Ordinary Level (O/L) ICT Sign Modules</h3>
+                    <span className="rounded-full bg-primary/20 border border-primary/30 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
+                      {modules.length} Syllabus Units
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">Complete each unit by mastering official O/L ICT sign terms with camera AI &amp; haptic feedback.</p>
                 </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleOpenLearningPlan}
+                    className="flex shrink-0 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/20 transition-colors"
+                  >
+                    <GraduationCap size={13} />
+                    View Learning Plan
+                  </button>
+                  <button
+                    onClick={handleResetCourse}
+                    className="flex shrink-0 items-center gap-1.5 self-start rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors sm:self-auto"
+                  >
+                    <RotateCcw size={13} />
+                    Reset Progress
+                  </button>
+                </div>
+              </div>
+
+              {/* Grade Filter Pill Tabs */}
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/5 bg-slate-900/40 p-2">
+                <span className="text-[11px] font-bold text-slate-400 px-2">Filter Syllabus:</span>
                 <button
-                  onClick={handleResetCourse}
-                  className="flex shrink-0 items-center gap-1.5 self-start rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors sm:self-auto"
+                  type="button"
+                  onClick={() => setCurriculumGradeFilter('ALL')}
+                  className={`rounded-lg px-3 py-1 text-xs font-bold transition-all ${
+                    curriculumGradeFilter === 'ALL'
+                      ? 'bg-primary text-white shadow-md shadow-primary/30'
+                      : 'border border-white/10 bg-white/5 text-slate-400 hover:text-white'
+                  }`}
                 >
-                  <RotateCcw size={13} />
-                  Reset Progress
+                  All Units ({modules.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurriculumGradeFilter('Grade 10')}
+                  className={`rounded-lg px-3 py-1 text-xs font-bold transition-all ${
+                    curriculumGradeFilter === 'Grade 10'
+                      ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
+                      : 'border border-emerald-500/20 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/15'
+                  }`}
+                >
+                  Grade 10 ({modules.filter((m) => m.grade === 'Grade 10').length} Units)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurriculumGradeFilter('Grade 11')}
+                  className={`rounded-lg px-3 py-1 text-xs font-bold transition-all ${
+                    curriculumGradeFilter === 'Grade 11'
+                      ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/30'
+                      : 'border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 hover:bg-cyan-500/15'
+                  }`}
+                >
+                  Grade 11 ({modules.filter((m) => m.grade === 'Grade 11').length} Units)
                 </button>
               </div>
 
               <div className="sign-course-module-list">
-                {modules.map((mod) => {
-                  const IconComponent = ICON_MAP[mod.iconName] || Cpu;
-                  const modCompletedCount = mod.keywords.filter((k) =>
-                    progress?.completedKeywords?.includes(k.keyword)
-                  ).length;
-                  const isModComplete = modCompletedCount === mod.keywords.length;
+                {modules
+                  .filter((mod) => (curriculumGradeFilter === 'ALL' ? true : mod.grade === curriculumGradeFilter))
+                  .map((mod) => {
+                    const IconComponent = ICON_MAP[mod.iconName] || Cpu;
+                    const modCompletedCount = (mod.keywords || []).filter((k) =>
+                      progress?.completedKeywords?.includes(k.keyword)
+                    ).length;
+                    const isModComplete = (mod.keywords?.length || 0) > 0 && modCompletedCount === mod.keywords.length;
 
-                  return (
-                    <div
-                      key={mod.id}
-                      className={`sign-course-module-card group relative overflow-hidden rounded-2xl border p-4 transition-all sm:p-5 ${isModComplete
-                          ? 'border-emerald-500/40 bg-emerald-950/10'
-                          : 'border-white/10 bg-slate-900/60 hover:border-primary/40 hover:bg-slate-900/90'
+                    return (
+                      <div
+                        key={mod.id}
+                        className={`sign-course-module-card group relative overflow-hidden rounded-2xl border p-4 transition-all sm:p-5 ${
+                          isModComplete
+                            ? 'border-emerald-500/40 bg-emerald-950/10'
+                            : 'border-white/10 bg-slate-900/60 hover:border-primary/40 hover:bg-slate-900/90'
                         }`}
-                    >
-                      <div className="sign-course-module-head">
+                      >
+                        <div className="sign-course-module-head">
                           <div className="sign-course-module-body">
                             <div
-                              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 sm:rounded-2xl ${isModComplete
+                              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 sm:rounded-2xl ${
+                                isModComplete
                                   ? 'bg-emerald-500/20 text-emerald-400'
                                   : 'bg-primary/20 text-primary'
-                                }`}
+                              }`}
                             >
                               <IconComponent size={24} />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <span className="font-mono text-xs font-semibold text-primary uppercase">
-                                Unit {mod.moduleNumber}
-                              </span>
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <span className="font-mono text-xs font-semibold text-primary uppercase">
+                                  Unit {mod.moduleNumber}
+                                </span>
+                                <span
+                                  className={`rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                    mod.grade === 'Grade 10'
+                                      ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                                      : 'border border-cyan-500/30 bg-cyan-500/10 text-cyan-400'
+                                  }`}
+                                >
+                                  {mod.grade || 'O/L ICT'}
+                                </span>
+                                {mod.syllabusArea && (
+                                  <span className="text-[11px] font-medium text-slate-400 truncate">
+                                    {mod.syllabusArea}
+                                  </span>
+                                )}
+                              </div>
                               <h4 className="text-base font-bold text-white group-hover:text-primary transition-colors overflow-wrap-anywhere">
                                 {mod.title}
                               </h4>
@@ -452,44 +569,51 @@ const SignCoursePage = () => {
                             </div>
                           </div>
 
-                        <button
-                          onClick={() => handleStartModule(mod)}
-                          className="sign-course-start-button flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all whitespace-nowrap"
-                        >
-                          Start Unit
-                        </button>
-                      </div>
+                          <button
+                            onClick={() => handleStartModule(mod)}
+                            className="sign-course-start-button flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all whitespace-nowrap"
+                          >
+                            Start Unit
+                          </button>
+                        </div>
 
-                      {/* Keywords Pill Grid */}
-                      <div className="sign-course-keyword-row border-t border-white/10">
-                        <span className="sign-course-keyword-label">Keywords:</span>
-                        {mod.keywords.map((kw) => {
-                          const isKwPassed = progress?.completedKeywords?.includes(kw.keyword);
-                          return (
-                            <button
-                              key={kw.id}
-                              onClick={() => {
-                                setActiveModule(mod);
-                                handleSelectKeyword(kw);
-                              }}
-                              className={`sign-course-keyword-badge flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${isKwPassed
-                                  ? 'border border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                                  : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:border-primary/40'
+                        {/* Keywords Pill Grid */}
+                        <div className="sign-course-keyword-row border-t border-white/10">
+                          <span className="sign-course-keyword-label">Keywords:</span>
+                          {(mod.keywords || []).map((kw) => {
+                            const isKwPassed = progress?.completedKeywords?.includes(kw.keyword);
+                            return (
+                              <button
+                                key={kw.id}
+                                onClick={() => {
+                                  setActiveModule(mod);
+                                  handleSelectKeyword(kw);
+                                }}
+                                title={`${kw.englishMeaning || ''} · ${kw.examRelevance || 'O/L ICT Terminology'}`}
+                                className={`sign-course-keyword-badge flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                                  isKwPassed
+                                    ? 'border border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                                    : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:border-primary/40'
                                 }`}
-                            >
-                              {isKwPassed ? (
-                                <CheckCircle2 size={12} className="text-emerald-400" />
-                              ) : (
-                                <Hand size={12} className="text-slate-400" />
-                              )}
-                              <span className="uppercase">{kw.keyword}</span>
-                            </button>
-                          );
-                        })}
+                              >
+                                {isKwPassed ? (
+                                  <CheckCircle2 size={12} className="text-emerald-400" />
+                                ) : (
+                                  <Hand size={12} className="text-slate-400" />
+                                )}
+                                <span className="uppercase">{kw.keyword}</span>
+                                {kw.examRelevance && (
+                                  <span className="text-[10px] text-slate-400 opacity-75 hidden sm:inline">
+                                    ({kw.examRelevance})
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             </div>
           )}
@@ -533,6 +657,15 @@ const SignCoursePage = () => {
         masteryScore={masteryPercentage}
         completedKeywordsCount={completedCount}
         onRestartCourse={handleResetCourse}
+      />
+
+      {/* O/L ICT Sign Language Learning Plan Modal */}
+      <SignLearningPlanModal
+        isOpen={showLearningPlan}
+        onClose={() => setShowLearningPlan(false)}
+        studentId={effectiveUserId}
+        planData={learningPlanData}
+        onStartKeywordPractice={handleStartKeywordFromPlan}
       />
     </div>
   );

@@ -31,6 +31,9 @@ class SignKeywordModel(BaseModel):
     handShapeTip: str
     movementTip: str
     landmarkConstraint: LandmarkConstraint | None = None
+    grade: str | None = "Grade 10"
+    syllabusUnit: str | None = None
+    examRelevance: str | None = None
 
 
 class SignModuleModel(BaseModel):
@@ -42,6 +45,42 @@ class SignModuleModel(BaseModel):
     iconName: str
     keywords: list[SignKeywordModel]
     passingThreshold: int = 75 # percentage
+    grade: str | None = "Grade 10" # "Grade 10" | "Grade 11"
+    syllabusArea: str | None = None
+
+
+class SignLearningPlanRequest(BaseModel):
+    studentId: str = Field(..., min_length=1)
+    gradeFocus: str = "ALL" # "ALL", "Grade 10", "Grade 11"
+    targetWeeks: int = 4
+
+
+class SyllabusAreaPlanModel(BaseModel):
+    grade: str
+    syllabusUnit: str
+    topicTitle: str
+    examWeight: str
+    targetKeywords: list[dict[str, Any]]
+    completedCount: int
+    totalCount: int
+    masteryPercentage: int
+    recommendedAction: str
+    wristbandHapticFocus: str
+
+
+class SignLearningPlanResponse(BaseModel):
+    studentId: str
+    planTitle: str
+    gradeFocus: str
+    generatedAt: datetime
+    overallMastery: int
+    totalKeywords: int
+    completedKeywordsCount: int
+    grade10SyllabusAreas: list[SyllabusAreaPlanModel]
+    grade11SyllabusAreas: list[SyllabusAreaPlanModel]
+    priorityFocusKeywords: list[str]
+    weeklyRevisionSchedule: list[dict[str, Any]]
+    examTips: list[str]
 
 
 class GestureEvaluationRequest(BaseModel):

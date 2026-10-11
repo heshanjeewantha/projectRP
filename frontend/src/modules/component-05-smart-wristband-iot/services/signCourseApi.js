@@ -27,3 +27,16 @@ export const resetSignCourseProgress = async (studentId) => {
   const response = await axios.post(`${API_BASE}/course/reset-progress`, { studentId });
   return response.data;
 };
+
+export const getSignLearningPlan = async (studentId, gradeFocus = 'ALL') => {
+  const response = await axios.get(`${API_BASE}/course/learning-plan/${studentId}`, {
+    params: { grade_focus: gradeFocus },
+  });
+  return response.data;
+};
+
+export const generateSignLearningPlan = async (payload) => {
+  const response = await axios.post(`${API_BASE}/course/generate-plan`, payload);
+  return response.data;
+};
+

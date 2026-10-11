@@ -17,6 +17,8 @@ from src.modules.component_05_smart_wristband_iot.models.sign_course import (
     GestureEvaluationRequest,
     GestureEvaluationResponse,
     ResetProgressRequest,
+    SignLearningPlanRequest,
+    SignLearningPlanResponse,
     SignModuleModel,
     StudentCourseProgressModel,
 )
@@ -103,3 +105,16 @@ async def complete_course_keyword(payload: CompleteKeywordRequest):
 async def reset_sign_course_progress(payload: ResetProgressRequest):
     """Reset course progress to restart the ICT sign language curriculum."""
     return await sign_course_service.reset_student_progress(payload.studentId)
+
+
+@router.get("/course/learning-plan/{student_id}", response_model=SignLearningPlanResponse)
+async def get_sign_learning_plan(student_id: str, grade_focus: str = "ALL"):
+    """Return an intelligent, personalized O/L ICT sign language learning plan."""
+    return await sign_course_service.generate_sign_learning_plan(student_id, grade_focus)
+
+
+@router.post("/course/generate-plan", response_model=SignLearningPlanResponse)
+async def generate_sign_learning_plan_endpoint(payload: SignLearningPlanRequest):
+    """Generate or update a syllabus-grounded O/L ICT sign language learning plan."""
+    return await sign_course_service.generate_sign_learning_plan(payload.studentId, payload.gradeFocus)
+
