@@ -3779,6 +3779,20 @@ button:active, a:active {
   padding: 6px 4px;
 }
 
+html[data-theme="light"] .chatbot-topic-select {
+  color-scheme: light;
+}
+
+html[data-theme="light"] .chatbot-topic-select option,
+html[data-theme="light"] .chatbot-topic-select optgroup {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .chatbot-topic-select optgroup {
+  background-color: #f1f5f9 !important;
+}
+
 .chatbot-scroll-area {
   display: flex;
   flex-direction: column;
@@ -7702,7 +7716,6 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
   color: #0f172a !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
-
 
 
 

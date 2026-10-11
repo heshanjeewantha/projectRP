@@ -1,20 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  Activity,
+  Box,
   BrainCircuit,
   Check,
   ChevronLeft,
   ChevronRight,
+  Compass,
   Download,
   Eye,
   FileText,
   Film,
   Filter,
+  GraduationCap,
   Hand,
   Layers,
   Pause,
   Play,
   RotateCcw,
+  RotateCw,
   Search,
   Sparkles,
   Users,
@@ -27,6 +32,7 @@ import {
   getFingerspellingAlphabet,
 } from '../../services/signAvatarApi';
 import RealisticAvatarViewer from './RealisticAvatarViewer';
+import ThreeHandAvatarViewer, { ASL_LEARNER_GUIDE } from './ThreeHandAvatarViewer';
 import { createLetterPose } from './FingerspellingFallback';
 
 const ASL_26_DATABASE = {
@@ -258,13 +264,170 @@ const KNOWN_ICT_ACRONYMS = [
   '1NF', '2NF', '3NF', 'NTFS', 'FAT32', 'DOS', 'AI', 'IOT'
 ];
 
+const GRADE_10_11_ICT_SYLLABUS = {
+  // Grade 10 - Unit 1: Introduction to ICT
+  DATA: { grade: 'Grade 10', unit: 'Unit 1: Introduction to ICT', topic: 'Data & Information', desc: 'Raw unorganized facts and figures.' },
+  INFORMATION: { grade: 'Grade 10', unit: 'Unit 1: Introduction to ICT', topic: 'Data & Information', desc: 'Processed meaningful data.' },
+  COMMUNICATION: { grade: 'Grade 10', unit: 'Unit 1: Introduction to ICT', topic: 'Fundamentals', desc: 'Transmission of information.' },
+  TECHNOLOGY: { grade: 'Grade 10', unit: 'Unit 1: Introduction to ICT', topic: 'Fundamentals', desc: 'Practical application of computing.' },
+  ICT: { grade: 'Grade 10', unit: 'Unit 1: Introduction to ICT', topic: 'Fundamentals', desc: 'Information & Communication Tech.' },
+  SYSTEM: { grade: 'Grade 10', unit: 'Unit 1: Introduction to ICT', topic: 'Fundamentals', desc: 'Integrated components working together.' },
+  SYSTEMS: { grade: 'Grade 10', unit: 'Unit 1: Introduction to ICT', topic: 'Fundamentals', desc: 'Integrated computer systems.' },
+  INPUT: { grade: 'Grade 10', unit: 'Unit 1: Introduction to ICT', topic: 'Data Processing', desc: 'Entering data into system.' },
+  PROCESS: { grade: 'Grade 10', unit: 'Unit 1: Introduction to ICT', topic: 'Data Processing', desc: 'Transforming raw input into information.' },
+  OUTPUT: { grade: 'Grade 10', unit: 'Unit 1: Introduction to ICT', topic: 'Data Processing', desc: 'Presenting processed results.' },
+  STORAGE: { grade: 'Grade 10', unit: 'Unit 1: Introduction to ICT', topic: 'Data Processing', desc: 'Retaining digital information.' },
+
+  // Grade 10 - Unit 2: Architecture of Computer Systems & Hardware
+  COMPUTER: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Hardware', desc: 'Electronic machine processing data.' },
+  HARDWARE: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Hardware', desc: 'Physical tangible components.' },
+  SOFTWARE: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Software', desc: 'Instructions guiding hardware.' },
+  KEYBOARD: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Input Devices', desc: 'Alphanumeric typing peripheral.' },
+  MOUSE: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Input Devices', desc: 'Pointing input device.' },
+  SCANNER: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Input Devices', desc: 'Optical digitizer.' },
+  MONITOR: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Output Devices', desc: 'Visual display screen.' },
+  PRINTER: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Output Devices', desc: 'Paper hardcopy device.' },
+  CPU: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Processor', desc: 'Central Processing Unit.' },
+  ALU: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Processor', desc: 'Arithmetic Logic Unit.' },
+  CU: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Processor', desc: 'Control Unit directing timing.' },
+  REGISTER: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Internal Memory', desc: 'High-speed CPU storage cells.' },
+  MEMORY: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Hardware', desc: 'Internal working storage.' },
+  RAM: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Main Memory', desc: 'Random Access Memory (volatile).' },
+  ROM: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Main Memory', desc: 'Read Only Memory (non-volatile).' },
+  CACHE: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'High-Speed Memory', desc: 'Fast buffer between CPU and RAM.' },
+  MOTHERBOARD: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Hardware', desc: 'Main circuit board.' },
+  BUS: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Data Path', desc: 'Pathway carrying signals.' },
+  PORT: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Interfaces', desc: 'Peripheral connector.' },
+  USB: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Interfaces', desc: 'Universal Serial Bus.' },
+  VGA: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Display Interface', desc: 'Video Graphics Array.' },
+  HDMI: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Display Interface', desc: 'Digital AV interface.' },
+  SSD: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Storage', desc: 'Solid State Drive.' },
+  HDD: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Storage', desc: 'Hard Disk Drive.' },
+  BIOS: { grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Firmware', desc: 'Boot initialization firmware.' },
+
+  // Grade 10 - Unit 3: Data Representation
+  BINARY: { grade: 'Grade 10', unit: 'Unit 3: Data Representation', topic: 'Number Systems', desc: 'Base-2 numeral system (0, 1).' },
+  DECIMAL: { grade: 'Grade 10', unit: 'Unit 3: Data Representation', topic: 'Number Systems', desc: 'Base-10 numeral system.' },
+  OCTAL: { grade: 'Grade 10', unit: 'Unit 3: Data Representation', topic: 'Number Systems', desc: 'Base-8 numeral system (0-7).' },
+  HEXADECIMAL: { grade: 'Grade 10', unit: 'Unit 3: Data Representation', topic: 'Number Systems', desc: 'Base-16 numeral system (0-F).' },
+  BIT: { grade: 'Grade 10', unit: 'Unit 3: Data Representation', topic: 'Units', desc: 'Smallest binary digit.' },
+  BYTE: { grade: 'Grade 10', unit: 'Unit 3: Data Representation', topic: 'Units', desc: 'Group of 8 binary bits.' },
+  ASCII: { grade: 'Grade 10', unit: 'Unit 3: Data Representation', topic: 'Encoding', desc: 'Standard character encoding.' },
+  UNICODE: { grade: 'Grade 10', unit: 'Unit 3: Data Representation', topic: 'Encoding', desc: 'Universal multi-language encoding.' },
+  LOGIC: { grade: 'Grade 10', unit: 'Unit 3: Data Representation', topic: 'Digital Logic', desc: 'Boolean reasoning principles.' },
+  GATE: { grade: 'Grade 10', unit: 'Unit 3: Data Representation', topic: 'Digital Logic', desc: 'Electronic logic circuit.' },
+
+  // Grade 10 - Unit 4: Operating Systems
+  OS: { grade: 'Grade 10', unit: 'Unit 4: Operating Systems', topic: 'System Software', desc: 'Operating system managing hardware.' },
+  OPERATING: { grade: 'Grade 10', unit: 'Unit 4: Operating Systems', topic: 'System Software', desc: 'OS system environment.' },
+  KERNEL: { grade: 'Grade 10', unit: 'Unit 4: Operating Systems', topic: 'OS Core', desc: 'Core heart of an OS.' },
+  GUI: { grade: 'Grade 10', unit: 'Unit 4: Operating Systems', topic: 'UI', desc: 'Graphical User Interface.' },
+  CLI: { grade: 'Grade 10', unit: 'Unit 4: Operating Systems', topic: 'UI', desc: 'Command Line Interface.' },
+  FILE: { grade: 'Grade 10', unit: 'Unit 4: Operating Systems', topic: 'File System', desc: 'Digital storage container.' },
+  DIRECTORY: { grade: 'Grade 10', unit: 'Unit 4: Operating Systems', topic: 'File System', desc: 'Hierarchical folder.' },
+  LINUX: { grade: 'Grade 10', unit: 'Unit 4: Operating Systems', topic: 'OS Examples', desc: 'Open-source OS kernel.' },
+  WINDOWS: { grade: 'Grade 10', unit: 'Unit 4: Operating Systems', topic: 'OS Examples', desc: 'Microsoft GUI OS.' },
+
+  // Grade 10 - Unit 7: Database Management
+  DATABASE: { grade: 'Grade 10', unit: 'Unit 7: Database Management', topic: 'Databases', desc: 'Organized electronic records repository.' },
+  DBMS: { grade: 'Grade 10', unit: 'Unit 7: Database Management', topic: 'Database Software', desc: 'Database Management System.' },
+  TABLE: { grade: 'Grade 10', unit: 'Unit 7: Database Management', topic: 'Relational DB', desc: 'Relation of rows and columns.' },
+  RECORD: { grade: 'Grade 10', unit: 'Unit 7: Database Management', topic: 'Relational DB', desc: 'Single row / tuple.' },
+  FIELD: { grade: 'Grade 10', unit: 'Unit 7: Database Management', topic: 'Relational DB', desc: 'Single attribute column.' },
+  PRIMARY: { grade: 'Grade 10', unit: 'Unit 7: Database Management', topic: 'Keys', desc: 'Primary Key unique identifier.' },
+  FOREIGN: { grade: 'Grade 10', unit: 'Unit 7: Database Management', topic: 'Keys', desc: 'Foreign Key reference.' },
+  SQL: { grade: 'Grade 10', unit: 'Unit 7: Database Management', topic: 'Queries', desc: 'Structured Query Language.' },
+  QUERY: { grade: 'Grade 10', unit: 'Unit 7: Database Management', topic: 'Queries', desc: 'Database access command.' },
+
+  // Grade 11 - Unit 1: Programming & Algorithms
+  PROGRAM: { grade: 'Grade 11', unit: 'Unit 1: Programming & Algorithms', topic: 'Programming', desc: 'Executable coded instructions.' },
+  ALGORITHM: { grade: 'Grade 11', unit: 'Unit 1: Programming & Algorithms', topic: 'Algorithms', desc: 'Step-by-step problem-solving sequence.' },
+  FLOWCHART: { grade: 'Grade 11', unit: 'Unit 1: Programming & Algorithms', topic: 'Algorithms', desc: 'Visual diagram of logic.' },
+  PSEUDOCODE: { grade: 'Grade 11', unit: 'Unit 1: Programming & Algorithms', topic: 'Algorithms', desc: 'Informal human-readable code.' },
+  VARIABLE: { grade: 'Grade 11', unit: 'Unit 1: Programming & Algorithms', topic: 'Coding', desc: 'Named storage location.' },
+  CONSTANT: { grade: 'Grade 11', unit: 'Unit 1: Programming & Algorithms', topic: 'Coding', desc: 'Fixed unaltered value.' },
+  LOOP: { grade: 'Grade 11', unit: 'Unit 1: Programming & Algorithms', topic: 'Control Flow', desc: 'Repetitive code execution.' },
+  ARRAY: { grade: 'Grade 11', unit: 'Unit 1: Programming & Algorithms', topic: 'Data Structures', desc: 'Collection of same-type items.' },
+  COMPILER: { grade: 'Grade 11', unit: 'Unit 1: Programming & Algorithms', topic: 'Translators', desc: 'Converts source to machine code.' },
+  DEBUG: { grade: 'Grade 11', unit: 'Unit 1: Programming & Algorithms', topic: 'Testing', desc: 'Finding and fixing software bugs.' },
+  PYTHON: { grade: 'Grade 11', unit: 'Unit 1: Programming & Algorithms', topic: 'Languages', desc: 'High-level interpreted language.' },
+
+  // Grade 11 - Unit 2: The Internet & World Wide Web
+  INTERNET: { grade: 'Grade 11', unit: 'Unit 2: The Internet & WWW', topic: 'Internet', desc: 'Global interconnected network.' },
+  WEB: { grade: 'Grade 11', unit: 'Unit 2: The Internet & WWW', topic: 'Web Systems', desc: 'World Wide Web information system.' },
+  WWW: { grade: 'Grade 11', unit: 'Unit 2: The Internet & WWW', topic: 'Web Systems', desc: 'World Wide Web documents.' },
+  BROWSER: { grade: 'Grade 11', unit: 'Unit 2: The Internet & WWW', topic: 'Web Clients', desc: 'Web page viewer app.' },
+  URL: { grade: 'Grade 11', unit: 'Unit 2: The Internet & WWW', topic: 'Addressing', desc: 'Uniform Resource Locator.' },
+  HTTP: { grade: 'Grade 11', unit: 'Unit 2: The Internet & WWW', topic: 'Protocols', desc: 'Hypertext Transfer Protocol.' },
+  HTTPS: { grade: 'Grade 11', unit: 'Unit 2: The Internet & WWW', topic: 'Protocols', desc: 'Secure encrypted HTTP.' },
+  HTML: { grade: 'Grade 11', unit: 'Unit 2: The Internet & WWW', topic: 'Web Design', desc: 'Hypertext Markup Language.' },
+  DNS: { grade: 'Grade 11', unit: 'Unit 2: The Internet & WWW', topic: 'Naming', desc: 'Domain Name System.' },
+  EMAIL: { grade: 'Grade 11', unit: 'Unit 2: The Internet & WWW', topic: 'Messaging', desc: 'Electronic mail messages.' },
+  CLOUD: { grade: 'Grade 11', unit: 'Unit 2: The Internet & WWW', topic: 'Cloud', desc: 'Remote on-demand computing & storage.' },
+
+  // Grade 11 - Unit 3: Computer Networks
+  NETWORK: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Networking', desc: 'Interconnected communicating devices.' },
+  LAN: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Network Scope', desc: 'Local Area Network.' },
+  WAN: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Network Scope', desc: 'Wide Area Network.' },
+  TOPOLOGY: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Layout', desc: 'Arrangement of network nodes.' },
+  ROUTER: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Network Devices', desc: 'Packet forwarding interconnect.' },
+  SWITCH: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Network Devices', desc: 'Intelligent LAN frame switch.' },
+  HUB: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Network Devices', desc: 'Multiport broadcast device.' },
+  NIC: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Network Devices', desc: 'Network Interface Card.' },
+  IP: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Protocols', desc: 'Internet Protocol address.' },
+  TCP: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Protocols', desc: 'Transmission Control Protocol.' },
+  PACKET: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Transmission', desc: 'Formatted data segment.' },
+  ETHERNET: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Media', desc: 'Wired LAN network standard.' },
+  CABLE: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Media', desc: 'Physical wired connection medium.' },
+  FIBER: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Media', desc: 'High-speed optical fiber.' },
+  SERVER: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Architecture', desc: 'Resource provider node.' },
+  CLIENT: { grade: 'Grade 11', unit: 'Unit 3: Computer Networks', topic: 'Architecture', desc: 'Resource requester node.' },
+
+  // Grade 11 - Unit 4: Cyber Security & Ethics
+  SECURITY: { grade: 'Grade 11', unit: 'Unit 4: Cyber Security', topic: 'Security', desc: 'Protection of systems & data.' },
+  CYBER: { grade: 'Grade 11', unit: 'Unit 4: Cyber Security', topic: 'Security', desc: 'Relating to digital networks.' },
+  MALWARE: { grade: 'Grade 11', unit: 'Unit 4: Cyber Security', topic: 'Threats', desc: 'Malicious destructive software.' },
+  VIRUS: { grade: 'Grade 11', unit: 'Unit 4: Cyber Security', topic: 'Threats', desc: 'Replicating file malware.' },
+  WORM: { grade: 'Grade 11', unit: 'Unit 4: Cyber Security', topic: 'Threats', desc: 'Network propagating malware.' },
+  TROJAN: { grade: 'Grade 11', unit: 'Unit 4: Cyber Security', topic: 'Threats', desc: 'Disguised malicious program.' },
+  PHISHING: { grade: 'Grade 11', unit: 'Unit 4: Cyber Security', topic: 'Threats', desc: 'Deceptive credential theft.' },
+  FIREWALL: { grade: 'Grade 11', unit: 'Unit 4: Cyber Security', topic: 'Defense', desc: 'Network traffic filter barrier.' },
+  ENCRYPTION: { grade: 'Grade 11', unit: 'Unit 4: Cyber Security', topic: 'Cryptography', desc: 'Cipher conversion of plaintext.' },
+  PASSWORD: { grade: 'Grade 11', unit: 'Unit 4: Cyber Security', topic: 'Auth', desc: 'Identity verification secret.' },
+  BACKUP: { grade: 'Grade 11', unit: 'Unit 4: Cyber Security', topic: 'Protection', desc: 'Duplicate copy of data.' },
+
+  // Grade 11 - Unit 5: Emerging Technologies & IoT
+  IOT: { grade: 'Grade 11', unit: 'Unit 5: Emerging Tech', topic: 'IoT', desc: 'Internet of Things smart devices.' },
+  SENSOR: { grade: 'Grade 11', unit: 'Unit 5: Emerging Tech', topic: 'IoT', desc: 'Environmental input detector.' },
+  AI: { grade: 'Grade 11', unit: 'Unit 5: Emerging Tech', topic: 'AI', desc: 'Artificial Intelligence systems.' },
+  ROBOTICS: { grade: 'Grade 11', unit: 'Unit 5: Emerging Tech', topic: 'Robotics', desc: 'Automated intelligent machines.' },
+};
+
+const INITIAL_ICT_KEYWORDS = [
+  { word: 'RAM', isAcronym: true, letterCount: 3, letters: ['R', 'A', 'M'], grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Main Memory' },
+  { word: 'CPU', isAcronym: true, letterCount: 3, letters: ['C', 'P', 'U'], grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Processor' },
+  { word: 'ALU', isAcronym: true, letterCount: 3, letters: ['A', 'L', 'U'], grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Processor' },
+  { word: 'MEMORY', isAcronym: false, letterCount: 6, letters: ['M', 'E', 'M', 'O', 'R', 'Y'], grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Hardware' },
+  { word: 'COMPUTER', isAcronym: false, letterCount: 8, letters: ['C', 'O', 'M', 'P', 'U', 'T', 'E', 'R'], grade: 'Grade 10', unit: 'Unit 2: Computer Architecture', topic: 'Hardware' },
+  { word: 'SYSTEMS', isAcronym: false, letterCount: 7, letters: ['S', 'Y', 'S', 'T', 'E', 'M', 'S'], grade: 'Grade 10', unit: 'Unit 1: Introduction to ICT', topic: 'Fundamentals' },
+];
+
+const INITIAL_OTHER_WORDS = [
+  { word: 'IS', isAcronym: false, letterCount: 2, letters: ['I', 'S'] },
+  { word: 'PRIMARY', isAcronym: false, letterCount: 7, letters: ['P', 'R', 'I', 'M', 'A', 'R', 'Y'] },
+  { word: 'VOLATILE', isAcronym: false, letterCount: 8, letters: ['V', 'O', 'L', 'A', 'T', 'I', 'L', 'E'] },
+  { word: 'USED', isAcronym: false, letterCount: 4, letters: ['U', 'S', 'E', 'D'] },
+  { word: 'BY', isAcronym: false, letterCount: 2, letters: ['B', 'Y'] },
+  { word: 'AND', isAcronym: false, letterCount: 3, letters: ['A', 'N', 'D'] },
+  { word: 'IN', isAcronym: false, letterCount: 2, letters: ['I', 'N'] },
+];
+
 const FingerspellingStudio = () => {
   const [inputText, setInputText] = useState('RAM is primary volatile memory used by CPU and ALU in Computer Systems.');
-  const [detectedKeywords, setDetectedKeywords] = useState([
-    { word: 'RAM', isAcronym: true, letterCount: 3, letters: ['R', 'A', 'M'] },
-    { word: 'CPU', isAcronym: true, letterCount: 3, letters: ['C', 'P', 'U'] },
-    { word: 'ALU', isAcronym: true, letterCount: 3, letters: ['A', 'L', 'U'] },
-  ]);
+  const [ictKeywords, setIctKeywords] = useState(INITIAL_ICT_KEYWORDS);
+  const [otherWords, setOtherWords] = useState(INITIAL_OTHER_WORDS);
+  const [syllabusFilter, setSyllabusFilter] = useState('ALL'); // 'ALL' | 'Grade 10' | 'Grade 11'
+  const [visualMode, setVisualMode] = useState('3d-mesh'); // '3d-mesh' | '3d-skeleton' | '3d-hud' | '2d-vector'
   const [selectedWord, setSelectedWord] = useState('RAM');
   const [activeLetterIndex, setActiveLetterIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -275,12 +438,16 @@ const FingerspellingStudio = () => {
   const [recordProgress, setRecordProgress] = useState(0);
   const [recordingWord, setRecordingWord] = useState('');
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [downloadVideoUrl, setDownloadVideoUrl] = useState(null);
+  const [downloadFileName, setDownloadFileName] = useState('');
   const [selectedManualLetter, setSelectedManualLetter] = useState(null);
   const [isFiltering, setIsFiltering] = useState(false);
+  const [isAutoRotate, setIsAutoRotate] = useState(false);
 
   const timerRef = useRef(null);
+  const threeViewerRef = useRef(null);
 
-  // Manual Filter & Extract ICT Keywords
+  // Manual Filter & Extract ICT Keywords and Other Words
   const handleManualFilterKeywords = async (overrideText = null, targetWord = null) => {
     const textToAnalyze = overrideText !== null ? overrideText : inputText;
     if (!textToAnalyze.trim()) return;
@@ -293,56 +460,75 @@ const FingerspellingStudio = () => {
         selectedWord: targetWord,
       });
 
-      if (res.detectedKeywords?.length) {
-        setDetectedKeywords(res.detectedKeywords);
-        const newWord = targetWord || res.selectedWord || res.detectedKeywords[0]?.word;
-        setSelectedWord(newWord);
+      if (res.ictKeywords && res.otherWords) {
+        setIctKeywords(res.ictKeywords);
+        setOtherWords(res.otherWords);
+        const newWord = targetWord || res.selectedWord || res.ictKeywords[0]?.word || res.otherWords[0]?.word;
+        if (newWord) setSelectedWord(newWord);
         setActiveLetterIndex(0);
         setSelectedManualLetter(null);
+      } else if (res.detectedKeywords?.length) {
+        // Classify response if backend returned combined list
+        classifyAndSetWords(textToAnalyze, targetWord);
       }
     } catch (err) {
-      console.error('API extraction fallback to local parser', err);
-      const words = textToAnalyze.match(/[A-Za-z0-9]+/g) || [];
-      const extracted = [];
-      const seen = new Set();
-
-      // Find ICT acronyms first
-      words.forEach((w) => {
-        const upper = w.toUpperCase();
-        if (KNOWN_ICT_ACRONYMS.includes(upper) && !seen.has(upper)) {
-          seen.add(upper);
-          extracted.push({
-            word: upper,
-            isAcronym: true,
-            letterCount: upper.length,
-            letters: upper.split(''),
-          });
-        }
-      });
-
-      // Add other non-acronym words
-      words.forEach((w) => {
-        const upper = w.toUpperCase();
-        if (!seen.has(upper) && upper.length >= 2) {
-          seen.add(upper);
-          extracted.push({
-            word: upper,
-            isAcronym: false,
-            letterCount: upper.length,
-            letters: upper.split(''),
-          });
-        }
-      });
-
-      if (extracted.length) {
-        setDetectedKeywords(extracted);
-        setSelectedWord(targetWord || extracted[0].word);
-        setActiveLetterIndex(0);
-        setSelectedManualLetter(null);
-      }
+      console.error('API extraction fallback to local classifier', err);
+      classifyAndSetWords(textToAnalyze, targetWord);
     } finally {
       setIsFiltering(false);
     }
+  };
+
+  // Local Syllabus Classifier Fallback
+  const classifyAndSetWords = (textToAnalyze, targetWord = null) => {
+    const words = textToAnalyze.match(/[A-Za-z0-9]+/g) || [];
+    const extractedIct = [];
+    const extractedOther = [];
+    const seen = new Set();
+
+    words.forEach((w) => {
+      const upper = w.toUpperCase();
+      if (seen.has(upper)) return;
+
+      const isSyllabus = !!GRADE_10_11_ICT_SYLLABUS[upper];
+      const isAcronym = KNOWN_ICT_ACRONYMS.includes(upper);
+
+      if (isSyllabus || isAcronym) {
+        seen.add(upper);
+        const meta = GRADE_10_11_ICT_SYLLABUS[upper] || {
+          grade: 'Grade 10/11',
+          unit: 'General O/L ICT',
+          topic: 'ICT Acronym',
+          desc: `Technical term ${upper}`,
+        };
+        extractedIct.push({
+          word: upper,
+          isAcronym,
+          letterCount: upper.length,
+          letters: upper.split(''),
+          grade: meta.grade,
+          unit: meta.unit,
+          topic: meta.topic,
+          desc: meta.desc,
+        });
+      } else if (upper.length >= 2) {
+        seen.add(upper);
+        extractedOther.push({
+          word: upper,
+          isAcronym: false,
+          letterCount: upper.length,
+          letters: upper.split(''),
+        });
+      }
+    });
+
+    setIctKeywords(extractedIct);
+    setOtherWords(extractedOther);
+
+    const defaultWord = targetWord || extractedIct[0]?.word || extractedOther[0]?.word || 'RAM';
+    setSelectedWord(defaultWord);
+    setActiveLetterIndex(0);
+    setSelectedManualLetter(null);
   };
 
   // Letters of the currently selected word
@@ -352,6 +538,32 @@ const FingerspellingStudio = () => {
     }
     return (selectedWord || 'RAM').toUpperCase().replace(/[^A-Z]/g, '').split('');
   }, [selectedWord, selectedManualLetter]);
+
+  // Filtered ICT keywords according to Grade 10 & 11 syllabus tab
+  const filteredIctKeywords = useMemo(() => {
+    if (syllabusFilter === 'Grade 10') {
+      return ictKeywords.filter((k) => k.grade === 'Grade 10');
+    }
+    if (syllabusFilter === 'Grade 11') {
+      return ictKeywords.filter((k) => k.grade === 'Grade 11');
+    }
+    return ictKeywords;
+  }, [ictKeywords, syllabusFilter]);
+
+  const grade10Count = useMemo(
+    () => ictKeywords.filter((k) => k.grade === 'Grade 10').length,
+    [ictKeywords]
+  );
+  const grade11Count = useMemo(
+    () => ictKeywords.filter((k) => k.grade === 'Grade 11').length,
+    [ictKeywords]
+  );
+
+  // Metadata for current word if an ICT term
+  const selectedIctMeta = useMemo(() => {
+    const upper = (selectedWord || '').toUpperCase();
+    return ictKeywords.find((k) => k.word === upper) || GRADE_10_11_ICT_SYLLABUS[upper] || null;
+  }, [selectedWord, ictKeywords]);
 
   // Current active letter character
   const activeLetterChar = currentLetters[activeLetterIndex] || currentLetters[0] || 'A';
@@ -363,6 +575,10 @@ const FingerspellingStudio = () => {
       handShape: 'ASL Finger Posture',
       ictExamples: [`${activeLetterChar} - Example ICT Term`],
     };
+  }, [activeLetterChar]);
+
+  const activeLearnerGuide = useMemo(() => {
+    return ASL_LEARNER_GUIDE[activeLetterChar] || ASL_LEARNER_GUIDE['A'];
   }, [activeLetterChar]);
 
   // Direct pose for active letter
@@ -443,7 +659,84 @@ const FingerspellingStudio = () => {
     setActiveLetterIndex(0);
   };
 
-  // Ultra High Quality 1080p 60fps Video Exporter
+  // Fallback: Direct Avatar Canvas 3D WebM Recorder (Native in DOM, 100% Guaranteed)
+  const recordDirectCanvas = async (wordToSpel, lettersToRecord, canvasElem) => {
+    try {
+      if (!canvasElem || typeof canvasElem.captureStream !== 'function') {
+        throw new Error('Avatar canvas element not capable of captureStream');
+      }
+
+      const stream = canvasElem.captureStream(30);
+      let mimeType = 'video/webm';
+      if (typeof MediaRecorder !== 'undefined') {
+        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+          mimeType = 'video/webm;codecs=vp8';
+        } else if (MediaRecorder.isTypeSupported('video/webm')) {
+          mimeType = 'video/webm';
+        }
+      }
+
+      const recorder = new MediaRecorder(stream, {
+        mimeType,
+        videoBitsPerSecond: 2_500_000,
+      });
+
+      const chunks = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: mimeType });
+        if (blob.size === 0) {
+          console.error('Direct canvas recording produced 0 bytes');
+          setIsRecording(false);
+          alert('Recording failed to produce video data. Please try again.');
+          return;
+        }
+
+        const url = URL.createObjectURL(blob);
+        const fileName = `asl_sign_${wordToSpel}.webm`;
+        setDownloadVideoUrl(url);
+        setDownloadFileName(fileName);
+
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          if (document.body.contains(a)) document.body.removeChild(a);
+        }, 3000);
+
+        setIsRecording(false);
+        setDownloadSuccess(true);
+        setTimeout(() => setDownloadSuccess(false), 8000);
+      };
+
+      recorder.start(100);
+
+      for (let i = 0; i < lettersToRecord.length; i++) {
+        setActiveLetterIndex(i);
+        setRecordProgress(Math.round(((i + 1) / lettersToRecord.length) * 100));
+        await new Promise((r) => setTimeout(r, 650));
+      }
+
+      await new Promise((r) => setTimeout(r, 350));
+      if (recorder.state === 'recording') {
+        recorder.requestData();
+        await new Promise((r) => setTimeout(r, 200));
+        recorder.stop();
+      }
+    } catch (err) {
+      console.error('Direct canvas recording failed:', err);
+      setIsRecording(false);
+      alert('Unable to capture video in this browser.');
+    }
+  };
+
+  // Ultra High Quality 720p/1080p WebM Video Exporter
   const handleDownloadKeywordVideo = async (targetWordToRecord = null) => {
     if (isRecording) return;
 
@@ -456,28 +749,114 @@ const FingerspellingStudio = () => {
     setRecordProgress(0);
     setDownloadSuccess(false);
 
-    try {
-      const container = document.getElementById('realistic-avatar-canvas-container');
-      const svg = container ? container.querySelector('svg') : null;
+    const container = document.getElementById('realistic-avatar-canvas-container');
+    const canvasElem = container ? container.querySelector('canvas') : null;
 
-      if (!svg) {
-        throw new Error('Avatar SVG canvas element not found');
+    // 1. Offscreen Composite Canvas Setup (MUST be appended to DOM so Chromium compositor fires captureStream frames)
+    const width = 1280;
+    const height = 720;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.position = 'fixed';
+    canvas.style.left = '-9999px';
+    canvas.style.top = '-9999px';
+    canvas.style.width = '1280px';
+    canvas.style.height = '720px';
+    canvas.style.opacity = '0.01';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '-999';
+    document.body.appendChild(canvas);
+
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    // Helper: Draw full composite frame
+    const renderCompositeFrame = (letterChar) => {
+      // Background gradient
+      const bg = ctx.createRadialGradient(width / 2, height / 2, 80, width / 2, height / 2, width / 1.3);
+      bg.addColorStop(0, '#0a1a12');
+      bg.addColorStop(0.6, '#050c08');
+      bg.addColorStop(1, '#020504');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, width, height);
+
+      // 3D Avatar WebGL Canvas draw
+      if (canvasElem && canvasElem.width > 0 && canvasElem.height > 0) {
+        const srcW = canvasElem.width;
+        const srcH = canvasElem.height;
+        const maxDrawW = 1000;
+        const maxDrawH = 540;
+        const scale = Math.min(maxDrawW / srcW, maxDrawH / srcH);
+        const drawW = srcW * scale;
+        const drawH = srcH * scale;
+        const drawX = (width - drawW) / 2;
+        const drawY = (height - drawH) / 2 - 10;
+        ctx.drawImage(canvasElem, drawX, drawY, drawW, drawH);
       }
 
-      // 1080p High-Resolution Master Canvas
-      const width = 1920;
-      const height = 1080;
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d', { alpha: false });
+      // Top Header Bar
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+      ctx.fillRect(40, 25, width - 80, 60);
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(40, 25, width - 80, 60);
 
-      const stream = canvas.captureStream(60); // 60 FPS Smooth capture
+      ctx.fillStyle = '#10b981';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText('SIGNLEARN AI · 3D ASL FINGERSPELLING FOOTAGE', 65, 62);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 22px monospace';
+      ctx.fillText(`WORD: ${wordToSpel}`, width - 290, 62);
+
+      // Bottom Active Letter Card
+      const activeMeta = ASL_26_DATABASE[letterChar] || {};
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+      ctx.fillRect(40, height - 120, width - 80, 85);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(40, height - 120, width - 80, 85);
+
+      // Big Letter Box
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(55, height - 110, 65, 65);
+      ctx.fillStyle = '#020504';
+      ctx.font = '900 42px monospace';
+      ctx.fillText(letterChar, 70, height - 63);
+
+      // Letter Info
+      ctx.fillStyle = '#10b981';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText(`Letter ${letterChar} · ${activeMeta.handShape || 'ASL Sign'}`, 140, height - 85);
+
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '14px sans-serif';
+      ctx.fillText(activeMeta.description || 'American Sign Language manual alphabet posture.', 140, height - 60);
+    };
+
+    try {
+      // Paint first frame BEFORE starting stream so stream has an initial valid image buffer
+      renderCompositeFrame(lettersToRecord[0]);
+
+      if (typeof canvas.captureStream !== 'function') {
+        throw new Error('canvas.captureStream not supported');
+      }
+
+      const stream = canvas.captureStream(30); // 30 FPS steady capture
+      const videoTrack = stream.getVideoTracks()[0];
+
+      let mimeType = 'video/webm';
+      if (typeof MediaRecorder !== 'undefined') {
+        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+          mimeType = 'video/webm;codecs=vp8';
+        } else if (MediaRecorder.isTypeSupported('video/webm')) {
+          mimeType = 'video/webm';
+        }
+      }
+
       const recorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-          ? 'video/webm;codecs=vp9'
-          : 'video/webm',
-        videoBitsPerSecond: 10_000_000, // 10 Mbps Ultra Crisp Video Bitrate
+        mimeType,
+        videoBitsPerSecond: 2_500_000,
       });
 
       const chunks = [];
@@ -486,23 +865,45 @@ const FingerspellingStudio = () => {
       };
 
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
+        if (document.body.contains(canvas)) {
+          document.body.removeChild(canvas);
+        }
+
+        const blob = new Blob(chunks, { type: mimeType });
+        if (blob.size === 0) {
+          console.warn('Composite recorder chunks were empty, running direct canvas fallback...');
+          if (canvasElem) {
+            recordDirectCanvas(wordToSpel, lettersToRecord, canvasElem);
+            return;
+          }
+          setIsRecording(false);
+          return;
+        }
+
         const url = URL.createObjectURL(blob);
+        const fileName = `asl_fingerspelling_${wordToSpel}_720p.webm`;
+        setDownloadVideoUrl(url);
+        setDownloadFileName(fileName);
+
         const a = document.createElement('a');
+        a.style.display = 'none';
         a.href = url;
-        a.download = `asl_fingerspelling_${wordToSpel}_1080p.webm`;
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setTimeout(() => {
+          if (document.body.contains(a)) document.body.removeChild(a);
+        }, 3000);
+
         setIsRecording(false);
         setDownloadSuccess(true);
-        setTimeout(() => setDownloadSuccess(false), 4000);
+        setTimeout(() => setDownloadSuccess(false), 8000);
       };
 
-      recorder.start();
+      recorder.start(100);
 
-      const framesPerLetter = 45; // 45 frames @ 60fps = ~750ms per letter
+      const frameDelayMs = 40; // 25 frames per second
+      const framesPerLetter = 16; // 16 * 40ms = 640ms per letter
 
       for (let i = 0; i < lettersToRecord.length; i++) {
         const char = lettersToRecord[i];
@@ -513,91 +914,32 @@ const FingerspellingStudio = () => {
         setActiveLetterIndex(i);
         setRecordProgress(Math.round(((i + 1) / lettersToRecord.length) * 100));
 
-        // Get SVG data
-        const svgString = new XMLSerializer().serializeToString(svg);
-        const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-        const URLObj = window.URL || window.webkitURL || window;
-        const blobURL = URLObj.createObjectURL(svgBlob);
-        const img = new Image();
-
-        await new Promise((resolve) => {
-          img.onload = () => {
-            let frameCount = 0;
-            const drawLoop = () => {
-              // 1. Dark Studio Gradient Background
-              const bgGradient = ctx.createRadialGradient(width / 2, height / 2, 50, width / 2, height / 2, width / 1.4);
-              bgGradient.addColorStop(0, '#0a1a12');
-              bgGradient.addColorStop(0.6, '#050c08');
-              bgGradient.addColorStop(1, '#020504');
-              ctx.fillStyle = bgGradient;
-              ctx.fillRect(0, 0, width, height);
-
-              // 2. Draw SVG Avatar Stage scaled to Full HD
-              const avatarWidth = 1400;
-              const avatarHeight = (avatarWidth * 560) / 900;
-              const avatarX = (width - avatarWidth) / 2;
-              const avatarY = (height - avatarHeight) / 2 - 20;
-              ctx.drawImage(img, avatarX, avatarY, avatarWidth, avatarHeight);
-
-              // 3. Top Header Bar Overlay
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-              ctx.fillRect(60, 40, width - 120, 80);
-              ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
-              ctx.lineWidth = 2;
-              ctx.strokeRect(60, 40, width - 120, 80);
-
-              ctx.fillStyle = '#10b981';
-              ctx.font = 'bold 24px sans-serif';
-              ctx.fillText('SIGNLEARN AI · O/L ICT ASL FINGER SPELLING FOOTAGE', 90, 88);
-
-              ctx.fillStyle = '#ffffff';
-              ctx.font = '900 28px monospace';
-              ctx.fillText(`WORD: ${wordToSpel}`, width - 380, 88);
-
-              // 4. Bottom Active Letter Card
-              const activeMeta = ASL_26_DATABASE[char] || {};
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-              ctx.fillRect(60, height - 160, width - 120, 100);
-              ctx.strokeStyle = '#10b981';
-              ctx.lineWidth = 2.5;
-              ctx.strokeRect(60, height - 160, width - 120, 100);
-
-              // Big Letter Box
-              ctx.fillStyle = '#10b981';
-              ctx.fillRect(80, height - 145, 70, 70);
-              ctx.fillStyle = '#020504';
-              ctx.font = '900 48px monospace';
-              ctx.fillText(char, 94, height - 94);
-
-              // Letter Title & Description
-              ctx.fillStyle = '#10b981';
-              ctx.font = 'bold 22px sans-serif';
-              ctx.fillText(`Letter ${char} · ${activeMeta.handShape || 'ASL Sign'}`, 175, height - 118);
-
-              ctx.fillStyle = '#e2e8f0';
-              ctx.font = '18px sans-serif';
-              ctx.fillText(activeMeta.description || 'American Sign Language manual alphabet posture.', 175, height - 88);
-
-              frameCount++;
-              if (frameCount < framesPerLetter) {
-                requestAnimationFrame(drawLoop);
-              } else {
-                URLObj.revokeObjectURL(blobURL);
-                resolve();
-              }
-            };
-            drawLoop();
-          };
-          img.src = blobURL;
-        });
+        // Render frames for this letter
+        for (let f = 0; f < framesPerLetter; f++) {
+          renderCompositeFrame(char);
+          if (videoTrack && typeof videoTrack.requestFrame === 'function') {
+            videoTrack.requestFrame();
+          }
+          await new Promise((r) => setTimeout(r, frameDelayMs));
+        }
       }
 
-      await new Promise((r) => setTimeout(r, 500));
-      recorder.stop();
+      await new Promise((r) => setTimeout(r, 250));
+      if (recorder.state === 'recording') {
+        recorder.requestData();
+        await new Promise((r) => setTimeout(r, 150));
+        recorder.stop();
+      }
     } catch (err) {
-      console.error('Failed to export video footage', err);
-      setIsRecording(false);
-      alert('Video footage recorded and ready.');
+      console.error('Composite recording failed, trying direct canvas fallback...', err);
+      if (document.body.contains(canvas)) {
+        document.body.removeChild(canvas);
+      }
+      if (canvasElem) {
+        await recordDirectCanvas(wordToSpel, lettersToRecord, canvasElem);
+      } else {
+        setIsRecording(false);
+      }
     }
   };
 
@@ -709,52 +1051,182 @@ const FingerspellingStudio = () => {
               </button>
             </div>
 
-            {/* Detected Keywords Section */}
+            {/* ── SECTION 1: Grade 10 & 11 O/L ICT Keywords ── */}
+            <div className="pt-4 border-t border-border space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-500 font-bold">
+                    <GraduationCap size={15} />
+                  </span>
+                  <div>
+                    <h5 className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                      O/L ICT Syllabus Keywords ({ictKeywords.length})
+                    </h5>
+                    <p className="text-[11px] text-text-muted">
+                      Categorized according to Grade 10 &amp; 11 National ICT Syllabus
+                    </p>
+                  </div>
+                </div>
+
+                {/* Syllabus Grade Filter Pills */}
+                <div className="flex items-center gap-1.5 bg-black/5 dark:bg-white/5 p-1 rounded-xl border border-border">
+                  <button
+                    type="button"
+                    onClick={() => setSyllabusFilter('ALL')}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                      syllabusFilter === 'ALL'
+                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                        : 'text-text-muted hover:text-primary'
+                    }`}
+                  >
+                    All ICT ({ictKeywords.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSyllabusFilter('Grade 10')}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                      syllabusFilter === 'Grade 10'
+                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                        : 'text-text-muted hover:text-emerald-400'
+                    }`}
+                  >
+                    Grade 10 ({grade10Count})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSyllabusFilter('Grade 11')}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                      syllabusFilter === 'Grade 11'
+                        ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                        : 'text-text-muted hover:text-cyan-400'
+                    }`}
+                  >
+                    Grade 11 ({grade11Count})
+                  </button>
+                </div>
+              </div>
+
+              {filteredIctKeywords.length === 0 ? (
+                <div className="p-4 rounded-xl border border-dashed border-border text-center text-xs text-text-muted">
+                  No keywords found for {syllabusFilter}. Try selecting &quot;All ICT&quot; or filter new notes above.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                  {filteredIctKeywords.map((kw) => {
+                    const isSelected = selectedWord === kw.word && !selectedManualLetter;
+                    const isG10 = kw.grade === 'Grade 10';
+                    return (
+                      <div
+                        key={kw.word}
+                        className={`fs-keyword-card flex flex-col justify-between p-3 rounded-2xl border transition-all ${
+                          isSelected
+                            ? 'is-active ring-2 ring-emerald-500/50 shadow-md border-emerald-500/60 bg-emerald-500/5'
+                            : 'border-border/70 bg-black/[0.02] dark:bg-white/[0.02]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleSelectKeyword(kw.word)}
+                            className="flex-1 text-left cursor-pointer space-y-1"
+                          >
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`text-sm font-black tracking-wide ${isSelected ? 'text-emerald-600 dark:text-emerald-400' : ''}`}>
+                                {kw.word}
+                              </span>
+                              <span
+                                className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
+                                  isG10
+                                    ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'
+                                    : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                                }`}
+                              >
+                                {kw.grade || 'O/L ICT'}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-text-muted line-clamp-1 font-medium">
+                              {kw.unit || kw.topic || 'ICT Terminology'}
+                            </div>
+                          </button>
+
+                          {/* Individual Download Video Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadKeywordVideo(kw.word)}
+                            disabled={isRecording}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-black/5 dark:bg-white/10 border border-border text-text-muted hover:text-primary hover:border-primary transition-all cursor-pointer"
+                            title={`Download "${kw.word}" 1080p 3D sign video clip`}
+                          >
+                            <Download size={13} />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 mt-1 border-t border-border/50 text-[10px] text-text-muted">
+                          <span className="font-mono">{kw.letterCount} letters</span>
+                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                            {kw.topic || 'Syllabus Core'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* ── SECTION 2: Other General Lesson Words ── */}
             <div className="pt-4 border-t border-border space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
-                  <Zap size={15} className="text-amber-500" /> Detected ICT Keywords ({detectedKeywords.length}):
-                </span>
-                <span className="text-[11px] text-text-muted">Click to spell or download footage</span>
+                <div>
+                  <h5 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
+                    <FileText size={14} className="text-text-muted" /> Other Lesson Words ({otherWords.length})
+                  </h5>
+                  <p className="text-[11px] text-text-muted">
+                    General English vocabulary from notes. Click any word to fingerspell letter-by-letter.
+                  </p>
+                </div>
+                <span className="text-[11px] font-mono text-text-muted">{otherWords.length} words</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {detectedKeywords.map((kw) => {
-                  const isSelected = selectedWord === kw.word && !selectedManualLetter;
-                  return (
-                    <div
-                      key={kw.word}
-                      className={`fs-keyword-card flex items-center justify-between p-3 rounded-2xl border transition-all ${
-                        isSelected ? 'is-active ring-2 ring-emerald-500/40 shadow-md' : ''
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => handleSelectKeyword(kw.word)}
-                        className="flex items-center gap-2 text-left cursor-pointer flex-1"
+              {otherWords.length === 0 ? (
+                <div className="p-3 rounded-xl border border-dashed border-border text-center text-xs text-text-muted">
+                  No additional words detected in current text.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  {otherWords.map((ow) => {
+                    const isSelected = selectedWord === ow.word && !selectedManualLetter;
+                    return (
+                      <div
+                        key={ow.word}
+                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-xs transition-all ${
+                          isSelected
+                            ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm'
+                            : 'border-border/60 bg-black/[0.01] dark:bg-white/[0.01] hover:border-border text-text-muted'
+                        }`}
                       >
-                        <span className={`text-sm font-black ${isSelected ? 'text-emerald-600 dark:text-emerald-400' : ''}`}>
-                          {kw.word}
-                        </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded font-mono bg-black/5 dark:bg-white/10 text-text-muted">
-                          {kw.letterCount} letters
-                        </span>
-                      </button>
-
-                      {/* Individual Download Video Button */}
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadKeywordVideo(kw.word)}
-                        disabled={isRecording}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-black/5 dark:bg-white/10 border border-border text-text-muted hover:text-primary hover:border-primary transition-all cursor-pointer"
-                        title={`Download "${kw.word}" 1080p sign video clip`}
-                      >
-                        <Download size={14} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectKeyword(ow.word)}
+                          className="flex items-center gap-1.5 text-left cursor-pointer truncate flex-1"
+                        >
+                          <span className="truncate font-semibold">{ow.word}</span>
+                          <span className="text-[9px] font-mono opacity-70">({ow.letterCount})</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadKeywordVideo(ow.word)}
+                          disabled={isRecording}
+                          className="text-text-muted hover:text-primary transition-colors p-1"
+                          title={`Download "${ow.word}" sign video`}
+                        >
+                          <Download size={11} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
@@ -797,12 +1269,20 @@ const FingerspellingStudio = () => {
             </div>
 
             {/* Active Letter Anatomical Guide Card */}
-            <div className="fs-guide-box">
+            <div className="fs-guide-box space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2 fs-guide-title text-xs uppercase">
+                  <div className="flex items-center gap-2 fs-guide-title text-xs uppercase flex-wrap">
                     <Sparkles size={15} className="text-emerald-500" />
-                    <span>Anatomical Sign Guide: {activeLetterMeta.name}</span>
+                    <span className="font-bold">Anatomical Sign Guide: {activeLetterMeta.name}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+                      {activeLearnerGuide.difficulty}
+                    </span>
+                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold border border-cyan-500/30">
+                      <span>Palm:</span>
+                      <span>{activeLearnerGuide.directionIcon}</span>
+                      <span>{activeLearnerGuide.palmDirection}</span>
+                    </span>
                   </div>
 
                   <p className="fs-guide-text text-sm leading-relaxed">
@@ -823,10 +1303,63 @@ const FingerspellingStudio = () => {
                 </div>
               </div>
 
+              {/* Step-by-Step Instructions */}
+              <div className="p-3 rounded-xl bg-black/5 dark:bg-black/30 border border-emerald-500/20 space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-500">
+                  📋 How to Form Handshape (Step-by-Step):
+                </div>
+                <div className="grid grid-cols-1 gap-1.5 text-xs text-slate-700 dark:text-slate-300">
+                  {activeLearnerGuide.steps.map((st, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-500 text-[10px] font-bold mt-0.5">
+                        {i + 1}
+                      </span>
+                      <span>{st}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Learner Tip & Finger State Badges */}
+              <div className="space-y-2">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-300 leading-snug flex items-start gap-2">
+                  <span className="text-sm shrink-0">💡</span>
+                  <div>
+                    <strong>Learner Tip:</strong> {activeLearnerGuide.learnerTip}
+                  </div>
+                </div>
+
+                {/* Individual Finger Postures */}
+                {activeLearnerGuide.fingerStates && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 pt-1">
+                    <div className="p-1.5 rounded-lg bg-black/5 dark:bg-white/5 border border-border text-[10px]">
+                      <span className="font-bold text-amber-500">👍 Thumb:</span>
+                      <div className="truncate text-text-muted">{activeLearnerGuide.fingerStates.thumb}</div>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/5 dark:bg-white/5 border border-border text-[10px]">
+                      <span className="font-bold text-cyan-500">☝️ Index:</span>
+                      <div className="truncate text-text-muted">{activeLearnerGuide.fingerStates.index}</div>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/5 dark:bg-white/5 border border-border text-[10px]">
+                      <span className="font-bold text-emerald-500">🖕 Middle:</span>
+                      <div className="truncate text-text-muted">{activeLearnerGuide.fingerStates.middle}</div>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/5 dark:bg-white/5 border border-border text-[10px]">
+                      <span className="font-bold text-purple-500">💍 Ring:</span>
+                      <div className="truncate text-text-muted">{activeLearnerGuide.fingerStates.ring}</div>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-black/5 dark:bg-white/5 border border-border text-[10px]">
+                      <span className="font-bold text-rose-500">🤙 Pinky:</span>
+                      <div className="truncate text-text-muted">{activeLearnerGuide.fingerStates.pinky}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* ICT Acronym Examples */}
               {activeLetterMeta.ictExamples && activeLetterMeta.ictExamples.length > 0 && (
-                <div className="fs-guide-examples mt-3 pt-3 border-t border-emerald-500/20 flex items-center gap-2 flex-wrap text-xs">
-                  <span className="font-bold">ICT Examples:</span>
+                <div className="fs-guide-examples pt-3 border-t border-emerald-500/20 flex items-center gap-2 flex-wrap text-xs">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">ICT Term Examples:</span>
                   {activeLetterMeta.ictExamples.map((ex, i) => (
                     <span
                       key={i}
@@ -845,15 +1378,73 @@ const FingerspellingStudio = () => {
         <div className="lg:col-span-5 space-y-6">
           <div className="fs-card space-y-4">
             {/* Top Toolbar */}
-            <div className="flex items-center justify-between gap-2 pb-3 border-b border-border">
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-border flex-wrap">
               <div className="flex items-center gap-2">
-                <span className="flex h-3 w-3 rounded-full bg-emerald-500 animate-ping" />
-                <span className="text-xs font-bold uppercase tracking-wider">
+                <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping" />
+                <span className="text-xs font-black uppercase tracking-wider text-emerald-500">
                   3D ASL Hand Avatar
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  360° Interactive Orbit
                 </span>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
+                {/* Visual Mode Selector */}
+                <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl border border-border">
+                  <button
+                    type="button"
+                    onClick={() => setVisualMode('3d-mesh')}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                      visualMode === '3d-mesh'
+                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                        : 'text-text-muted hover:text-white'
+                    }`}
+                    title="Three.js Articulated 3D Hand Mesh with Organic Shading"
+                  >
+                    🖐️ 3D Mesh
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setVisualMode('3d-skeleton')}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                      visualMode === '3d-skeleton'
+                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                        : 'text-text-muted hover:text-white'
+                    }`}
+                    title="3D Biomechanical Skeleton with Glowing Landmark Joints"
+                  >
+                    🦴 Skeleton
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setVisualMode('3d-hud')}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                      visualMode === '3d-hud'
+                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                        : 'text-text-muted hover:text-white'
+                    }`}
+                    title="Real-time 5-Finger Flex Angle Telemetry Gauge"
+                  >
+                    📊 Flex HUD
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setVisualMode('2d-vector')}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                      visualMode === '2d-vector'
+                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                        : 'text-text-muted hover:text-white'
+                    }`}
+                    title="High-Contrast 2D Vector Diagram (Accessible Mode)"
+                  >
+                    📐 2D SVG
+                  </button>
+                </div>
+
                 {/* Both Hands Toggle Button */}
                 <button
                   type="button"
@@ -867,20 +1458,6 @@ const FingerspellingStudio = () => {
                 >
                   <Users size={14} />
                   <span>{useBothHands ? 'Both Hands' : 'Single Hand'}</span>
-                </button>
-
-                {/* Skeleton Toggle Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowSkeleton((prev) => !prev)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                    showSkeleton
-                      ? 'border-primary bg-primary/20 text-primary'
-                      : 'border-border bg-black/5 dark:bg-white/5 text-text-muted hover:text-primary'
-                  }`}
-                  title="Toggle Hand Bones / Landmarks"
-                >
-                  Skeleton
                 </button>
 
                 {/* Speed Dropdown */}
@@ -898,25 +1475,35 @@ const FingerspellingStudio = () => {
               </div>
             </div>
 
-            {/* Prominent Active Word Ribbon HUD */}
-            <div className="p-3.5 rounded-2xl bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between gap-3 shadow-inner">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                  {selectedManualLetter ? 'Single Sign:' : 'Word Spelling:'}
-                </span>
-                <span className="text-base font-black font-mono tracking-widest text-emerald-700 dark:text-white">
-                  {selectedManualLetter ? selectedManualLetter : selectedWord}
-                </span>
+            {/* Prominent Active Word Ribbon HUD with Syllabus Metadata */}
+            <div className="p-3.5 rounded-2xl bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-inner">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    {selectedManualLetter ? 'Manual Alphabet:' : 'Word Spelling:'}
+                  </span>
+                  <span className="text-base font-black font-mono tracking-widest text-emerald-700 dark:text-white">
+                    {selectedManualLetter ? selectedManualLetter : selectedWord}
+                  </span>
+                </div>
+                {selectedIctMeta && !selectedManualLetter && (
+                  <div className="flex items-center gap-2 text-[10px] text-emerald-600 dark:text-emerald-300 font-semibold">
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30 font-bold">
+                      {selectedIctMeta.grade || 'O/L ICT'}
+                    </span>
+                    <span>{selectedIctMeta.unit || selectedIctMeta.topic}</span>
+                  </div>
+                )}
               </div>
 
               {/* Progress Letter Badges */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
                 {currentLetters.map((letter, idx) => {
                   const isActive = idx === activeLetterIndex;
                   return (
                     <span
                       key={idx}
-                      className={`inline-flex h-7 w-7 items-center justify-center rounded-lg font-mono text-xs font-black transition-all ${
+                      className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-mono text-xs font-black transition-all ${
                         isActive
                           ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/40 scale-110 ring-2 ring-emerald-400'
                           : 'bg-black/10 dark:bg-white/10 text-text-muted'
@@ -929,41 +1516,56 @@ const FingerspellingStudio = () => {
               </div>
             </div>
 
-            {/* Realistic Avatar Canvas Stage */}
+            {/* 3D WebGL / Vector Avatar Canvas Stage */}
             <div
               id="realistic-avatar-canvas-container"
-              className="relative aspect-square w-full rounded-2xl border border-border bg-gradient-to-b from-slate-950 via-[#060a12] to-black overflow-hidden shadow-inner flex items-center justify-center"
+              className="relative min-h-[520px] h-[550px] w-full rounded-2xl border border-border bg-gradient-to-b from-slate-950 via-[#060a12] to-black overflow-hidden shadow-inner flex items-center justify-center"
             >
-              <RealisticAvatarViewer
-                currentGesture={activeGestureData}
-                currentWord={activeLetterChar}
-                speed={speed === '0.5x' ? 'slow' : speed === '1.5x' ? 'fast' : 'normal'}
-                isPlaying={isPlaying}
-                showHandLandmarks={showSkeleton}
-                showFingerLabels={false}
-                useBothHands={useBothHands}
-                zoomLevel={1.15}
-              />
+              {visualMode !== '2d-vector' ? (
+                <ThreeHandAvatarViewer
+                  ref={threeViewerRef}
+                  activeLetter={activeLetterChar}
+                  speed={speed === '0.5x' ? 'slow' : speed === '1.5x' ? 'fast' : 'normal'}
+                  isPlaying={isPlaying}
+                  useBothHands={useBothHands}
+                  viewMode={visualMode === '3d-mesh' ? 'realistic' : visualMode === '3d-skeleton' ? 'skeleton' : 'hud'}
+                  isAutoRotate={isAutoRotate}
+                  onAutoRotateChange={setIsAutoRotate}
+                />
+              ) : (
+                <>
+                  <RealisticAvatarViewer
+                    currentGesture={activeGestureData}
+                    currentWord={activeLetterChar}
+                    speed={speed === '0.5x' ? 'slow' : speed === '1.5x' ? 'fast' : 'normal'}
+                    isPlaying={isPlaying}
+                    showHandLandmarks={showSkeleton}
+                    showFingerLabels={false}
+                    useBothHands={useBothHands}
+                    zoomLevel={1.15}
+                  />
 
-              {/* Active Letter Giant Illuminated HUD Tag */}
-              <div className="absolute top-3 left-4 pointer-events-none flex items-center gap-2">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black/60 backdrop-blur-md border border-emerald-500/40 text-3xl font-black font-mono text-emerald-300 shadow-xl">
-                  {activeLetterChar}
-                </span>
-                <div className="rounded-xl bg-black/60 backdrop-blur-md px-3 py-1.5 border border-white/10">
-                  <div className="text-[10px] font-bold uppercase text-emerald-400">ASL Pose</div>
-                  <div className="text-xs font-bold text-white truncate max-w-[150px]">
-                    {activeLetterMeta.handShape}
+                  {/* Active Letter Giant Illuminated HUD Tag for 2D Mode */}
+                  <div className="absolute top-3 left-4 pointer-events-none flex items-center gap-2 z-10">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black/60 backdrop-blur-md border border-emerald-500/40 text-3xl font-black font-mono text-emerald-300 shadow-xl">
+                      {activeLetterChar}
+                    </span>
+                    <div className="rounded-xl bg-black/60 backdrop-blur-md px-3 py-1.5 border border-white/10">
+                      <div className="text-[10px] font-bold uppercase text-emerald-400">ASL Pose</div>
+                      <div className="text-xs font-bold text-white truncate max-w-[150px]">
+                        {activeLetterMeta.handShape}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Hand Mode Indicator Pill */}
-              <div className="absolute bottom-3 right-4 pointer-events-none">
-                <span className="rounded-lg bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-mono text-emerald-400 border border-emerald-500/20">
-                  {useBothHands ? '● Dual Hands Mode' : '● Dominant Hand Mode'}
-                </span>
-              </div>
+                  {/* Hand Mode Indicator Pill for 2D Mode */}
+                  <div className="absolute bottom-3 right-4 pointer-events-none z-10">
+                    <span className="rounded-lg bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-mono text-emerald-400 border border-emerald-500/20">
+                      {useBothHands ? '● Dual Hands Mode' : '● Dominant Hand Mode'}
+                    </span>
+                  </div>
+                </>
+              )}
 
               {/* Recording Overlay if exporting video */}
               {isRecording && (
@@ -1018,8 +1620,8 @@ const FingerspellingStudio = () => {
             </div>
 
             {/* Media Controls Bar & Full Video Downloader */}
-            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
+            <div className="pt-2 pb-2 pr-0 sm:pr-24 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 relative z-10">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={handleStepPrev}
@@ -1059,23 +1661,80 @@ const FingerspellingStudio = () => {
                 >
                   <RotateCcw size={16} />
                 </button>
+
+                {/* Dedicated Stop / Start 360° Rotation Button while playing sign */}
+                <button
+                  type="button"
+                  id="btn-toggle-360-rotation"
+                  onClick={() => setIsAutoRotate((prev) => !prev)}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer min-h-[42px] border ${
+                    isAutoRotate
+                      ? 'bg-rose-600 hover:bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-600/40 animate-pulse'
+                      : 'bg-black/5 dark:bg-white/5 border-border text-text-muted hover:text-cyan-400 hover:border-cyan-500/40'
+                  }`}
+                  title={isAutoRotate ? 'Stop 360° Hand Rotation' : 'Start 360° Continuous Turntable Rotation'}
+                >
+                  {isAutoRotate ? (
+                    <>
+                      <span className="flex h-2 w-2 rounded-full bg-white animate-ping" />
+                      <span className="font-black">🛑 Stop 360° Spin</span>
+                    </>
+                  ) : (
+                    <>
+                      <RotateCw size={15} />
+                      <span>360° Spin</span>
+                    </>
+                  )}
+                </button>
               </div>
 
-              {/* Master Export Video Footage Button (1080p) */}
-              <button
-                type="button"
-                onClick={() => handleDownloadKeywordVideo()}
-                disabled={isRecording}
-                className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold transition-all shadow-md cursor-pointer ${
-                  downloadSuccess
-                    ? 'bg-emerald-500 text-slate-950'
-                    : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/20'
-                }`}
-                title="Capture & Download 1080p 60FPS Sign Video Footage"
-              >
-                {downloadSuccess ? <Check size={16} /> : <Download size={16} />}
-                <span>{downloadSuccess ? 'Downloaded HD Footage!' : `Download ${selectedWord} 1080p Video`}</span>
-              </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Master Export Video Footage Button (WebM) */}
+                <button
+                  type="button"
+                  id="btn-download-asl-video"
+                  onClick={() => handleDownloadKeywordVideo()}
+                  disabled={isRecording}
+                  className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold transition-all shadow-md cursor-pointer ${
+                    downloadSuccess
+                      ? 'bg-emerald-500 text-slate-950 font-black'
+                      : isRecording
+                      ? 'bg-emerald-700/60 text-white cursor-wait opacity-80'
+                      : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/20 active:scale-95'
+                  }`}
+                  title="Capture & Download Sign Video Footage in WEBM format"
+                >
+                  {downloadSuccess ? (
+                    <>
+                      <Check size={16} />
+                      <span>Downloaded WEBM Footage!</span>
+                    </>
+                  ) : isRecording ? (
+                    <>
+                      <Film size={16} className="animate-spin" />
+                      <span>Recording {recordProgress}%...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download size={16} />
+                      <span>Download {selectedWord} WEBM Video</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Direct Save Button Link if generated (100% bypasses popup blocker) */}
+                {downloadVideoUrl && (
+                  <a
+                    href={downloadVideoUrl}
+                    download={downloadFileName || `asl_sign_${selectedWord}.webm`}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-black bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-400/40 transition-all cursor-pointer animate-bounce hover:animate-none"
+                    title="Click to directly save WEBM video file"
+                  >
+                    <Download size={15} />
+                    <span>Save {downloadFileName || `${selectedWord}.webm`}</span>
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         </div>

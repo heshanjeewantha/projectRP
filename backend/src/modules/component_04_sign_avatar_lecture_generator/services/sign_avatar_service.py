@@ -1778,6 +1778,157 @@ KNOWN_ICT_ACRONYMS = [
     "1NF", "2NF", "3NF", "NTFS", "FAT32", "DOS", "AI", "IOT"
 ]
 
+GRADE_10_11_ICT_SYLLABUS = {
+    # Grade 10 - Unit 1: Introduction to ICT
+    "DATA": {"grade": "Grade 10", "unit": "Unit 1: Introduction to ICT", "topic": "Data & Information", "desc": "Raw unorganized facts, figures, and symbols."},
+    "INFORMATION": {"grade": "Grade 10", "unit": "Unit 1: Introduction to ICT", "topic": "Data & Information", "desc": "Processed, structured, and meaningful data."},
+    "COMMUNICATION": {"grade": "Grade 10", "unit": "Unit 1: Introduction to ICT", "topic": "Fundamentals", "desc": "Transmission of information between entities."},
+    "TECHNOLOGY": {"grade": "Grade 10", "unit": "Unit 1: Introduction to ICT", "topic": "Fundamentals", "desc": "Application of scientific knowledge for practical purposes."},
+    "ICT": {"grade": "Grade 10", "unit": "Unit 1: Introduction to ICT", "topic": "Fundamentals", "desc": "Information and Communication Technology."},
+    "SYSTEM": {"grade": "Grade 10", "unit": "Unit 1: Introduction to ICT", "topic": "Fundamentals", "desc": "Integrated set of components working together."},
+    "INPUT": {"grade": "Grade 10", "unit": "Unit 1: Introduction to ICT", "topic": "Data Processing", "desc": "Entering data and instructions into a computer system."},
+    "PROCESS": {"grade": "Grade 10", "unit": "Unit 1: Introduction to ICT", "topic": "Data Processing", "desc": "Manipulating and transforming raw input into information."},
+    "OUTPUT": {"grade": "Grade 10", "unit": "Unit 1: Introduction to ICT", "topic": "Data Processing", "desc": "Presenting processed results to the user."},
+    "STORAGE": {"grade": "Grade 10", "unit": "Unit 1: Introduction to ICT", "topic": "Data Processing", "desc": "Retaining digital data for ongoing or future use."},
+    "ACCURACY": {"grade": "Grade 10", "unit": "Unit 1: Introduction to ICT", "topic": "Quality of Info", "desc": "Freedom from mistakes or error in information."},
+    "SPEED": {"grade": "Grade 10", "unit": "Unit 1: Introduction to ICT", "topic": "Characteristics", "desc": "High computation rate of electronic processors."},
+
+    # Grade 10 - Unit 2: Architecture of Computer Systems & Hardware
+    "COMPUTER": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Hardware & Devices", "desc": "Electronic machine that accepts, stores, and processes data."},
+    "HARDWARE": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Hardware & Devices", "desc": "Physical tangible parts of a computer system."},
+    "SOFTWARE": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Software Systems", "desc": "Collection of instructions that tell hardware what to do."},
+    "KEYBOARD": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Input Devices", "desc": "Primary alphanumeric input peripheral device."},
+    "MOUSE": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Input Devices", "desc": "Handheld pointing device detecting two-dimensional motion."},
+    "SCANNER": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Input Devices", "desc": "Optical digitizer converting paper images to digital files."},
+    "MONITOR": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Output Devices", "desc": "Visual display screen for computer output."},
+    "PRINTER": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Output Devices", "desc": "Produces physical hardcopy printouts on paper."},
+    "CPU": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Central Processor", "desc": "Central Processing Unit executing program instructions."},
+    "ALU": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Central Processor", "desc": "Arithmetic Logic Unit performing math and comparisons."},
+    "CU": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Central Processor", "desc": "Control Unit directing data flow and timing signals."},
+    "REGISTER": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Internal Memory", "desc": "High-speed temporary storage cells inside the CPU."},
+    "RAM": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Main Memory", "desc": "Random Access Memory - volatile working storage."},
+    "ROM": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Main Memory", "desc": "Read Only Memory - non-volatile firmware storage."},
+    "CACHE": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "High-Speed Memory", "desc": "Ultra-fast buffer memory between CPU and RAM."},
+    "MOTHERBOARD": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Hardware & Devices", "desc": "Main printed circuit board interconnecting components."},
+    "BUS": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Data Transmission", "desc": "Communication pathway carrying electrical signals."},
+    "PORT": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Peripherals & Interfaces", "desc": "Physical or logical connection point for peripherals."},
+    "USB": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Peripherals & Interfaces", "desc": "Universal Serial Bus standard interface."},
+    "VGA": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Display Interfaces", "desc": "Video Graphics Array analog display connection."},
+    "HDMI": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Display Interfaces", "desc": "High-Definition Multimedia Interface for digital AV."},
+    "SSD": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Secondary Storage", "desc": "Solid State Drive using flash memory chips."},
+    "HDD": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Secondary Storage", "desc": "Hard Disk Drive magnetic mechanical storage."},
+    "BIOS": {"grade": "Grade 10", "unit": "Unit 2: Computer Architecture", "topic": "Firmware & Booting", "desc": "Basic Input/Output System initializing hardware at boot."},
+
+    # Grade 10 - Unit 3: Data Representation
+    "BINARY": {"grade": "Grade 10", "unit": "Unit 3: Data Representation", "topic": "Number Systems", "desc": "Base-2 number system using digits 0 and 1."},
+    "DECIMAL": {"grade": "Grade 10", "unit": "Unit 3: Data Representation", "topic": "Number Systems", "desc": "Base-10 standard numbering system."},
+    "OCTAL": {"grade": "Grade 10", "unit": "Unit 3: Data Representation", "topic": "Number Systems", "desc": "Base-8 numeral system using digits 0 to 7."},
+    "HEXADECIMAL": {"grade": "Grade 10", "unit": "Unit 3: Data Representation", "topic": "Number Systems", "desc": "Base-16 numeral system using 0-9 and A-F."},
+    "BIT": {"grade": "Grade 10", "unit": "Unit 3: Data Representation", "topic": "Units of Storage", "desc": "Binary digit, fundamental smallest unit of digital data."},
+    "BYTE": {"grade": "Grade 10", "unit": "Unit 3: Data Representation", "topic": "Units of Storage", "desc": "Group of 8 binary bits representing one character."},
+    "ASCII": {"grade": "Grade 10", "unit": "Unit 3: Data Representation", "topic": "Character Encoding", "desc": "American Standard Code for Information Interchange."},
+    "UNICODE": {"grade": "Grade 10", "unit": "Unit 3: Data Representation", "topic": "Character Encoding", "desc": "Universal multi-language digital character encoding."},
+    "LOGIC": {"grade": "Grade 10", "unit": "Unit 3: Data Representation", "topic": "Digital Logic", "desc": "Principles of Boolean reasoning and digital circuits."},
+    "GATE": {"grade": "Grade 10", "unit": "Unit 3: Data Representation", "topic": "Digital Logic", "desc": "Elementary physical electronic circuit implementing logic."},
+
+    # Grade 10 - Unit 4: Operating Systems
+    "OS": {"grade": "Grade 10", "unit": "Unit 4: Operating Systems", "topic": "System Software", "desc": "Operating System managing hardware and software resources."},
+    "OPERATING": {"grade": "Grade 10", "unit": "Unit 4: Operating Systems", "topic": "System Software", "desc": "Operating system system-level environment."},
+    "KERNEL": {"grade": "Grade 10", "unit": "Unit 4: Operating Systems", "topic": "OS Architecture", "desc": "Core heart of an OS directly controlling hardware."},
+    "GUI": {"grade": "Grade 10", "unit": "Unit 4: Operating Systems", "topic": "User Interfaces", "desc": "Graphical User Interface using windows, icons, and menus."},
+    "CLI": {"grade": "Grade 10", "unit": "Unit 4: Operating Systems", "topic": "User Interfaces", "desc": "Command Line Interface receiving text commands."},
+    "FILE": {"grade": "Grade 10", "unit": "Unit 4: Operating Systems", "topic": "File Management", "desc": "Named digital container storing related bytes on disk."},
+    "DIRECTORY": {"grade": "Grade 10", "unit": "Unit 4: Operating Systems", "topic": "File Management", "desc": "Folder organizing multiple digital files hierarchically."},
+    "LINUX": {"grade": "Grade 10", "unit": "Unit 4: Operating Systems", "topic": "OS Examples", "desc": "Open-source Unix-like operating system kernel."},
+    "WINDOWS": {"grade": "Grade 10", "unit": "Unit 4: Operating Systems", "topic": "OS Examples", "desc": "Popular proprietary GUI operating system by Microsoft."},
+    "NTFS": {"grade": "Grade 10", "unit": "Unit 4: Operating Systems", "topic": "File Systems", "desc": "New Technology File System with security and journaling."},
+    "FAT32": {"grade": "Grade 10", "unit": "Unit 4: Operating Systems", "topic": "File Systems", "desc": "File Allocation Table 32-bit legacy file system."},
+
+    # Grade 10 - Unit 5 & 6: Applications & Multimedia
+    "SPREADSHEET": {"grade": "Grade 10", "unit": "Unit 5: Office Applications", "topic": "Productivity Software", "desc": "Grid of rows and columns for calculations and analysis."},
+    "DOCUMENT": {"grade": "Grade 10", "unit": "Unit 5: Office Applications", "topic": "Word Processing", "desc": "Digital text composition with formatting and images."},
+    "PIXEL": {"grade": "Grade 10", "unit": "Unit 6: Multimedia", "topic": "Digital Graphics", "desc": "Picture element - tiny individual dot of a digital image."},
+    "IMAGE": {"grade": "Grade 10", "unit": "Unit 6: Multimedia", "topic": "Digital Graphics", "desc": "Visual raster or vector picture representation."},
+    "AUDIO": {"grade": "Grade 10", "unit": "Unit 6: Multimedia", "topic": "Sound & Media", "desc": "Digitized sound waveforms and acoustic signals."},
+    "VIDEO": {"grade": "Grade 10", "unit": "Unit 6: Multimedia", "topic": "Moving Visuals", "desc": "Sequence of visual frames played back in rapid succession."},
+
+    # Grade 10 - Unit 7: Database Management
+    "DATABASE": {"grade": "Grade 10", "unit": "Unit 7: Database Management", "topic": "Data Systems", "desc": "Structured electronic repository of organized records."},
+    "DBMS": {"grade": "Grade 10", "unit": "Unit 7: Database Management", "topic": "Database Software", "desc": "Database Management System controlling data access."},
+    "TABLE": {"grade": "Grade 10", "unit": "Unit 7: Database Management", "topic": "Relational Model", "desc": "Relation holding rows and columns of structured data."},
+    "RECORD": {"grade": "Grade 10", "unit": "Unit 7: Database Management", "topic": "Relational Model", "desc": "Single row/tuple containing attributes of one entity."},
+    "FIELD": {"grade": "Grade 10", "unit": "Unit 7: Database Management", "topic": "Relational Model", "desc": "Single column representing one property or attribute."},
+    "PRIMARY": {"grade": "Grade 10", "unit": "Unit 7: Database Management", "topic": "Keys & Constraints", "desc": "Primary Key uniquely identifying records in a table."},
+    "FOREIGN": {"grade": "Grade 10", "unit": "Unit 7: Database Management", "topic": "Keys & Constraints", "desc": "Foreign Key referencing a primary key in another table."},
+    "SQL": {"grade": "Grade 10", "unit": "Unit 7: Database Management", "topic": "Query Languages", "desc": "Structured Query Language for managing relational databases."},
+    "QUERY": {"grade": "Grade 10", "unit": "Unit 7: Database Management", "topic": "Query Languages", "desc": "Command requesting specific records or data actions."},
+
+    # Grade 11 - Unit 1: Programming & Algorithms
+    "PROGRAM": {"grade": "Grade 11", "unit": "Unit 1: Programming & Algorithms", "topic": "Software Development", "desc": "Executable sequence of coded instructions for a computer."},
+    "ALGORITHM": {"grade": "Grade 11", "unit": "Unit 1: Programming & Algorithms", "topic": "Logic & Problem Solving", "desc": "Step-by-step procedure for solving a computational problem."},
+    "FLOWCHART": {"grade": "Grade 11", "unit": "Unit 1: Programming & Algorithms", "topic": "Algorithm Design", "desc": "Diagrammatic visual representation of an algorithm."},
+    "PSEUDOCODE": {"grade": "Grade 11", "unit": "Unit 1: Programming & Algorithms", "topic": "Algorithm Design", "desc": "Informal high-level human-readable program logic."},
+    "VARIABLE": {"grade": "Grade 11", "unit": "Unit 1: Programming & Algorithms", "topic": "Coding Concepts", "desc": "Named memory location holding values that can change."},
+    "CONSTANT": {"grade": "Grade 11", "unit": "Unit 1: Programming & Algorithms", "topic": "Coding Concepts", "desc": "Fixed data value that cannot be altered during execution."},
+    "LOOP": {"grade": "Grade 11", "unit": "Unit 1: Programming & Algorithms", "topic": "Control Structures", "desc": "Repetitive execution of a code block until condition changes."},
+    "ARRAY": {"grade": "Grade 11", "unit": "Unit 1: Programming & Algorithms", "topic": "Data Structures", "desc": "Sequential collection of items of the same data type."},
+    "COMPILER": {"grade": "Grade 11", "unit": "Unit 1: Programming & Algorithms", "topic": "Language Translators", "desc": "Translates entire source code into machine code."},
+    "DEBUG": {"grade": "Grade 11", "unit": "Unit 1: Programming & Algorithms", "topic": "Software Testing", "desc": "Finding and resolving errors and bugs in code."},
+    "PYTHON": {"grade": "Grade 11", "unit": "Unit 1: Programming & Algorithms", "topic": "Languages", "desc": "High-level interpreted programming language in O/L syllabus."},
+
+    # Grade 11 - Unit 2: The Internet & World Wide Web
+    "INTERNET": {"grade": "Grade 11", "unit": "Unit 2: The Internet & WWW", "topic": "Global Networking", "desc": "Global network of interconnected computer networks."},
+    "WEB": {"grade": "Grade 11", "unit": "Unit 2: The Internet & WWW", "topic": "Information Systems", "desc": "World Wide Web collection of linked hypertext documents."},
+    "WWW": {"grade": "Grade 11", "unit": "Unit 2: The Internet & WWW", "topic": "Information Systems", "desc": "World Wide Web network of multimedia web pages."},
+    "BROWSER": {"grade": "Grade 11", "unit": "Unit 2: The Internet & WWW", "topic": "Web Clients", "desc": "Software application used to navigate and view web pages."},
+    "URL": {"grade": "Grade 11", "unit": "Unit 2: The Internet & WWW", "topic": "Web Addressing", "desc": "Uniform Resource Locator - unique web address of a resource."},
+    "HTTP": {"grade": "Grade 11", "unit": "Unit 2: The Internet & WWW", "topic": "Web Protocols", "desc": "Hypertext Transfer Protocol for web page communication."},
+    "HTTPS": {"grade": "Grade 11", "unit": "Unit 2: The Internet & WWW", "topic": "Web Protocols", "desc": "Secure HTTP encrypted with SSL/TLS encryption."},
+    "HTML": {"grade": "Grade 11", "unit": "Unit 2: The Internet & WWW", "topic": "Web Authoring", "desc": "Hypertext Markup Language structuring web pages."},
+    "DNS": {"grade": "Grade 11", "unit": "Unit 2: The Internet & WWW", "topic": "Name Resolution", "desc": "Domain Name System resolving domain names to IP addresses."},
+    "EMAIL": {"grade": "Grade 11", "unit": "Unit 2: The Internet & WWW", "topic": "Electronic Mail", "desc": "Electronic messaging exchanged over digital networks."},
+    "CLOUD": {"grade": "Grade 11", "unit": "Unit 2: The Internet & WWW", "topic": "Remote Computing", "desc": "On-demand internet access to remote computing and storage."},
+    "SEARCH": {"grade": "Grade 11", "unit": "Unit 2: The Internet & WWW", "topic": "Web Tools", "desc": "Software program searching internet databases for keywords."},
+
+    # Grade 11 - Unit 3: Computer Networks
+    "NETWORK": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Network Architecture", "desc": "Two or more interconnected computing devices sharing data."},
+    "LAN": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Network Scope", "desc": "Local Area Network confined to a small geographic area."},
+    "WAN": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Network Scope", "desc": "Wide Area Network spanning large geographic distances."},
+    "MAN": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Network Scope", "desc": "Metropolitan Area Network covering a town or city."},
+    "TOPOLOGY": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Network Layout", "desc": "Geometric physical or logical arrangement of network nodes."},
+    "ROUTER": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Network Devices", "desc": "Interconnecting device forwarding data packets between networks."},
+    "SWITCH": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Network Devices", "desc": "Intelligent device connecting nodes inside a LAN."},
+    "HUB": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Network Devices", "desc": "Multiport repeater broadcasting packets to all ports."},
+    "NIC": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Network Devices", "desc": "Network Interface Card providing physical connectivity."},
+    "IP": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Addressing & Protocols", "desc": "Internet Protocol identifying devices with a logical address."},
+    "TCP": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Addressing & Protocols", "desc": "Transmission Control Protocol ensuring reliable transmission."},
+    "PACKET": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Data Transmission", "desc": "Formatted segment of data routed across a packet network."},
+    "ETHERNET": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Wired Standards", "desc": "Standard wired networking technology for local area networks."},
+    "CABLE": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Transmission Media", "desc": "Physical guided transmission medium (UTP/Coaxial/Fiber)."},
+    "FIBER": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Transmission Media", "desc": "Optical fiber transmitting data pulses using light rays."},
+    "SERVER": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Client-Server", "desc": "Dedicated computer providing shared resources and services."},
+    "CLIENT": {"grade": "Grade 11", "unit": "Unit 3: Computer Networks", "topic": "Client-Server", "desc": "End-user node requesting resources from a centralized server."},
+
+    # Grade 11 - Unit 4: ICT in Society & Cyber Security
+    "SECURITY": {"grade": "Grade 11", "unit": "Unit 4: Cyber Security & Ethics", "topic": "Information Security", "desc": "Safeguarding computer systems and networks from threats."},
+    "CYBER": {"grade": "Grade 11", "unit": "Unit 4: Cyber Security & Ethics", "topic": "Information Security", "desc": "Relating to digital networks and virtual computer systems."},
+    "MALWARE": {"grade": "Grade 11", "unit": "Unit 4: Cyber Security & Ethics", "topic": "Threats", "desc": "Malicious software designed to disrupt, damage, or gain access."},
+    "VIRUS": {"grade": "Grade 11", "unit": "Unit 4: Cyber Security & Ethics", "topic": "Threats", "desc": "Malicious code replicating itself by inserting copies into files."},
+    "WORM": {"grade": "Grade 11", "unit": "Unit 4: Cyber Security & Ethics", "topic": "Threats", "desc": "Self-replicating malware propagating across networks without a host."},
+    "TROJAN": {"grade": "Grade 11", "unit": "Unit 4: Cyber Security & Ethics", "topic": "Threats", "desc": "Malware masquerading as legitimate software."},
+    "PHISHING": {"grade": "Grade 11", "unit": "Unit 4: Cyber Security & Ethics", "topic": "Threats", "desc": "Fraudulent attempt to steal sensitive data by disguising as trusted entity."},
+    "FIREWALL": {"grade": "Grade 11", "unit": "Unit 4: Cyber Security & Ethics", "topic": "Defenses", "desc": "Network security barrier monitoring incoming and outgoing traffic."},
+    "ENCRYPTION": {"grade": "Grade 11", "unit": "Unit 4: Cyber Security & Ethics", "topic": "Cryptography", "desc": "Encoding plaintext information into unreadable ciphertext."},
+    "PASSWORD": {"grade": "Grade 11", "unit": "Unit 4: Cyber Security & Ethics", "topic": "Authentication", "desc": "Secret string of characters verifying user identity."},
+    "BACKUP": {"grade": "Grade 11", "unit": "Unit 4: Cyber Security & Ethics", "topic": "Data Protection", "desc": "Duplicate copy of critical data preserved in case of loss."},
+
+    # Grade 11 - Unit 5: Emerging Technologies & IoT
+    "IOT": {"grade": "Grade 11", "unit": "Unit 5: Emerging Technologies", "topic": "Internet of Things", "desc": "Interconnected smart physical devices and sensors."},
+    "SENSOR": {"grade": "Grade 11", "unit": "Unit 5: Emerging Technologies", "topic": "Embedded Systems", "desc": "Input transducer detecting physical changes in environment."},
+    "AI": {"grade": "Grade 11", "unit": "Unit 5: Emerging Technologies", "topic": "Artificial Intelligence", "desc": "Machine simulation of human cognition and learning."},
+    "ROBOTICS": {"grade": "Grade 11", "unit": "Unit 5: Emerging Technologies", "topic": "Automation", "desc": "Design and operation of automated intelligent machines."},
+}
+
 
 async def get_asl_alphabet_reference() -> list[dict[str, Any]]:
     """Returns the full 26-letter ASL manual alphabet definitions and handshape metrics."""
@@ -1786,42 +1937,59 @@ async def get_asl_alphabet_reference() -> list[dict[str, Any]]:
 
 async def decompose_text_to_fingerspelling(payload: dict[str, Any]) -> dict[str, Any]:
     """
-    Decomposes notes or words into ICT keywords and 26-letter ASL fingerspelling sequences.
+    Decomposes notes or words into Grade 10 & 11 ICT keywords and separate general words,
+    providing 26-letter ASL fingerspelling sequences.
     """
     text = (payload.get("text") or "").strip()
     if not text:
         text = "RAM and CPU process binary data in Computer Systems"
 
-    # Extract words and detect ICT acronyms
+    # Extract words
     words = re.findall(r"[A-Za-z0-9]+", text)
-    detected_keywords = []
+    ict_keywords = []
+    other_words = []
     seen = set()
 
-    # Prioritize recognized ICT acronyms
     for w in words:
         upper = w.upper()
-        if upper in KNOWN_ICT_ACRONYMS and upper not in seen:
-            seen.add(upper)
-            detected_keywords.append({
-                "word": upper,
-                "isAcronym": True,
-                "letterCount": len(upper),
-                "letters": list(upper)
-            })
+        if upper in seen:
+            continue
 
-    # Add other unique words
-    for w in words:
-        upper = w.upper()
-        if upper not in seen and len(upper) >= 2:
+        is_acronym = upper in KNOWN_ICT_ACRONYMS
+        is_syllabus_keyword = upper in GRADE_10_11_ICT_SYLLABUS
+
+        if is_syllabus_keyword or is_acronym:
             seen.add(upper)
-            detected_keywords.append({
+            meta = GRADE_10_11_ICT_SYLLABUS.get(upper, {
+                "grade": "Grade 10/11",
+                "unit": "General O/L ICT",
+                "topic": "ICT Acronym & Concepts",
+                "desc": f"ICT technical term {upper}"
+            })
+            ict_keywords.append({
+                "word": upper,
+                "isAcronym": is_acronym,
+                "letterCount": len(upper),
+                "letters": list(upper),
+                "grade": meta.get("grade", "Grade 10/11"),
+                "unit": meta.get("unit", "O/L ICT"),
+                "topic": meta.get("topic", "ICT Core"),
+                "desc": meta.get("desc", ""),
+            })
+        elif len(upper) >= 2:
+            seen.add(upper)
+            other_words.append({
                 "word": upper,
                 "isAcronym": False,
                 "letterCount": len(upper),
-                "letters": list(upper)
+                "letters": list(upper),
             })
 
-    active_word = payload.get("selectedWord") or (detected_keywords[0]["word"] if detected_keywords else "RAM")
+    # Total combined keywords for backwards compatibility
+    combined_keywords = ict_keywords + other_words
+
+    default_word = ict_keywords[0]["word"] if ict_keywords else (other_words[0]["word"] if other_words else "RAM")
+    active_word = payload.get("selectedWord") or default_word
     active_letters = [char.upper() for char in active_word if char.upper() in ASL_26_ALPHABET_DATA]
 
     # Build letter animation timeline
@@ -1844,7 +2012,9 @@ async def decompose_text_to_fingerspelling(payload: dict[str, Any]) -> dict[str,
 
     return {
         "inputText": text,
-        "detectedKeywords": detected_keywords,
+        "ictKeywords": ict_keywords,
+        "otherWords": other_words,
+        "detectedKeywords": combined_keywords,
         "selectedWord": active_word,
         "totalLetters": len(active_letters),
         "letterTimeline": letter_timeline,
