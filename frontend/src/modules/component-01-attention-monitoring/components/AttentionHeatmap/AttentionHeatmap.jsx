@@ -83,7 +83,6 @@ const AttentionHeatmap = ({ videoDuration = 0 }) => {
         <div className="flex items-center gap-3 text-[9px] text-text-muted">
           <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-[#5fbf97]" />Focused</span>
           <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-[#fb923c]" />Distracted</span>
-          <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-[#ef4444]" />Phone</span>
           <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-[#f59e0b]" />Drowsy</span>
         </div>
       </div>

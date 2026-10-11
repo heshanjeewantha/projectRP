@@ -52,6 +52,28 @@ async def convert_sign_video_to_transcript(
     )
     result["video_id"] = doc["_id"]
     result["video_url"] = doc.get("video_url")
+
+    # Persist transcript in database and update video status to ready
+    from datetime import datetime
+    from bson import ObjectId
+    from src.common.database.connection import get_db
+    try:
+        db = get_db()
+        v_id = ObjectId(doc["_id"])
+        await db["transcripts"].update_one(
+            {"$or": [{"video_id": v_id}, {"video_id": doc["_id"]}]},
+            {"$set": {
+                "video_id": v_id,
+                "segments": result.get("segments", []),
+                "generated_at": datetime.utcnow(),
+                "source": "sign_classifier_cv",
+            }},
+            upsert=True,
+        )
+        await video_service.update_video_status(doc["_id"], "ready")
+    except Exception as err:
+        print(f"[Warning] Failed to persist converted sign transcript: {err}")
+
     return result
 
 

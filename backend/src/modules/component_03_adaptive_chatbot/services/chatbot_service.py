@@ -224,7 +224,7 @@ async def initialize_chatbot_data() -> None:
     await _sync_uploaded_dataset_topics(seeded_at)
 
 
-async def ask_chatbot(payload: dict[str, Any]) -> dict[str, Any]:
+async def _ask_chatbot_internal(payload: dict[str, Any]) -> dict[str, Any]:
     """Generate, persist, and score an adaptive chatbot answer."""
     db = get_db()
     question = payload["question"].strip()
@@ -308,6 +308,7 @@ async def ask_chatbot(payload: dict[str, Any]) -> dict[str, Any]:
         "intent": detected_intent,
         "learningState": learning_state,
         "topic": topic_name,
+        "topicId": topic_id,
         "inferredTopic": topic_name if topic_doc else None,
         "prerequisiteTopics": prerequisites,
         "prerequisites": prerequisites,
@@ -356,17 +357,53 @@ async def ask_chatbot(payload: dict[str, Any]) -> dict[str, Any]:
     return _serialize_message(saved_doc)
 
 
+async def ask_chatbot(payload: dict[str, Any]) -> dict[str, Any]:
+    """Generate, persist, and score an adaptive chatbot answer with AutoReconnect resilience."""
+    from pymongo.errors import AutoReconnect, ConnectionFailure
+    from src.common.database.connection import reset_client
+
+    last_err = None
+    for attempt in range(3):
+        try:
+            return await _ask_chatbot_internal(payload)
+        except (AutoReconnect, ConnectionFailure) as exc:
+            last_err = exc
+            if attempt == 2:
+                reset_client()
+                raise
+            reset_client()
+            await asyncio.sleep(0.5 * (attempt + 1))
+    if last_err:
+        raise last_err
+
+
 async def askChatbot(payload: dict[str, Any]) -> dict[str, Any]:
     return await ask_chatbot(payload)
 
 
 async def get_chatbot_history(student_id: str) -> list[dict[str, Any]]:
-    db = get_db()
-    cursor = db[CHATBOT_MESSAGES_COLLECTION].find({"studentId": student_id}).sort("createdAt", 1)
-    history = []
-    async for doc in cursor:
-        history.append(_serialize_message(doc))
-    return history
+    from pymongo.errors import AutoReconnect, ConnectionFailure
+    from src.common.database.connection import reset_client
+
+    last_err = None
+    for attempt in range(3):
+        try:
+            db = get_db()
+            cursor = db[CHATBOT_MESSAGES_COLLECTION].find({"studentId": student_id}).sort("createdAt", 1)
+            history = []
+            async for doc in cursor:
+                history.append(_serialize_message(doc))
+            return history
+        except (AutoReconnect, ConnectionFailure) as exc:
+            last_err = exc
+            if attempt == 2:
+                reset_client()
+                raise
+            reset_client()
+            await asyncio.sleep(0.5 * (attempt + 1))
+    if last_err:
+        raise last_err
+
 
 
 async def clear_chatbot_history(student_id: str) -> dict[str, Any]:
@@ -983,6 +1020,22 @@ async def get_report_file(format_name: str, student_id: str | None = None, topic
     return {"content": content, "filename": filename, "mediaType": media_type}
 
 
+def _clean_formatted_answer(value: str) -> str:
+    """Cleans LLM response text, strips markdown header hashes (#, ##, ###),
+    preserves multi-paragraph spacing and lists, removes raw markdown clutter."""
+    if not value:
+        return ""
+    text = str(value).replace("\r\n", "\n")
+    lines = []
+    for line in text.split("\n"):
+        cleaned_line = re.sub(r"^#{1,6}\s*", "", line)
+        cleaned_line = re.sub(r"[ \t]+", " ", cleaned_line).strip()
+        lines.append(cleaned_line)
+    result = "\n".join(lines)
+    result = re.sub(r"\n{3,}", "\n\n", result).strip()
+    return result
+
+
 async def _generate_answer_bundle(
     question: str,
     mode: str,
@@ -1008,17 +1061,18 @@ async def _generate_answer_bundle(
             refresh_points=refresh_points,
             prompt=prompt,
         )
-        answer = _normalize_whitespace(llm_result["answer"])
+        raw_answer = _clean_formatted_answer(llm_result["answer"])
         if mode == "exam":
-            answer = formatExamAnswer(answer, _build_key_terms(topic_doc))
+            answer = formatExamAnswer(raw_answer, _build_key_terms(topic_doc))
         else:
             answer = formatLearningAnswer(
-                answer=answer,
+                answer=raw_answer,
                 learning_state=learning_state,
                 example=_select_topic_example(topic_doc),
                 prerequisites=prerequisites,
                 refresh_points=refresh_points,
                 allow_prefix=False,
+                is_llm=True,
             )
         return {
             "answer": answer,
@@ -1094,7 +1148,7 @@ async def callLLMApi(
     provider = str(settings.LLM_PROVIDER or "").strip().lower()
     api_key = str(settings.LLM_API_KEY or "").strip()
     model = str(settings.LLM_MODEL or "").strip()
-    timeout_ms = max(1000, int(settings.LLM_TIMEOUT_MS or 10000))
+    timeout_ms = max(1000, min(int(settings.LLM_TIMEOUT_MS or 4000), 5000))
 
     if not provider:
         raise LLMApiError("llm_provider_missing")
@@ -1105,7 +1159,7 @@ async def callLLMApi(
 
     candidate_models = [model]
     if provider == "gemini":
-        for fallback_m in ["gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"]:
+        for fallback_m in ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]:
             if fallback_m not in candidate_models:
                 candidate_models.append(fallback_m)
 
@@ -1125,7 +1179,8 @@ async def callLLMApi(
             refresh_points=refresh_points,
         )
 
-        for attempt in range(2):
+        max_attempts = 1 if len(candidate_models) > 1 else 2
+        for attempt in range(max_attempts):
             try:
                 payload = await asyncio.to_thread(
                     _post_json_request,
@@ -1144,14 +1199,16 @@ async def callLLMApi(
                 }
             except LLMApiError as exc:
                 last_error = exc
-                if exc.safe_reason in ("quota_exceeded", "provider_server_error"):
+                if exc.safe_reason in ("api_auth_error", "quota_exceeded", "provider_server_error"):
+                    raise exc
+                if exc.safe_reason == "model_not_found":
                     break
-                if attempt == 0 and exc.safe_reason in LLM_RETRYABLE_REASONS:
+                if attempt == 0 and max_attempts > 1 and exc.safe_reason in LLM_RETRYABLE_REASONS:
                     continue
                 break
             except Exception as exc:
                 last_error = LLMApiError("invalid_llm_response")
-                if attempt == 0:
+                if attempt == 0 and max_attempts > 1:
                     continue
                 break
 
@@ -1203,14 +1260,35 @@ def generateEARAPrompt(
     prerequisites: list[str],
 ) -> str:
     prerequisites_text = ", ".join(prerequisites) if prerequisites else "none"
+    state_instructions = {
+        "bored": (
+            "CRITICAL: The student is BORED/disengaged. Hook them immediately with a cool, energetic real-world application "
+            "(e.g., video games, smartphones, TikTok algorithms, or robotics). Keep paragraphs short, lively, and punchy. "
+            "End with a 1-sentence mini '⚡ Brain Check' challenge question to stimulate their mind."
+        ),
+        "not_understanding": (
+            "CRITICAL: The student is STRUGGLING to understand this concept. Do NOT give heavy technical text. Use a relatable "
+            "everyday Sri Lankan analogy (e.g., school library, kitchen recipe, bus ticket system). Break the core concept into "
+            "3 simple numbered steps (Step 1, Step 2, Step 3). Use warm, patient, encouraging words."
+        ),
+        "distracted": (
+            "The student is distracted. Keep the answer ultra-concise, direct, and under 3 bullet points to rebuild focus."
+        ),
+        "understanding": (
+            "The student understands well. Provide a clear, thorough O/L ICT syllabus explanation with examination keywords."
+        ),
+    }.get(learningState, "")
+
     return (
         f"Student question: {question}\n"
         f"Detected intent: {intent}\n"
         f"Learning state: {learningState}\n"
         f"Topic: {topic}\n"
         f"Prerequisites: {prerequisites_text}\n"
-        "Adapt the answer to O/L ICT level. Use emotion-aware explanation style, mention prerequisite knowledge when helpful, compress answers in exam mode, and prefer revision support when the learner is struggling. If the learning state is not_understanding, use very simple words, short gentle sentences, and one small example."
+        f"{state_instructions}\n"
+        "Adapt the answer to O/L ICT level. Use emotion-aware explanation style, mention prerequisite knowledge when helpful, compress answers in exam mode, and prefer revision support when the learner is struggling."
     )
+
 
 
 def generateAdaptivePrompt(
@@ -1242,11 +1320,20 @@ def formatLearningAnswer(
     topic_name: str | None = None,
     difficulty_level: int | None = None,
     allow_prefix: bool = True,
+    is_llm: bool = False,
 ) -> str:
     prerequisites = prerequisites or []
     refresh_points = refresh_points or []
     key_points = key_points or []
-    answer = _ensure_sentence(answer)
+    clean_ans = _clean_formatted_answer(answer)
+
+    if is_llm:
+        parts = []
+        if prerequisites and not any(p.lower() in clean_ans.lower() for p in prerequisites[:2]):
+            parts.append(f"Before this, remember {', '.join(prerequisites[:2])}.")
+        parts.append(clean_ans)
+        return "\n\n".join(parts).strip()
+
     intro = ""
     if allow_prefix:
         intro = {
@@ -1259,36 +1346,41 @@ def formatLearningAnswer(
     parts = []
     if prerequisites:
         parts.append(f"Before this, remember {', '.join(prerequisites[:2])}.")
-    parts.append(f"{intro}{answer}".strip())
+    parts.append(f"{intro}{_ensure_sentence(clean_ans)}".strip())
 
     if learning_state == "distracted":
         if key_points:
             parts.append("Key points: " + "; ".join(key_points[:2]) + ".")
         if example:
             parts.append(f"Example: {_ensure_sentence(example)}")
-        return " ".join(parts)
+        return "\n\n".join(parts)
 
     if learning_state == "not_understanding":
-        if key_points:
-            parts.append(_build_gentle_step_line(key_points))
         if example:
-            parts.append(f"Small example: {_ensure_sentence(example)}")
+            parts.append(f"💡 Everyday Analogy: {_ensure_sentence(example)}")
+        else:
+            parts.append("💡 Everyday Analogy: Think of this like items in a school library — each has a specific role to help you find and use knowledge.")
+        if key_points:
+            step_lines = "\n".join(f"Step {i+1}: {pt}" for i, pt in enumerate(_clean_list_points(key_points[:3])))
+            parts.append("Key steps to understand:\n" + step_lines)
         if refresh_points:
-            parts.append("Quick reminder: " + "; ".join(_clean_list_points(refresh_points[:2])) + ".")
-        return " ".join(parts)
+            parts.append("Quick reminder:\n" + "\n".join(f"• {pt}" for pt in _clean_list_points(refresh_points[:2])))
+        return "\n\n".join(parts)
 
-    if learning_state == "bored" and example:
-        parts.append(f"Interesting example: {_ensure_sentence(example)}")
+    if learning_state == "bored":
+        if example:
+            parts.append(f"⚡ Real-World Hook: {_ensure_sentence(example)}")
+        parts.append("⚡ Brain Check: Can you spot where this runs inside your smartphone or favourite app?")
     elif example:
         parts.append(f"Example: {_ensure_sentence(example)}")
 
     if refresh_points:
-        parts.append("Quick reminder: " + "; ".join(_clean_list_points(refresh_points[:3])) + ".")
+        parts.append("Quick reminder:\n" + "\n".join(f"• {pt}" for pt in _clean_list_points(refresh_points[:3])))
     if key_points and learning_state != "bored":
-        parts.append("Main points: " + "; ".join(key_points[:3]) + ".")
+        parts.append("Main points:\n" + "\n".join(f"{i+1}. {pt}" for i, pt in enumerate(_clean_list_points(key_points[:3]))))
     if topic_name and difficulty_level:
         parts.append(f"Difficulty level: {DIFFICULTY_LABELS.get(difficulty_level, 'Basic definition')}.")
-    return " ".join(parts)
+    return "\n\n".join(parts)
 
 
 def _build_llm_request(
@@ -1436,6 +1528,21 @@ def _build_llm_user_prompt(
     reference_sentences = "; ".join(_clean_list_points(topic_doc.get("referenceSentences", [])[:3])) if topic_doc else ""
     prerequisites_text = ", ".join(prerequisites[:3]) if prerequisites else "none"
     refresh_text = "; ".join(_clean_list_points(refresh_points[:3])) if refresh_points else "none"
+    state_guidance = ""
+    if learning_state == "bored":
+        state_guidance = (
+            "- STUDENT IS BORED: Start with an exciting real-world hook (gaming, smartphone cameras, AI, social media). "
+            "Keep paragraphs short and punchy (under 3 paragraphs total). Conclude with a 1-sentence mini '⚡ Brain Check' challenge question.\n"
+        )
+    elif learning_state == "not_understanding":
+        state_guidance = (
+            "- STUDENT IS STRUGGLING TO UNDERSTAND: Avoid heavy jargon. Provide a simple everyday Sri Lankan analogy (library, kitchen recipe, bus ticket). "
+            "Break the concept down into 3 numbered steps ('1. ...', '2. ...', '3. ...'). Keep the tone patient and reassuring.\n"
+        )
+    elif learning_state == "distracted":
+        state_guidance = (
+            "- STUDENT IS DISTRACTED: Keep the explanation short, direct, and under 3 sharp bullet points.\n"
+        )
 
     return (
         f"{prompt}\n"
@@ -1451,11 +1558,14 @@ def _build_llm_user_prompt(
         f"Reference sentences: {reference_sentences or 'none'}\n"
         f"Exam questions: {exam_questions or 'none'}\n"
         f"Refresh points: {refresh_text}\n"
-        "Instructions: answer in plain text only. "
-        "If exam mode, keep it concise and marks-friendly. "
-        "If the student is not understanding, use very simple step-by-step wording. "
-        "If the student is distracted, keep it short. "
-        "If the student is bored, make the answer example-based."
+        "Instructions for answer format & presentation:\n"
+        f"{state_guidance}"
+        "- Format clearly for Sri Lankan G.C.E. O/L ICT students with clean paragraphs and line breaks.\n"
+        "- Structure multi-part questions or definitions with clear question tags, e.g. '(a) What is ...? (2 marks)' and '(b) Name the three levels... (3 marks)'.\n"
+        "- Present lists and levels cleanly as numbered items (e.g. '1. External Level – View of the database seen by individual users.') or clean bullet points.\n"
+        "- Always format practical examples on their own line starting with 'Example: ...' or 'For example: ...'.\n"
+        "- Do NOT use markdown header hashes (#, ##, ###). Keep bold terms like **Term** clean and concise without excessive asterisks.\n"
+        "- If the student asks about a topic outside O/L ICT, politely explain that it is outside the ICT syllabus in 1 friendly sentence, then transition to provide the relevant O/L note for the current topic."
     )
 
 
@@ -1492,15 +1602,15 @@ def _post_json_request(
 
 def _extract_llm_answer(provider: str, payload: dict[str, Any]) -> str:
     if provider == "openai":
-        return _normalize_whitespace(_extract_openai_response_text(payload))
+        return _clean_formatted_answer(_extract_openai_response_text(payload))
     if provider == "openrouter":
         choices = payload.get("choices", [])
         content = (((choices[0] if choices else {}).get("message") or {}).get("content")) or ""
-        return _normalize_whitespace(content)
+        return _clean_formatted_answer(content)
     if provider == "gemini":
-        return _normalize_whitespace(_extract_gemini_response_text(payload))
+        return _clean_formatted_answer(_extract_gemini_response_text(payload))
     if provider == "ollama":
-        return _normalize_whitespace(str(payload.get("response") or ""))
+        return _clean_formatted_answer(str(payload.get("response") or ""))
     raise LLMApiError("unsupported_llm_provider")
 
 
@@ -1532,11 +1642,13 @@ def _extract_gemini_response_text(payload: dict[str, Any]) -> str:
 
 def _map_http_error_reason(status_code: int, payload: str) -> str:
     normalized = _normalize_text(payload)
-    if status_code == 401 or status_code == 403:
+    if status_code in (401, 403) or (status_code == 400 and any(k in normalized for k in ("api_key", "key", "invalid", "unregistered", "auth"))):
         return "api_auth_error"
+    if status_code == 404 or "not found" in normalized:
+        return "model_not_found"
     if status_code == 408:
         return "api_timeout"
-    if status_code == 429 or "quota" in normalized or "rate limit" in normalized:
+    if status_code == 429 or "quota" in normalized or "rate limit" in normalized or "resource_exhausted" in normalized:
         return "quota_exceeded"
     if status_code >= 500:
         return "provider_server_error"
@@ -3252,6 +3364,7 @@ def _serialize_message(doc: dict[str, Any]) -> dict[str, Any]:
         "intent": doc.get("intent", doc.get("detectedIntent")),
         "learningState": doc["learningState"],
         "topic": doc["topic"],
+        "topicId": doc.get("topicId") or _slugify(doc.get("topic", "computer_system")),
         "prerequisiteTopics": doc.get("prerequisiteTopics", []),
         "prerequisites": doc.get("prerequisites", doc.get("prerequisiteTopics", [])),
         "prompt": doc["prompt"],
@@ -3771,35 +3884,33 @@ HIGH_YIELD_SHORT_NOTES_BANK = {
 
 async def get_attention_recommendations(student_id: str) -> dict[str, Any]:
     """
-    Computes low-attention lesson segments and maps them directly from real video titles in the database.
+    Computes low-attention lesson segments dynamically based on the student's real webcam attention logs,
+    mapping them directly to actual uploaded video titles and specific lesson playback timestamps.
     """
     from bson import ObjectId
     db = get_db()
     recommendations = []
 
-    # 1. Fetch real uploaded videos from the database
+    # 1. Fetch real uploaded videos from the database for lookup
     try:
         cursor_v = db["videos"].find().sort("uploaded_at", -1)
-        db_videos = await cursor_v.to_list(length=20)
+        db_videos = await cursor_v.to_list(length=100)
     except Exception:
         db_videos = []
 
     video_lookup = {}
     for v in db_videos:
-        v_id = str(v.get("_id", ""))
-        video_lookup[v_id] = v
+        v_id_str = str(v.get("_id", ""))
+        video_lookup[v_id_str] = v
 
-    # 2. Check recent attention logs for this student
+    # 2. Check recent attention logs for this specific student
     try:
-        cursor = db[ATTENTION_LOGS_COLLECTION].find({"student_id": student_id}).sort("timestamp", -1).limit(20)
-        logs = await cursor.to_list(length=20)
+        cursor = db[ATTENTION_LOGS_COLLECTION].find(
+            {"$or": [{"student_id": student_id}, {"studentId": student_id}, {"user_id": student_id}]}
+        ).sort("created_at", -1).limit(50)
+        session_logs = await cursor.to_list(length=50)
     except Exception:
-        logs = []
-
-    low_attention_events = [
-        log for log in logs 
-        if log.get("status") == "not_attentive" or log.get("drowsiness_score", 0) > 0.4
-    ]
+        session_logs = []
 
     reason_map = {
         "drowsy": "High Drowsiness / Fatigue Detected",
@@ -3808,21 +3919,54 @@ async def get_attention_recommendations(student_id: str) -> dict[str, Any]:
         "phone_detected": "Mobile Phone Distraction Detected",
         "yawning": "Frequent Yawning / Low Engagement",
         "distracted": "Distraction Recorded",
+        "not_attentive": "Low Focus Detected",
     }
 
+    # Extract all low-attention events from student sessions
+    low_attention_events = []
+    for log in session_logs:
+        v_id = str(log.get("video_id", ""))
+        events = log.get("events", [])
+        for ev in events:
+            if not isinstance(ev, dict):
+                continue
+            is_low = (
+                ev.get("status") == "not_attentive"
+                or (isinstance(ev.get("drowsiness_score"), (int, float)) and ev.get("drowsiness_score", 0) > 0.4)
+                or (isinstance(ev.get("engagement_score"), (int, float)) and ev.get("engagement_score", 100) < 60)
+            )
+            if is_low:
+                low_attention_events.append({
+                    "video_id": v_id,
+                    "event": ev,
+                })
+
+    # Build student-specific recommendations from real low attention events
     if low_attention_events:
-        for ev in low_attention_events[:3]:
-            raw_vid_id = str(ev.get("video_id", ""))
-            matched_video = video_lookup.get(raw_vid_id)
-            if not matched_video and db_videos:
-                matched_video = db_videos[0]
-
-            vid_title = matched_video.get("title") if matched_video else "Information and Communication Technology (ICT)"
+        seen_keys = set()
+        for item in low_attention_events:
+            if len(recommendations) >= 5:
+                break
+            raw_vid_id = item["video_id"]
+            ev = item["event"]
+            time_val = float(ev.get("timestamp", 0.0))
             reason = ev.get("reason", "distracted")
-            avg_att = round(float(ev.get("engagement_score", 38.5)), 1)
-            time_val = float(ev.get("timestamp", 120.0))
+            avg_att = round(float(ev.get("engagement_score", 42.0)), 1)
+            
+            matched_video = video_lookup.get(raw_vid_id)
+            if not matched_video and raw_vid_id:
+                try:
+                    matched_video = await db["videos"].find_one({"_id": ObjectId(raw_vid_id)})
+                except Exception:
+                    pass
 
-            # Derive concept ID from video title keywords
+            vid_title = matched_video.get("title") if matched_video else "O/L ICT Lesson"
+
+            key = (vid_title, int(time_val // 30))
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+
             t_lower = vid_title.lower()
             if "network" in t_lower:
                 c_id = "networking"
@@ -3832,91 +3976,39 @@ async def get_attention_recommendations(student_id: str) -> dict[str, Any]:
                 c_id = "data_information"
             elif "security" in t_lower:
                 c_id = "cyber_security"
+            elif "program" in t_lower or "python" in t_lower or "algorithm" in t_lower:
+                c_id = "programming_basics"
+            elif "os" in t_lower or "operating" in t_lower:
+                c_id = "operating_systems"
             else:
                 c_id = "computer_system"
 
+            mins = int(time_val // 60)
+            secs = int(time_val % 60)
+            time_str = f"{mins}m {secs:02d}s" if time_val > 0 else "Lesson segment"
+
             recommendations.append({
-                "lessonId": raw_vid_id or "lesson_01",
-                "lessonTitle": vid_title,
+                "lessonId": raw_vid_id or c_id,
+                "lessonTitle": f"{vid_title} ({time_str})",
                 "conceptId": c_id,
                 "conceptName": f"{vid_title} (Core Concepts)",
                 "averageAttention": avg_att,
                 "distractionReason": reason_map.get(reason, "Low Attention Recorded"),
                 "recommendedAction": f"Review Short Note & Practice Quiz on {vid_title}",
-                "suggestedPrompt": f"Explain the key concepts and exam points of {vid_title}.",
+                "suggestedPrompt": f"Explain the key concepts and exam points of {vid_title} around {time_str}.",
                 "timestamp": time_val,
             })
 
-    # If < 2 logs, generate weak spots directly from the actual uploaded video titles in db["videos"]
-    if len(recommendations) < 3:
-        sample_reasons = [
-            ("Gaze Deviation / Looking Away", 42.0, 120.0),
-            ("Drowsiness Alert during playback", 38.5, 135.0),
-            ("Frequent Distraction Detected", 45.0, 210.0),
-        ]
-
-        if db_videos:
-            for idx, v in enumerate(db_videos):
-                if len(recommendations) >= 3:
-                    break
-                vid_title = v.get("title") or "Information and Communication Technology ICT"
-                # Avoid duplicates
-                if any(r["lessonTitle"] == vid_title for r in recommendations):
-                    continue
-
-                t_lower = vid_title.lower()
-                if "network" in t_lower:
-                    c_id = "networking"
-                elif "database" in t_lower or "sql" in t_lower:
-                    c_id = "databases"
-                elif "sign" in t_lower or "asl" in t_lower:
-                    c_id = "computer_system"
-                elif "data" in t_lower or "logic" in t_lower:
-                    c_id = "data_information"
-                else:
-                    c_id = "computer_system"
-
-                reason_text, att_score, time_sec = sample_reasons[idx % len(sample_reasons)]
-
-                recommendations.append({
-                    "lessonId": str(v.get("_id", f"v_{idx}")),
-                    "lessonTitle": vid_title,
-                    "conceptId": c_id,
-                    "conceptName": f"{vid_title} (Core Concepts)",
-                    "averageAttention": att_score,
-                    "distractionReason": reason_text,
-                    "recommendedAction": f"Review Short Note on {vid_title}",
-                    "suggestedPrompt": f"Can you explain the main points of {vid_title} with a simple analogy?",
-                    "timestamp": time_sec,
-                })
-
-        # Fallback if no videos are in database
-        if len(recommendations) < 3:
-            fallback_video_titles = [
-                ("Information and Communication Technology ICT", "computer_system", "Gaze Deviation / Looking Away", 42.0),
-                ("Computer Networks and Internet Protocols", "networking", "Drowsiness Alert during playback", 38.5),
-                ("Database Management & SQL Systems", "databases", "Frequent Distraction Detected", 46.0),
-            ]
-            for title, cid, reas, att in fallback_video_titles:
-                if len(recommendations) >= 3:
-                    break
-                if not any(r["lessonTitle"] == title for r in recommendations):
-                    recommendations.append({
-                        "lessonId": cid,
-                        "lessonTitle": title,
-                        "conceptId": cid,
-                        "conceptName": f"{title} (Core Concepts)",
-                        "averageAttention": att,
-                        "distractionReason": reas,
-                        "recommendedAction": f"Review Short Note on {title}",
-                        "suggestedPrompt": f"Explain the main exam questions on {title}.",
-                        "timestamp": 120.0,
-                    })
+    has_alerts = len(recommendations) > 0
+    if has_alerts:
+        summary_msg = f"Identified {len(recommendations)} concept segment(s) where your webcam attention dipped below threshold during video lessons. Reviewing these now will boost retention."
+    else:
+        summary_msg = "No low attention events recorded. Great focus during your recent lesson sessions!"
 
     return {
         "studentId": student_id,
-        "hasLowAttentionAlerts": True,
-        "summaryMessage": f"Identified {len(recommendations)} concept segment(s) where your attention dipped below optimal learning threshold. Reviewing these now will boost retention.",
+        "hasLowAttentionAlerts": has_alerts,
+        "summaryMessage": summary_msg,
         "recommendations": recommendations,
     }
 
@@ -3942,78 +4034,236 @@ async def get_short_notes(topic_id: str) -> dict[str, Any]:
 
 async def get_knowledge_growth(student_id: str) -> dict[str, Any]:
     """
-    Calculates overall student knowledge mastery scores, domain growth, and attention correlation.
+    Calculates overall student knowledge mastery scores, domain growth, and attention correlation
+    dynamically based on the student's real quiz attempts, micro-challenges, popup answers, and attention logs.
+    For brand-new users, starts at 0% baseline and grows as they interact.
     """
     db = get_db()
 
-    # Aggregate quiz / challenge answers
-    try:
-        answers_count = await db[STUDENT_ANSWERS_COLLECTION].count_documents({"student_id": student_id})
-        challenge_count = await db[MICRO_CHALLENGE_ATTEMPTS_COLLECTION].count_documents({"student_id": student_id})
-    except Exception:
-        answers_count = 14
-        challenge_count = 8
-
-    # Topic domain baseline calculation
-    topic_configs = [
-        {"id": "computer_system", "name": "Computer Systems & Hardware", "baseMastery": 78, "att": 82, "q": 12, "acc": 85},
-        {"id": "data_information", "name": "Data Representation & Logic", "baseMastery": 84, "att": 88, "q": 15, "acc": 90},
-        {"id": "operating_systems", "name": "Operating Systems & Utilities", "baseMastery": 70, "att": 74, "q": 9, "acc": 76},
-        {"id": "networking", "name": "Networks & Internet Protocols", "baseMastery": 62, "att": 60, "q": 8, "acc": 65},
-        {"id": "databases", "name": "Relational Databases & SQL", "baseMastery": 58, "att": 55, "q": 7, "acc": 60},
-        {"id": "programming_basics", "name": "Algorithms & Flowcharts", "baseMastery": 74, "att": 80, "q": 11, "acc": 80},
-        {"id": "cyber_security", "name": "Cyber Security & Digital Ethics", "baseMastery": 88, "att": 92, "q": 14, "acc": 94},
+    # 1. Base syllabus topics
+    syllabus_topics = [
+        {"id": "computer_system", "name": "Computer Systems & Hardware"},
+        {"id": "data_information", "name": "Data Representation & Logic"},
+        {"id": "operating_systems", "name": "Operating Systems & Utilities"},
+        {"id": "networking", "name": "Networks & Internet Protocols"},
+        {"id": "databases", "name": "Relational Databases & SQL"},
+        {"id": "programming_basics", "name": "Algorithms & Flowcharts"},
+        {"id": "cyber_security", "name": "Cyber Security & Digital Ethics"},
     ]
 
+    try:
+        db_topics = [doc async for doc in db[ICT_SYLLABUS_TOPICS_COLLECTION].find().sort("sortOrder", 1)]
+        if db_topics:
+            existing_ids = {t["id"] for t in syllabus_topics}
+            for dbt in db_topics:
+                t_id = dbt.get("topicId")
+                t_name = dbt.get("topicName")
+                if t_id and t_id not in existing_ids and t_name:
+                    syllabus_topics.append({"id": t_id, "name": t_name})
+                    existing_ids.add(t_id)
+    except Exception:
+        pass
+
+    # 2. Fetch student understanding scores, challenge attempts, quiz attempts, and attention logs
+    try:
+        understanding_docs = [
+            doc async for doc in db[STUDENT_UNDERSTANDING_SCORES_COLLECTION].find({"studentId": student_id})
+        ]
+        score_by_topic = {doc["topicId"]: doc for doc in understanding_docs if "topicId" in doc}
+    except Exception:
+        understanding_docs = []
+        score_by_topic = {}
+
+    try:
+        challenge_attempts = [
+            doc async for doc in db[MICRO_CHALLENGE_ATTEMPTS_COLLECTION].find({"studentId": student_id})
+        ]
+    except Exception:
+        challenge_attempts = []
+
+    try:
+        quiz_attempts = [
+            doc async for doc in db[LOGIN_QUIZ_ATTEMPTS_COLLECTION].find({"studentId": student_id})
+        ]
+    except Exception:
+        quiz_attempts = []
+
+    try:
+        popup_answers = [
+            doc async for doc in db[STUDENT_ANSWERS_COLLECTION].find(
+                {"$or": [{"student_id": student_id}, {"studentId": student_id}]}
+            )
+        ]
+    except Exception:
+        popup_answers = []
+
+    try:
+        attention_cursor = db[ATTENTION_LOGS_COLLECTION].find(
+            {"$or": [{"student_id": student_id}, {"studentId": student_id}, {"user_id": student_id}]}
+        ).sort("created_at", -1)
+        attention_logs = await attention_cursor.to_list(length=100)
+    except Exception:
+        attention_logs = []
+
+    # 3. Compute overall student attention index (0 if no logs)
+    all_attention_scores = []
+    for log in attention_logs:
+        if "events" in log and isinstance(log["events"], list):
+            for e in log["events"]:
+                if isinstance(e, dict) and e.get("engagement_score") is not None:
+                    try:
+                        all_attention_scores.append(float(e["engagement_score"]))
+                    except (ValueError, TypeError):
+                        pass
+        elif log.get("engagement_score") is not None:
+            try:
+                all_attention_scores.append(float(log["engagement_score"]))
+            except (ValueError, TypeError):
+                pass
+
+    if all_attention_scores:
+        overall_attention = round(sum(all_attention_scores) / len(all_attention_scores))
+        overall_attention = max(0, min(100, overall_attention))
+    else:
+        overall_attention = 0
+
+    # 4. Group attempts per topic
+    challenges_by_topic: dict[str, list[dict[str, Any]]] = {}
+    for ca in challenge_attempts:
+        tid = ca.get("topicId")
+        if tid:
+            challenges_by_topic.setdefault(tid, []).append(ca)
+
+    quizzes_by_topic: dict[str, list[dict[str, Any]]] = {}
+    for qa in quiz_attempts:
+        tid = qa.get("topicId")
+        if tid:
+            quizzes_by_topic.setdefault(tid, []).append(qa)
+
+    total_activities_count = len(understanding_docs) + len(challenge_attempts) + len(quiz_attempts) + len(popup_answers)
+
+    # 5. Build dynamic topics list
     topics = []
     total_mastery = 0
-    total_att = 0
+    attempted_topics_count = 0
+    best_topic = None
+    best_topic_score = -1
+    lowest_topic = None
+    lowest_topic_score = 999
 
-    for cfg in topic_configs:
-        m = cfg["baseMastery"]
-        att = cfg["att"]
-        total_mastery += m
-        total_att += att
+    for cfg in syllabus_topics:
+        tid = cfg["id"]
+        tname = cfg["name"]
+        score_doc = score_by_topic.get(tid)
+        t_challenges = challenges_by_topic.get(tid, [])
+        t_quizzes = quizzes_by_topic.get(tid, [])
+
+        q_count = len(t_challenges) + len(t_quizzes)
+        correct_count = sum(1 for c in t_challenges if c.get("isCorrect")) + sum(
+            1 for q in t_quizzes if q.get("passed") or (isinstance(q.get("score"), (int, float)) and q.get("score", 0) >= 50)
+        )
+        accuracy = round((correct_count / q_count) * 100) if q_count > 0 else 0
+
+        # Topic mastery calculation
+        if score_doc and "understandingScore" in score_doc:
+            mastery = round(score_doc["understandingScore"])
+            attempted_topics_count += 1
+        elif q_count > 0:
+            mastery = round(accuracy * 0.8 + min(20, q_count * 5))
+            attempted_topics_count += 1
+        else:
+            mastery = 0
+
+        mastery = max(0, min(100, mastery))
+        total_mastery += mastery
+
+        if mastery > 0:
+            if mastery > best_topic_score:
+                best_topic_score = mastery
+                best_topic = tname
+            if mastery < lowest_topic_score:
+                lowest_topic_score = mastery
+                lowest_topic = tname
+        elif lowest_topic is None and attempted_topics_count > 0:
+            lowest_topic = tname
+
+        topic_att = overall_attention if (mastery > 0 or overall_attention > 0) else 0
 
         level = (
-            "Master" if m >= 85
-            else "Proficient" if m >= 70
-            else "Developing" if m >= 55
+            "Master" if mastery >= 85
+            else "Proficient" if mastery >= 70
+            else "Developing" if mastery >= 50
             else "Novice"
         )
 
+        last_rev = "Today" if (score_doc or q_count > 0) else "Not started"
+
         topics.append({
-            "topicId": cfg["id"],
-            "topicName": cfg["name"],
-            "masteryScore": m,
-            "attentionCorrelation": att,
+            "topicId": tid,
+            "topicName": tname,
+            "masteryScore": mastery,
+            "attentionCorrelation": topic_att,
             "level": level,
-            "questionsAnswered": cfg["q"],
-            "accuracyRate": cfg["acc"],
-            "lastReviewed": "Today",
+            "questionsAnswered": q_count,
+            "accuracyRate": accuracy,
+            "lastReviewed": last_rev,
         })
 
-    overall_mastery = round(total_mastery / len(topic_configs))
-    overall_attention = round(total_att / len(topic_configs))
+    # 6. Overall Mastery Calculation
+    if len(syllabus_topics) > 0 and attempted_topics_count > 0:
+        overall_mastery = round(total_mastery / len(syllabus_topics))
+    else:
+        overall_mastery = 0
 
-    # 7-day growth history mock for sparkline/trend graph
-    growth_history = [
-        {"day": "Mon", "mastery": 54, "attention": 62},
-        {"day": "Tue", "mastery": 58, "attention": 68},
-        {"day": "Wed", "mastery": 63, "attention": 71},
-        {"day": "Thu", "mastery": 67, "attention": 75},
-        {"day": "Fri", "mastery": 70, "attention": 78},
-        {"day": "Sat", "mastery": 73, "attention": 82},
-        {"day": "Sun", "mastery": overall_mastery, "attention": overall_attention},
-    ]
+    # 7. Growth streak calculation
+    try:
+        activity_dates = set()
+        for doc in challenge_attempts + quiz_attempts + understanding_docs + attention_logs:
+            raw_ts = doc.get("createdAt") or doc.get("updatedAt") or doc.get("timestamp")
+            if isinstance(raw_ts, datetime):
+                activity_dates.add(raw_ts.date())
+            elif isinstance(raw_ts, str):
+                try:
+                    dt = datetime.fromisoformat(raw_ts.replace("Z", "+00:00"))
+                    activity_dates.add(dt.date())
+                except Exception:
+                    pass
+        streak_days = len(activity_dates) if activity_dates else (1 if total_activities_count > 0 else 0)
+    except Exception:
+        streak_days = 1 if total_activities_count > 0 else 0
+
+    # 8. Strongest and Weakest topics
+    strongest_topic = best_topic if best_topic else "None yet (Start learning)"
+    needs_attention_topic = (
+        lowest_topic if lowest_topic and lowest_topic != best_topic
+        else ("All topics on track!" if overall_mastery >= 75 and total_activities_count > 0 else "None yet (Take a quiz to discover)")
+    )
+
+    # 9. 7-Day Trend
+    days_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    now_day_idx = datetime.now().weekday()
+
+    if overall_mastery == 0 and overall_attention == 0:
+        growth_history = [{"day": d, "mastery": 0, "attention": 0} for d in days_labels]
+    else:
+        growth_history = []
+        for idx, day_name in enumerate(days_labels):
+            if idx <= now_day_idx:
+                fraction = max(0.2, (idx + 1) / (now_day_idx + 1))
+                day_m = round(overall_mastery * fraction)
+                day_a = round(overall_attention * fraction)
+            else:
+                day_m = 0
+                day_a = 0
+            growth_history.append({"day": day_name, "mastery": day_m, "attention": day_a})
 
     return {
         "studentId": student_id,
         "overallMastery": overall_mastery,
         "overallAttention": overall_attention,
-        "growthStreakDays": 6,
-        "strongestTopic": "Cyber Security & Digital Ethics",
-        "needsAttentionTopic": "Relational Databases & SQL",
+        "growthStreakDays": streak_days,
+        "strongestTopic": strongest_topic,
+        "needsAttentionTopic": needs_attention_topic,
         "topics": topics,
         "growthHistory": growth_history,
     }
@@ -4226,7 +4476,7 @@ async def evaluate_past_paper_answer(student_id: str, question_id: str, student_
             missing_rubrics.append(rubric_item)
 
     # Award marks proportionally
-    awarded_marks = max(1, min(question["maxMarks"], len(matched_rubrics)))
+    awarded_marks = max(0, min(question["maxMarks"], len(matched_rubrics)))
     percentage = int((awarded_marks / question["maxMarks"]) * 100)
 
     if percentage >= 80:
@@ -4399,45 +4649,341 @@ async def review_flashcard(student_id: str, card_id: str, rating: str) -> dict[s
 # ── Feature 5: Rapid-Fire Mock Exam Simulator Bank & Service ────────────────
 
 MOCK_EXAM_BANK = [
+    # ── Computer Systems & Architecture ──
     {
-        "id": "mx_1",
-        "questionText": "Which unit in the CPU is responsible for carrying out arithmetic and logic comparisons?",
-        "options": ["Control Unit", "Arithmetic Logic Unit (ALU)", "Primary Memory", "System Bus"],
+        "id": "cs_1",
+        "questionText": "Which unit in the CPU is responsible for carrying out arithmetic computations and logical comparisons?",
+        "options": ["Control Unit (CU)", "Arithmetic Logic Unit (ALU)", "Primary Memory (RAM)", "System Bus"],
         "correctAnswer": "Arithmetic Logic Unit (ALU)",
         "topicId": "computer_system",
         "topicName": "Computer Systems",
         "difficulty": "easy"
     },
     {
-        "id": "mx_2",
-        "questionText": "What is the capacity in bytes of 1 Megabyte (1 MB) in strict binary computer notation?",
-        "options": ["1,000,000 Bytes", "1,048,576 Bytes (1024 x 1024)", "10,000 Bytes", "1,024 Bytes"],
-        "correctAnswer": "1,048,576 Bytes (1024 x 1024)",
-        "topicId": "data_information",
-        "topicName": "Data Representation",
+        "id": "cs_2",
+        "questionText": "In Von Neumann architecture, which CPU register holds the memory address of the next instruction to be fetched?",
+        "options": ["Memory Data Register (MDR)", "Accumulator (ACC)", "Program Counter (PC)", "Instruction Register (IR)"],
+        "correctAnswer": "Program Counter (PC)",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
         "difficulty": "medium"
     },
     {
-        "id": "mx_3",
-        "questionText": "Which network topology connects all client nodes to a central forwarding switch or hub?",
+        "id": "cs_3",
+        "questionText": "Why is RAM considered 'volatile' memory in computer systems?",
+        "options": [
+            "It can only be read, not written to",
+            "It loses all stored data when electrical power is turned off",
+            "It is permanently etched onto the motherboard",
+            "It has the slowest data transfer speed in the memory hierarchy"
+        ],
+        "correctAnswer": "It loses all stored data when electrical power is turned off",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
+        "difficulty": "easy"
+    },
+    {
+        "id": "cs_4",
+        "questionText": "Which bus in the system bus architecture is strictly unidirectional from the CPU to memory?",
+        "options": ["Data Bus", "Address Bus", "Control Bus", "PCIe Bus"],
+        "correctAnswer": "Address Bus",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
+        "difficulty": "medium"
+    },
+    {
+        "id": "cs_5",
+        "questionText": "What is the primary function of Cache memory located between the CPU and Main RAM?",
+        "options": [
+            "To store long-term backup files",
+            "To provide ultra-fast access to frequently used instructions and reduce CPU wait time",
+            "To convert digital signals into analog signals",
+            "To manage external peripheral device drivers"
+        ],
+        "correctAnswer": "To provide ultra-fast access to frequently used instructions and reduce CPU wait time",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
+        "difficulty": "hard"
+    },
+    {
+        "id": "cs_6",
+        "questionText": "Which high-speed port standard is commonly used for connecting external displays, peripherals, and high-speed data transfer simultaneously?",
+        "options": ["VGA", "PS/2", "Thunderbolt / USB-C", "Parallel Port"],
+        "correctAnswer": "Thunderbolt / USB-C",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
+        "difficulty": "easy"
+    },
+    {
+        "id": "cs_7",
+        "questionText": "What sequence correctly represents the machine instruction execution cycle of the CPU?",
+        "options": [
+            "Execute → Decode → Fetch → Store",
+            "Fetch → Decode → Execute → Store",
+            "Decode → Fetch → Store → Execute",
+            "Store → Fetch → Execute → Decode"
+        ],
+        "correctAnswer": "Fetch → Decode → Execute → Store",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
+        "difficulty": "medium"
+    },
+    {
+        "id": "cs_8",
+        "questionText": "Which component manages timing signals and directs data flow between the CPU, RAM, and I/O devices?",
+        "options": ["Arithmetic Logic Unit (ALU)", "Control Unit (CU)", "Flash ROM", "BIOS Chip"],
+        "correctAnswer": "Control Unit (CU)",
+        "topicId": "computer_system",
+        "topicName": "Computer Systems",
+        "difficulty": "easy"
+    },
+
+    # ── Data and Information Representation ──
+    {
+        "id": "di_1",
+        "questionText": "What is the exact capacity in bytes of 1 Megabyte (1 MB) in strict binary computer notation?",
+        "options": ["1,000,000 Bytes", "1,048,576 Bytes (1024 x 1024)", "10,000 Bytes", "1,024 Bytes"],
+        "correctAnswer": "1,048,576 Bytes (1024 x 1024)",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "medium"
+    },
+    {
+        "id": "di_2",
+        "questionText": "Which logic gate produces an output of 1 ONLY when both of its inputs are 1?",
+        "options": ["OR Gate", "AND Gate", "NOT Gate", "XOR Gate"],
+        "correctAnswer": "AND Gate",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "easy"
+    },
+    {
+        "id": "di_3",
+        "questionText": "What is the binary equivalent of the decimal number 13?",
+        "options": ["1101", "1011", "1110", "1001"],
+        "correctAnswer": "1101",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "medium"
+    },
+    {
+        "id": "di_4",
+        "questionText": "Which character encoding standard uses variable-width encoding to represent characters from almost all written languages including Sinhala, Tamil, and English?",
+        "options": ["ASCII (7-bit)", "EBCDIC", "Unicode / UTF-8", "BCD"],
+        "correctAnswer": "Unicode / UTF-8",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "easy"
+    },
+    {
+        "id": "di_5",
+        "questionText": "What is the fundamental difference between 'Data' and 'Information'?",
+        "options": [
+            "Data is processed and meaningful; Information is raw and unorganized",
+            "Data is raw unorganized facts; Information is processed data with context and meaning",
+            "Data is only numbers; Information is only text",
+            "There is no difference in computing"
+        ],
+        "correctAnswer": "Data is raw unorganized facts; Information is processed data with context and meaning",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "easy"
+    },
+    {
+        "id": "di_6",
+        "questionText": "Which two logic gates are considered 'Universal Gates' because any boolean function can be created using only them?",
+        "options": ["AND and OR", "NAND and NOR", "NOT and XOR", "OR and NOT"],
+        "correctAnswer": "NAND and NOR",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "hard"
+    },
+    {
+        "id": "di_7",
+        "questionText": "What is the hexadecimal representation of the 4-bit binary nibble '1111'?",
+        "options": ["E", "F", "15", "A"],
+        "correctAnswer": "F",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "easy"
+    },
+    {
+        "id": "di_8",
+        "questionText": "In logic gates, what is the output of an inverter (NOT Gate) when its input is binary 0?",
+        "options": ["0", "1", "High Impedance", "Undefined"],
+        "correctAnswer": "1",
+        "topicId": "data_information",
+        "topicName": "Data and Information",
+        "difficulty": "easy"
+    },
+
+    # ── Operating Systems & Utilities ──
+    {
+        "id": "os_1",
+        "questionText": "Which component of an Operating System is the core program that remains in RAM to manage hardware and system resources?",
+        "options": ["User Shell", "Kernel", "Device Driver", "File Explorer"],
+        "correctAnswer": "Kernel",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "medium"
+    },
+    {
+        "id": "os_2",
+        "questionText": "What is the primary role of a Device Driver?",
+        "options": [
+            "To physically speed up computer cooling fans",
+            "To act as a software translator between the OS and a specific hardware peripheral",
+            "To prevent internet viruses from infecting RAM",
+            "To defragment hard disk storage sectors"
+        ],
+        "correctAnswer": "To act as a software translator between the OS and a specific hardware peripheral",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "easy"
+    },
+    {
+        "id": "os_3",
+        "questionText": "Which type of User Interface requires users to type text commands rather than clicking graphical windows and icons?",
+        "options": ["GUI (Graphical User Interface)", "CLI (Command Line Interface)", "NUI (Natural User Interface)", "Touch UI"],
+        "correctAnswer": "CLI (Command Line Interface)",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "easy"
+    },
+    {
+        "id": "os_4",
+        "questionText": "What technique allows an OS to use hard drive storage space as temporary extension memory when physical RAM is full?",
+        "options": ["Disk Striping", "Virtual Memory (Paging/Swapping)", "RAID Mirroring", "Flash Caching"],
+        "correctAnswer": "Virtual Memory (Paging/Swapping)",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "medium"
+    },
+    {
+        "id": "os_5",
+        "questionText": "Which utility software reorganizes fragmented files on an HDD into contiguous clusters to speed up access times?",
+        "options": ["Disk Defragmenter", "Disk Cleanup", "Antivirus Scanner", "File Compression Utility"],
+        "correctAnswer": "Disk Defragmenter",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "easy"
+    },
+    {
+        "id": "os_6",
+        "questionText": "Which of the following is an example of an Open Source operating system?",
+        "options": ["Microsoft Windows 11", "Apple macOS", "Linux (Ubuntu)", "Apple iOS"],
+        "correctAnswer": "Linux (Ubuntu)",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "easy"
+    },
+    {
+        "id": "os_7",
+        "questionText": "What OS process management state occurs when a running process is paused waiting for an I/O operation to finish?",
+        "options": ["Ready State", "Running State", "Blocked / Waiting State", "Terminated State"],
+        "correctAnswer": "Blocked / Waiting State",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "hard"
+    },
+    {
+        "id": "os_8",
+        "questionText": "Which file system structure is used by modern operating systems to organize files and folders?",
+        "options": ["Linear Queue", "Hierarchical Directory Tree", "Circular Ring", "Flat Database"],
+        "correctAnswer": "Hierarchical Directory Tree",
+        "topicId": "operating_systems",
+        "topicName": "Operating Systems",
+        "difficulty": "easy"
+    },
+
+    # ── Networking & Internet ──
+    {
+        "id": "net_1",
+        "questionText": "Which network topology connects all client devices to a central forwarding switch or hub?",
         "options": ["Ring Topology", "Bus Topology", "Star Topology", "Mesh Topology"],
         "correctAnswer": "Star Topology",
         "topicId": "networking",
-        "topicName": "Networks",
+        "topicName": "Networking",
         "difficulty": "easy"
     },
     {
-        "id": "mx_4",
-        "questionText": "Which protocol is responsible for translating domain names into machine-readable IP addresses?",
+        "id": "net_2",
+        "questionText": "Which protocol is responsible for translating human-friendly domain names (e.g. www.nie.lk) into machine-routable IP addresses?",
         "options": ["HTTP", "DNS (Domain Name System)", "SMTP", "FTP"],
         "correctAnswer": "DNS (Domain Name System)",
         "topicId": "networking",
-        "topicName": "Networks",
+        "topicName": "Networking",
         "difficulty": "easy"
     },
     {
-        "id": "mx_5",
-        "questionText": "In relational databases, what property ensures that a primary key field cannot contain duplicate or NULL values?",
+        "id": "net_3",
+        "questionText": "What is the primary function of a Router in computer networking?",
+        "options": [
+            "To connect devices within the exact same Local Area Network (LAN)",
+            "To route data packets across different subnets and between a local network and the Internet",
+            "To convert digital signals into display pixels",
+            "To encrypt passwords stored in browser cookies"
+        ],
+        "correctAnswer": "To route data packets across different subnets and between a local network and the Internet",
+        "topicId": "networking",
+        "topicName": "Networking",
+        "difficulty": "medium"
+    },
+    {
+        "id": "net_4",
+        "questionText": "What is the difference between an IP address and a MAC address?",
+        "options": [
+            "An IP address is permanent hardware address; MAC address changes dynamically",
+            "An IP address is logical/network layer address; MAC address is physical hardware address on the NIC",
+            "MAC addresses are only used for satellite communications",
+            "There is no difference"
+        ],
+        "correctAnswer": "An IP address is logical/network layer address; MAC address is physical hardware address on the NIC",
+        "topicId": "networking",
+        "topicName": "Networking",
+        "difficulty": "medium"
+    },
+    {
+        "id": "net_5",
+        "questionText": "Which protocol securely transmits encrypted web pages over the internet using SSL/TLS?",
+        "options": ["HTTP", "HTTPS", "FTP", "SNMP"],
+        "correctAnswer": "HTTPS",
+        "topicId": "networking",
+        "topicName": "Networking",
+        "difficulty": "easy"
+    },
+    {
+        "id": "net_6",
+        "questionText": "In email architecture, which protocol is specifically used by email clients to SEND outgoing mail messages?",
+        "options": ["POP3", "IMAP", "SMTP (Simple Mail Transfer Protocol)", "HTTP"],
+        "correctAnswer": "SMTP (Simple Mail Transfer Protocol)",
+        "topicId": "networking",
+        "topicName": "Networking",
+        "difficulty": "easy"
+    },
+    {
+        "id": "net_7",
+        "questionText": "Which transmission medium provides the highest data transfer bandwidth and immunity against electromagnetic interference?",
+        "options": ["Unshielded Twisted Pair (UTP) Copper Cable", "Coaxial Cable", "Fiber Optic Cable", "Infrared Wave"],
+        "correctAnswer": "Fiber Optic Cable",
+        "topicId": "networking",
+        "topicName": "Networking",
+        "difficulty": "easy"
+    },
+    {
+        "id": "net_8",
+        "questionText": "In bus topology, what passive device is attached to both ends of the main backbone cable to prevent signal reflection?",
+        "options": ["Repeater", "Terminator", "Bridge", "Gateway"],
+        "correctAnswer": "Terminator",
+        "topicId": "networking",
+        "topicName": "Networking",
+        "difficulty": "hard"
+    },
+
+    # ── Databases & SQL ──
+    {
+        "id": "db_1",
+        "questionText": "In relational databases, what property ensures that a primary key column cannot contain duplicate or NULL values?",
         "options": ["Referential Integrity", "Entity Integrity", "Domain Integrity", "Atomicity"],
         "correctAnswer": "Entity Integrity",
         "topicId": "databases",
@@ -4445,59 +4991,803 @@ MOCK_EXAM_BANK = [
         "difficulty": "medium"
     },
     {
-        "id": "mx_6",
+        "id": "db_2",
         "questionText": "Which SQL command is used to retrieve specific columns of data from an existing database table?",
-        "options": ["INSERT INTO", "SELECT", "UPDATE", "DROP"],
+        "options": ["INSERT INTO", "SELECT", "UPDATE", "DROP TABLE"],
         "correctAnswer": "SELECT",
         "topicId": "databases",
         "topicName": "Databases",
         "difficulty": "easy"
     },
     {
-        "id": "mx_7",
-        "questionText": "Which logic gate outputs a binary 1 ONLY when both of its input signals are 1?",
-        "options": ["OR Gate", "AND Gate", "NOT Gate", "XOR Gate"],
-        "correctAnswer": "AND Gate",
-        "topicId": "data_information",
-        "topicName": "Data Representation",
+        "id": "db_3",
+        "questionText": "What is a Foreign Key in a relational database table?",
+        "options": [
+            "A key imported from another country's database",
+            "An attribute in one table that references the Primary Key of another table to establish a relationship",
+            "A key used exclusively for password encryption",
+            "A column that must contain only floating point numbers"
+        ],
+        "correctAnswer": "An attribute in one table that references the Primary Key of another table to establish a relationship",
+        "topicId": "databases",
+        "topicName": "Databases",
         "difficulty": "easy"
     },
     {
-        "id": "mx_8",
-        "questionText": "What type of malware disguises itself as legitimate software to trick users into running it?",
-        "options": ["Worm", "Trojan Horse", "Ransomware", "Spyware"],
+        "id": "db_4",
+        "questionText": "Which SQL statement is used to add new rows of records into an existing table?",
+        "options": ["ADD ROW", "INSERT INTO", "CREATE ROW", "UPDATE"],
+        "correctAnswer": "INSERT INTO",
+        "topicId": "databases",
+        "topicName": "Databases",
+        "difficulty": "easy"
+    },
+    {
+        "id": "db_5",
+        "questionText": "What database rule prevents a foreign key from referencing a non-existent primary key value?",
+        "options": ["Entity Integrity", "Referential Integrity", "Null Value Constraint", "Database Isolation"],
+        "correctAnswer": "Referential Integrity",
+        "topicId": "databases",
+        "topicName": "Databases",
+        "difficulty": "medium"
+    },
+    {
+        "id": "db_6",
+        "questionText": "In a relational table, what standard term refers to a single row representing an entity instance?",
+        "options": ["Tuple / Record", "Field / Attribute", "Schema", "Domain"],
+        "correctAnswer": "Tuple / Record",
+        "topicId": "databases",
+        "topicName": "Databases",
+        "difficulty": "easy"
+    },
+    {
+        "id": "db_7",
+        "questionText": "Which SQL clause is used to filter records so only rows meeting a specific logical condition are returned?",
+        "options": ["ORDER BY", "GROUP BY", "WHERE", "HAVING"],
+        "correctAnswer": "WHERE",
+        "topicId": "databases",
+        "topicName": "Databases",
+        "difficulty": "easy"
+    },
+    {
+        "id": "db_8",
+        "questionText": "What process systematically decomposes complex relational tables to minimize data redundancy and prevent update anomalies?",
+        "options": ["Database Normalization (1NF, 2NF, 3NF)", "Data Encryption", "Data Mining", "Table Indexing"],
+        "correctAnswer": "Database Normalization (1NF, 2NF, 3NF)",
+        "topicId": "databases",
+        "topicName": "Databases",
+        "difficulty": "hard"
+    },
+
+    # ── Programming & Algorithms ──
+    {
+        "id": "pr_1",
+        "questionText": "In standard flowchart notation, which geometric symbol represents a decision or conditional branch (If-Else)?",
+        "options": ["Rectangle", "Oval", "Diamond (Rhombus)", "Parallelogram"],
+        "correctAnswer": "Diamond (Rhombus)",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "easy"
+    },
+    {
+        "id": "pr_2",
+        "questionText": "Which geometric symbol is used in flowcharts to represent input and output operations (e.g. Read X, Print Y)?",
+        "options": ["Rectangle", "Parallelogram", "Oval", "Circle"],
+        "correctAnswer": "Parallelogram",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "easy"
+    },
+    {
+        "id": "pr_3",
+        "questionText": "Which type of programming error occurs when code violates the grammatical rules of the programming language and prevents compilation?",
+        "options": ["Logic Error", "Syntax Error", "Runtime Error", "Semantic Error"],
+        "correctAnswer": "Syntax Error",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "easy"
+    },
+    {
+        "id": "pr_4",
+        "questionText": "What are the three fundamental control structures used in structured algorithms?",
+        "options": [
+            "Input, Process, Output",
+            "Sequence, Selection (Condition), Iteration (Looping)",
+            "Compile, Link, Execute",
+            "Constant, Variable, Function"
+        ],
+        "correctAnswer": "Sequence, Selection (Condition), Iteration (Looping)",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "medium"
+    },
+    {
+        "id": "pr_5",
+        "questionText": "What type of error is present when a program runs without crashing but produces incorrect calculation results?",
+        "options": ["Syntax Error", "Logic Error", "Hardware Crash Error", "Type Mismatch Error"],
+        "correctAnswer": "Logic Error",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "easy"
+    },
+    {
+        "id": "pr_6",
+        "questionText": "What is the purpose of a flowchart connector symbol (small circle)?",
+        "options": [
+            "To connect flowchart lines when drawing complex flow across pages without crossing lines",
+            "To represent arithmetic calculation",
+            "To store variables in memory",
+            "To indicate user keyboard input"
+        ],
+        "correctAnswer": "To connect flowchart lines when drawing complex flow across pages without crossing lines",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "medium"
+    },
+    {
+        "id": "pr_7",
+        "questionText": "What is Pseudocode?",
+        "options": [
+            "Compiled binary machine code",
+            "An informal, human-readable outline of an algorithm written in structured plain English",
+            "An encryption algorithm",
+            "A visual UML diagram"
+        ],
+        "correctAnswer": "An informal, human-readable outline of an algorithm written in structured plain English",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "easy"
+    },
+    {
+        "id": "pr_8",
+        "questionText": "What programming language translator converts high-level source code line-by-line during execution rather than all at once?",
+        "options": ["Compiler", "Interpreter", "Assembler", "Linker"],
+        "correctAnswer": "Interpreter",
+        "topicId": "programming_basics",
+        "topicName": "Programming Basics",
+        "difficulty": "hard"
+    },
+
+    # ── Cyber Security & Digital Ethics ──
+    {
+        "id": "sec_1",
+        "questionText": "What type of malicious software disguises itself as a legitimate file or application to trick users into running it?",
+        "options": ["Worm", "Trojan Horse", "Ransomware", "Adware"],
         "correctAnswer": "Trojan Horse",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
+        "difficulty": "easy"
+    },
+    {
+        "id": "sec_2",
+        "questionText": "Which core pillar of information security (CIA Triad) ensures that information and systems are accessible by authorized users whenever needed?",
+        "options": ["Confidentiality", "Integrity", "Availability", "Authentication"],
+        "correctAnswer": "Availability",
         "topicId": "cyber_security",
         "topicName": "Cyber Security",
         "difficulty": "medium"
     },
     {
-        "id": "mx_9",
-        "questionText": "In standard flowchart notation, which symbol represents a decision or conditional branch (If-Else)?",
-        "options": ["Rectangle", "Oval", "Diamond (Rhombus)", "Parallelogram"],
-        "correctAnswer": "Diamond (Rhombus)",
-        "topicId": "programming_basics",
-        "topicName": "Algorithms",
+        "id": "sec_3",
+        "questionText": "What is Phishing in cyber security?",
+        "options": [
+            "Searching for bugs in source code",
+            "A fraudulent social engineering attack using fake emails or websites to steal sensitive user credentials",
+            "Encrypting a hard drive to ask for ransom",
+            "Connecting a switch to a router"
+        ],
+        "correctAnswer": "A fraudulent social engineering attack using fake emails or websites to steal sensitive user credentials",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
         "difficulty": "easy"
     },
     {
-        "id": "mx_10",
-        "questionText": "Which component of an Operating System directly manages memory, processes, and hardware device communication?",
-        "options": ["User Shell", "Kernel", "Device Driver", "File Explorer"],
-        "correctAnswer": "Kernel",
-        "topicId": "operating_systems",
-        "topicName": "Operating Systems",
+        "id": "sec_4",
+        "questionText": "What type of malware self-replicates across computer networks WITHOUT requiring human execution of an infected host file?",
+        "options": ["Virus", "Worm", "Spyware", "Keylogger"],
+        "correctAnswer": "Worm",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
+        "difficulty": "medium"
+    },
+    {
+        "id": "sec_5",
+        "questionText": "What is the primary role of a Network Firewall?",
+        "options": [
+            "To physically extinguish overheating server room fires",
+            "To monitor and filter incoming and outgoing network traffic based on predefined security rules",
+            "To clean dust from fiber optic cable connectors",
+            "To speed up broadband download bandwidth"
+        ],
+        "correctAnswer": "To monitor and filter incoming and outgoing network traffic based on predefined security rules",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
+        "difficulty": "easy"
+    },
+    {
+        "id": "sec_6",
+        "questionText": "What security practice involves encoding readable plaintext into unreadable ciphertext that only authorized key-holders can decrypt?",
+        "options": ["Hashing", "Encryption", "Fragmentation", "Virtualization"],
+        "correctAnswer": "Encryption",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
+        "difficulty": "easy"
+    },
+    {
+        "id": "sec_7",
+        "questionText": "What malicious attack floods a target server with overwhelming fake network traffic to make it unavailable to legitimate users?",
+        "options": ["Man-in-the-Middle (MitM)", "Denial of Service (DoS / DDoS)", "SQL Injection", "Cross-Site Scripting (XSS)"],
+        "correctAnswer": "Denial of Service (DoS / DDoS)",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
+        "difficulty": "medium"
+    },
+    {
+        "id": "sec_8",
+        "questionText": "What legal framework grants creators exclusive rights to reproduce, distribute, and adapt their original software and digital works?",
+        "options": [
+            "Creative Commons Attribution",
+            "Copyright & Intellectual Property Law",
+            "Open Access Agreement",
+            "Digital Freedom Act"
+        ],
+        "correctAnswer": "Copyright & Intellectual Property Law",
+        "topicId": "cyber_security",
+        "topicName": "Cyber Security",
+        "difficulty": "easy"
+    },
+
+
+    # ── Database Normalization (1NF, 2NF, 3NF) ──
+    {
+
+        "id": "norm_1",
+        "questionText": "What is the primary condition required for a database table to satisfy First Normal Form (1NF)?",
+        "options": [
+            "All non-key attributes must depend on the primary key",
+            "Every column cell must contain atomic (indivisible) values and have no repeating groups",
+            "The table must have at least three foreign keys",
+            "All table data must be encrypted"
+        ],
+        "correctAnswer": "Every column cell must contain atomic (indivisible) values and have no repeating groups",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "easy"
+    },
+    {
+        "id": "norm_2",
+        "questionText": "A table is in 1NF and has a composite primary key (StudentID, CourseID). If 'StudentName' depends only on 'StudentID', what type of dependency is this?",
+        "options": ["Transitive Dependency", "Partial Dependency", "Full Functional Dependency", "Multi-valued Dependency"],
+        "correctAnswer": "Partial Dependency",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "medium"
+    },
+    {
+        "id": "norm_3",
+        "questionText": "To convert a 1NF table into Second Normal Form (2NF), what problem must be completely eliminated?",
+        "options": ["Transitive Dependencies", "Partial Dependencies on composite primary keys", "Atomic Values", "Foreign Keys"],
+        "correctAnswer": "Partial Dependencies on composite primary keys",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "easy"
+    },
+    {
+        "id": "norm_4",
+        "questionText": "What type of dependency exists when a non-key attribute depends on another non-key attribute (e.g. StudentID → DepartmentID → DepartmentName)?",
+        "options": ["Partial Dependency", "Transitive Dependency", "Atomic Dependency", "Referential Constraint"],
+        "correctAnswer": "Transitive Dependency",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "medium"
+    },
+    {
+        "id": "norm_5",
+        "questionText": "Which normal form requires a table to be in 2NF and have zero transitive dependencies between non-key columns?",
+        "options": ["1NF", "2NF", "3NF (Third Normal Form)", "UNF"],
+        "correctAnswer": "3NF (Third Normal Form)",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "easy"
+    },
+    {
+        "id": "norm_6",
+        "questionText": "What database issue occurs when deleting a course record unintentionally erases all student enrollment data from the database?",
+        "options": ["Insertion Anomaly", "Deletion Anomaly", "Modification Anomaly", "Deadlock"],
+        "correctAnswer": "Deletion Anomaly",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "medium"
+    },
+    {
+        "id": "norm_7",
+        "questionText": "If a table in 1NF has a single-column Primary Key (e.g. CourseID only), is it automatically in 2NF?",
+        "options": [
+            "Yes, because partial dependencies can only occur with composite primary keys",
+            "No, it must always be split into two tables",
+            "Only if it has fewer than 100 rows",
+            "No, it must first be converted to 3NF"
+        ],
+        "correctAnswer": "Yes, because partial dependencies can only occur with composite primary keys",
+        "topicId": "normalization",
+        "topicName": "Normalization",
         "difficulty": "hard"
+    },
+    {
+        "id": "norm_8",
+        "questionText": "What is the primary benefit of normalizing a database structure?",
+        "options": [
+            "Increases storage hardware costs",
+            "Minimizes data redundancy and prevents update, insertion, and deletion anomalies",
+            "Eliminates the need for Primary Keys",
+            "Translates SQL queries into Python code"
+        ],
+        "correctAnswer": "Minimizes data redundancy and prevents update, insertion, and deletion anomalies",
+        "topicId": "normalization",
+        "topicName": "Normalization",
+        "difficulty": "easy"
+    },
+
+    # ── Database Management Systems (DBMS Architecture) ──
+    {
+        "id": "dbms_1",
+        "questionText": "Which layer of the standard ANSI-SPARC Three-Schema DBMS Architecture represents how individual end-users view their specific data?",
+        "options": ["Internal / Physical Schema", "Conceptual Schema", "External / View Schema", "Hardware Schema"],
+        "correctAnswer": "External / View Schema",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "medium"
+    },
+    {
+        "id": "dbms_2",
+        "questionText": "Which SQL category includes commands used to define, alter, and delete database structures (such as CREATE TABLE and DROP TABLE)?",
+        "options": ["DML (Data Manipulation Language)", "DDL (Data Definition Language)", "DCL (Data Control Language)", "TCL"],
+        "correctAnswer": "DDL (Data Definition Language)",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "easy"
+    },
+    {
+        "id": "dbms_3",
+        "questionText": "Which of the following is classified as a Data Manipulation Language (DML) command?",
+        "options": ["CREATE TABLE", "ALTER TABLE", "INSERT INTO", "DROP DATABASE"],
+        "correctAnswer": "INSERT INTO",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "easy"
+    },
+    {
+        "id": "dbms_4",
+        "questionText": "What is 'Physical Data Independence' in a Database Management System?",
+        "options": [
+            "The ability to modify physical storage structures without changing the conceptual database schema",
+            "Allowing physical hard drives to run without electrical power",
+            "Preventing users from viewing relational tables",
+            "Running databases on multiple physical computers"
+        ],
+        "correctAnswer": "The ability to modify physical storage structures without changing the conceptual database schema",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "hard"
+    },
+    {
+        "id": "dbms_5",
+        "questionText": "Who is the primary professional responsible for managing database permissions, backups, security, and schema maintenance?",
+        "options": ["Network Cabling Technician", "Database Administrator (DBA)", "Graphic Designer", "Hardware Assembler"],
+        "correctAnswer": "Database Administrator (DBA)",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "easy"
+    },
+    {
+        "id": "dbms_6",
+        "questionText": "What database component contains metadata descriptions of all table definitions, relationships, and access rights?",
+        "options": ["Data Dictionary / System Catalog", "Application Server", "Web Cache", "Print Spooler"],
+        "correctAnswer": "Data Dictionary / System Catalog",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "medium"
+    },
+    {
+        "id": "dbms_7",
+        "questionText": "Why are DBMS systems preferred over traditional Flat-File spreadsheet storage for large institutions?",
+        "options": [
+            "DBMS completely removes the need for backup power",
+            "DBMS supports multi-user concurrent access, eliminates duplicate data, and enforces strict security",
+            "DBMS only runs on mobile phones",
+            "Flat-file systems are too fast for modern computers"
+        ],
+        "correctAnswer": "DBMS supports multi-user concurrent access, eliminates duplicate data, and enforces strict security",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "easy"
+    },
+    {
+        "id": "dbms_8",
+        "questionText": "Which SQL command is used to remove all rows from a table while preserving the table structure for future use?",
+        "options": ["TRUNCATE TABLE / DELETE FROM", "DROP TABLE", "REMOVE SCHEMA", "CANCEL TABLE"],
+        "correctAnswer": "TRUNCATE TABLE / DELETE FROM",
+        "topicId": "dbms",
+        "topicName": "DBMS",
+        "difficulty": "medium"
+    },
+
+    # ── Flowcharts & Algorithm Design ──
+    {
+        "id": "fc_1",
+        "questionText": "In standard flowchart notation, which symbol must be used to indicate the Start and Stop (Terminal) of an algorithm?",
+        "options": ["Rectangle", "Oval / Rounded Pill", "Diamond", "Parallelogram"],
+        "correctAnswer": "Oval / Rounded Pill",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "easy"
+    },
+    {
+        "id": "fc_2",
+        "questionText": "Which flowchart symbol represents calculation or variable assignment (e.g. Total = Count + 1)?",
+        "options": ["Parallelogram", "Diamond", "Rectangle (Process)", "Circle"],
+        "correctAnswer": "Rectangle (Process)",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "easy"
+    },
+    {
+        "id": "fc_3",
+        "questionText": "How many outgoing labeled flowlines MUST emerge from a Decision Diamond in a valid flowchart?",
+        "options": ["Exactly 1", "Exactly 2 (True/False or Yes/No)", "At least 4", "None"],
+        "correctAnswer": "Exactly 2 (True/False or Yes/No)",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "easy"
+    },
+    {
+        "id": "fc_4",
+        "questionText": "What manual dry-run debugging technique uses a multi-column table to track how variable values change row-by-row during algorithm execution?",
+        "options": ["Truth Table", "Trace Table", "Routing Table", "Entity Table"],
+        "correctAnswer": "Trace Table",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "medium"
+    },
+    {
+        "id": "fc_5",
+        "questionText": "What type of loop construct checks its condition at the beginning BEFORE executing the loop body even once?",
+        "options": ["Pre-test Loop (e.g. WHILE loop)", "Post-test Loop (e.g. DO-WHILE loop)", "Infinite Loop", "Recursive Branch"],
+        "correctAnswer": "Pre-test Loop (e.g. WHILE loop)",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "medium"
+    },
+    {
+        "id": "fc_6",
+        "questionText": "Which geometric symbol is used to connect flowchart segments across different sections of a diagram without crossing flowlines?",
+        "options": ["Triangle", "Small Circle (Connector)", "Hexagon", "Pentagon"],
+        "correctAnswer": "Small Circle (Connector)",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "easy"
+    },
+    {
+        "id": "fc_7",
+        "questionText": "Consider loop: 'Count = 1; WHILE Count <= 5 DO Print Count; Count = Count + 2'. What numbers are printed?",
+        "options": ["1, 2, 3, 4, 5", "1, 3, 5", "2, 4", "1, 3, 5, 7"],
+        "correctAnswer": "1, 3, 5",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "medium"
+    },
+    {
+        "id": "fc_8",
+        "questionText": "Which flowchart symbol represents reading user input from a keyboard or displaying output on a monitor?",
+        "options": ["Rectangle", "Parallelogram (Input/Output)", "Diamond", "Oval"],
+        "correctAnswer": "Parallelogram (Input/Output)",
+        "topicId": "flowcharts",
+        "topicName": "Flowcharts",
+        "difficulty": "easy"
+    },
+
+    # ── Electronic Spreadsheets ──
+    {
+        "id": "ss_1",
+        "questionText": "In spreadsheet formulas, what does the dollar sign '$' indicate in the cell reference '$B$4'?",
+        "options": [
+            "The cell contains Sri Lankan Rupees currency",
+            "It is an Absolute Cell Reference that will not change when copied to other cells",
+            "The cell is encrypted with password protection",
+            "The formula has a syntax calculation error"
+        ],
+        "correctAnswer": "It is an Absolute Cell Reference that will not change when copied to other cells",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ss_2",
+        "questionText": "Which built-in spreadsheet function calculates the arithmetic mean of numeric cells in range A1 to A10?",
+        "options": ["=MEAN(A1:A10)", "=AVERAGE(A1:A10)", "=SUM(A1:A10)/10", "=TOTAL(A1:A10)"],
+        "correctAnswer": "=AVERAGE(A1:A10)",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ss_3",
+        "questionText": "What spreadsheet error code appears when a formula attempts to divide a number by zero or an empty cell?",
+        "options": ["#NAME?", "#DIV/0!", "#VALUE!", "#REF!"],
+        "correctAnswer": "#DIV/0!",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ss_4",
+        "questionText": "What formula in cell C1 will display 'Pass' if cell A1 is 50 or higher, and 'Fail' otherwise?",
+        "options": [
+            "=IF(A1 >= 50, 'Pass', 'Fail')",
+            "=CHECK(A1 > 50, Pass, Fail)",
+            "=WHEN(A1 = 50, 'Pass')",
+            "=COUNTIF(A1 >= 50)"
+        ],
+        "correctAnswer": "=IF(A1 >= 50, 'Pass', 'Fail')",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "medium"
+    },
+    {
+        "id": "ss_5",
+        "questionText": "Which chart type is best suited for showing continuous trends over time (e.g. monthly student attendance)?",
+        "options": ["Pie Chart", "Line Chart", "Radar Chart", "Scatter Bubble Chart"],
+        "correctAnswer": "Line Chart",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ss_6",
+        "questionText": "What is the difference between '=COUNT(A1:A10)' and '=COUNTA(A1:A10)'?",
+        "options": [
+            "=COUNT counts only numeric cells; =COUNTA counts all non-empty cells (numbers and text)",
+            "=COUNT adds the values; =COUNTA calculates averages",
+            "=COUNT is for Mac; =COUNTA is for Windows",
+            "There is no functional difference"
+        ],
+        "correctAnswer": "=COUNT counts only numeric cells; =COUNTA counts all non-empty cells (numbers and text)",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "medium"
+    },
+    {
+        "id": "ss_7",
+        "questionText": "If formula '=A1*2' in cell B1 is copied down to cell B2, what does the relative formula become?",
+        "options": ["=A1*2", "=A2*2", "=$A$2*2", "=B1*2"],
+        "correctAnswer": "=A2*2",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ss_8",
+        "questionText": "Which chart type is most appropriate for displaying the percentage contribution of individual categories to a whole (100%)?",
+        "options": ["Line Chart", "Pie Chart", "Column Chart", "Area Chart"],
+        "correctAnswer": "Pie Chart",
+        "topicId": "spreadsheets",
+        "topicName": "Spreadsheets",
+        "difficulty": "easy"
+    },
+
+    # ── Word Processing Applications ──
+    {
+        "id": "wp_1",
+        "questionText": "What are the three essential components required to perform a Mail Merge in a Word Processor?",
+        "options": [
+            "Keyboard, Mouse, Monitor",
+            "Main Document, Data Source (Recipient List), and Merged Document",
+            "Header, Footer, Footnote",
+            "Font, Size, Alignment"
+        ],
+        "correctAnswer": "Main Document, Data Source (Recipient List), and Merged Document",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "easy"
+    },
+    {
+        "id": "wp_2",
+        "questionText": "Which page orientation formats a printed document wider than it is tall (horizontal width > vertical height)?",
+        "options": ["Portrait Orientation", "Landscape Orientation", "Gutter Orientation", "Booklet Layout"],
+        "correctAnswer": "Landscape Orientation",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "easy"
+    },
+    {
+        "id": "wp_3",
+        "questionText": "What character formatting option positions text slightly above the normal text baseline in smaller font (e.g. the '2' in X²)?",
+        "options": ["Subscript", "Superscript", "Small Caps", "Strikethrough"],
+        "correctAnswer": "Superscript",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "easy"
+    },
+    {
+        "id": "wp_4",
+        "questionText": "What is the difference between a Footnote and an Endnote in a word document?",
+        "options": [
+            "Footnotes appear at the bottom of each respective page; Endnotes appear at the very end of the document",
+            "Footnotes are only for numbers; Endnotes are for pictures",
+            "Footnotes cannot be printed",
+            "There is no difference"
+        ],
+        "correctAnswer": "Footnotes appear at the bottom of each respective page; Endnotes appear at the very end of the document",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "medium"
+    },
+    {
+        "id": "wp_5",
+        "questionText": "Which word processing feature automatically searches for predefined common typing mistakes and replaces them instantly with correct text?",
+        "options": ["AutoCorrect", "Thesaurus", "Track Changes", "Word Count"],
+        "correctAnswer": "AutoCorrect",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "easy"
+    },
+    {
+        "id": "wp_6",
+        "questionText": "What type of break must be inserted into a document to allow different headers or page orientations in different chapters?",
+        "options": ["Simple Page Break", "Section Break (Next Page)", "Line Break (Shift+Enter)", "Column Break"],
+        "correctAnswer": "Section Break (Next Page)",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "medium"
+    },
+    {
+        "id": "wp_7",
+        "questionText": "Which paragraph alignment distributes text evenly between left and right margins, creating smooth straight edges on both sides?",
+        "options": ["Align Left", "Center Align", "Align Right", "Justify"],
+        "correctAnswer": "Justify",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "easy"
+    },
+    {
+        "id": "wp_8",
+        "questionText": "What tool in word processors provides a dictionary of synonyms and antonyms to help improve document vocabulary?",
+        "options": ["Thesaurus", "Spell Checker", "Mail Merge Wizard", "Macro Recorder"],
+        "correctAnswer": "Thesaurus",
+        "topicId": "word_processing",
+        "topicName": "Word Processing",
+        "difficulty": "easy"
+    },
+
+    # ── Internet, Web & Electronic Mail ──
+    {
+        "id": "ie_1",
+        "questionText": "What is the purpose of the 'BCC' (Blind Carbon Copy) field in an email message header?",
+        "options": [
+            "To send high priority emergency messages",
+            "To send copies to recipients while hiding their email addresses from all other recipients",
+            "To automatically attach zip files",
+            "To forward emails to the spam folder"
+        ],
+        "correctAnswer": "To send copies to recipients while hiding their email addresses from all other recipients",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ie_2",
+        "questionText": "Which protocol is strictly responsible for SENDING outgoing email messages from a client application to an email server?",
+        "options": ["POP3", "IMAP", "SMTP (Simple Mail Transfer Protocol)", "HTTP"],
+        "correctAnswer": "SMTP (Simple Mail Transfer Protocol)",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ie_3",
+        "questionText": "In URL 'https://www.nie.lk/syllabus/ict.pdf', what component is 'www.nie.lk'?",
+        "options": ["Protocol", "Domain Name (Host)", "File Path", "Search Query Parameter"],
+        "correctAnswer": "Domain Name (Host)",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ie_4",
+        "questionText": "What is the primary operational difference between POP3 and IMAP email retrieval protocols?",
+        "options": [
+            "POP3 downloads and removes mail from server; IMAP synchronizes folders live across multiple devices",
+            "POP3 is only for images; IMAP is only for text",
+            "POP3 requires satellite connection; IMAP requires fiber optics",
+            "There is no difference"
+        ],
+        "correctAnswer": "POP3 downloads and removes mail from server; IMAP synchronizes folders live across multiple devices",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "medium"
+    },
+    {
+        "id": "ie_5",
+        "questionText": "What is the fundamental difference between a 'Web Browser' and a 'Search Engine'?",
+        "options": [
+            "A Web Browser is software used to view web pages; a Search Engine is an online service that indexes and searches the web",
+            "A Search Engine is hardware; a Web Browser is an operating system",
+            "Web Browsers are only made by Google",
+            "There is no difference"
+        ],
+        "correctAnswer": "A Web Browser is software used to view web pages; a Search Engine is an online service that indexes and searches the web",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ie_6",
+        "questionText": "Which search engine technique forces the search engine to match the exact phrase in the exact word order?",
+        "options": ["Enclosing keywords in double quotation marks (\"... \")", "Adding asterisks (*)", "Typing in all capital letters", "Using question marks (?)"],
+        "correctAnswer": "Enclosing keywords in double quotation marks (\"... \")",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ie_7",
+        "questionText": "What top-level domain code in 'moe.gov.lk' indicates a government ministry or department in Sri Lanka?",
+        "options": [".edu.lk", ".gov.lk", ".org.lk", ".com.lk"],
+        "correctAnswer": ".gov.lk",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
+    },
+    {
+        "id": "ie_8",
+        "questionText": "What technology allows users to access shared computing resources, software applications, and storage over the internet on demand?",
+        "options": ["Cloud Computing", "Dial-up Networking", "Analog Broadcasting", "Disk Defragmentation"],
+        "correctAnswer": "Cloud Computing",
+        "topicId": "internet_email",
+        "topicName": "Internet and Email",
+        "difficulty": "easy"
     }
 ]
 
 
-async def start_mock_exam(student_id: str) -> dict[str, Any]:
+
+async def start_mock_exam(student_id: str, topic_id: str | None = None) -> dict[str, Any]:
+    """
+    Initializes a 10-minute rapid-fire mock exam.
+    If topic_id is provided, filters questions to match the active topic.
+    """
+    normalized_topic = (topic_id or "").lower().replace("-", "_").strip()
+    filtered_questions = []
+
+    if normalized_topic:
+        # Match topic questions
+        for q in MOCK_EXAM_BANK:
+            q_topic = q["topicId"].lower().replace("-", "_")
+            if (
+                q_topic == normalized_topic
+                or normalized_topic in q_topic
+                or q_topic in normalized_topic
+                or normalized_topic in q["topicName"].lower()
+            ):
+                filtered_questions.append(q)
+
+    # Fallback to general exam if not enough topic questions
+    if not filtered_questions or len(filtered_questions) < 5:
+        filtered_questions = MOCK_EXAM_BANK[:10]
+        exam_title = "National O/L ICT Rapid-Fire Mock Exam (Comprehensive 2026)"
+    else:
+        topic_display_name = filtered_questions[0]["topicName"]
+        exam_title = f"10-Min Topic Mock Exam: {topic_display_name}"
+
+    # Take up to 10 questions for the timed exam
+    selected_questions = filtered_questions[:10]
+
     return {
         "examId": f"mock_exam_{int(datetime.now(timezone.utc).timestamp())}",
-        "title": "National O/L ICT Rapid-Fire Mock Exam (2026 Edition)",
+        "title": exam_title,
+        "topicId": topic_id or "all_topics",
         "durationMinutes": 10,
-        "totalQuestions": len(MOCK_EXAM_BANK),
+        "totalQuestions": len(selected_questions),
         "questions": [
             {
                 "id": q["id"],
@@ -4507,7 +5797,7 @@ async def start_mock_exam(student_id: str) -> dict[str, Any]:
                 "topicName": q["topicName"],
                 "difficulty": q["difficulty"],
             }
-            for q in MOCK_EXAM_BANK
+            for q in selected_questions
         ],
     }
 
@@ -4516,7 +5806,15 @@ async def submit_mock_exam(exam_id: str, student_id: str, answers: dict[str, str
     score = 0
     topic_scores: dict[str, dict[str, int]] = {}
 
-    for q in MOCK_EXAM_BANK:
+    # Build question lookup map
+    question_map = {q["id"]: q for q in MOCK_EXAM_BANK}
+    evaluated_questions = [question_map[qid] for qid in answers.keys() if qid in question_map]
+
+    # If submitted empty or partial, fallback to bank
+    if not evaluated_questions:
+        evaluated_questions = MOCK_EXAM_BANK[:10]
+
+    for q in evaluated_questions:
         t_name = q["topicName"]
         if t_name not in topic_scores:
             topic_scores[t_name] = {"correct": 0, "total": 0}
@@ -4527,21 +5825,21 @@ async def submit_mock_exam(exam_id: str, student_id: str, answers: dict[str, str
             score += 1
             topic_scores[t_name]["correct"] += 1
 
-    total = len(MOCK_EXAM_BANK)
-    percentage = int((score / total) * 100)
+    total = len(evaluated_questions)
+    percentage = int((score / total) * 100) if total > 0 else 0
 
     if percentage >= 75:
         grade = "A (Distinction)"
-        feedback = "Outstanding examination readiness! You exhibit mastery across all O/L ICT syllabus components."
+        feedback = "Outstanding examination readiness! You exhibit mastery across tested O/L ICT syllabus concepts."
     elif percentage >= 65:
         grade = "B (Very Good)"
-        feedback = "Very strong performance! A slight brush-up on databases and system architecture will lock in an A grade."
+        feedback = "Very strong performance! A slight brush-up on key definitions and architecture will lock in an A grade."
     elif percentage >= 50:
         grade = "C (Credit)"
-        feedback = "Solid foundational knowledge. Review short notes on network protocols and data representation."
+        feedback = "Solid foundational knowledge. Review short notes on topic mechanisms and common exam traps."
     elif percentage >= 35:
         grade = "S (Pass)"
-        feedback = "Passing grade achieved. We recommend daily 5-minute flashcard drills to strengthen weak spots."
+        feedback = "Passing grade achieved. We recommend reviewing the concept diagram and taking daily flashcard drills."
     else:
         grade = "W (Needs Intensive Revision)"
         feedback = "Knowledge gaps identified. Use the Attention-Aware weak spot recommendations and short notes immediately."
@@ -4578,5 +5876,495 @@ async def submit_mock_exam(exam_id: str, student_id: str, answers: dict[str, str
         "topicBreakdown": topic_breakdown,
         "timeTakenFormatted": time_str,
         "studyPrescription": study_prescription,
+    }
+
+
+# ── EARA: Explainability of Adaptive Response Architecture ───────────────────
+
+# Concept diagram data per topic — nodes + edges + visual schematic + analogy + brain challenge
+_EARA_DIAGRAMS: dict[str, dict] = {
+    "computer_system": {
+        "title": "Computer System",
+        "schematicType": "bus_architecture",
+        "nodes": [
+            {"id": "cpu", "label": "CPU", "type": "core", "description": "Central Processing Unit — brain executing instructions"},
+            {"id": "alu", "label": "ALU", "type": "sub", "description": "Arithmetic Logic Unit — performs arithmetic & boolean logic"},
+            {"id": "cu", "label": "CU", "type": "sub", "description": "Control Unit — fetches, decodes, and directs signals"},
+            {"id": "registers", "label": "Registers", "type": "memory", "description": "High-speed temporary storage inside the CPU (PC, MAR, MDR, ACC)"},
+            {"id": "ram", "label": "RAM", "type": "memory", "description": "Volatile main memory — holds active programs and data"},
+            {"id": "rom", "label": "ROM", "type": "memory", "description": "Non-volatile read-only memory — holds startup BIOS/firmware"},
+            {"id": "bus", "label": "System Bus", "type": "connector", "description": "Data, Address, and Control buses linking CPU and memory"},
+            {"id": "storage", "label": "Secondary Storage", "type": "memory", "description": "HDD, SSD, Flash drive — permanent data persistence"},
+        ],
+        "edges": [
+            {"from": "cu", "to": "alu", "label": "controls"},
+            {"from": "cu", "to": "registers", "label": "coordinates"},
+            {"from": "cpu", "to": "bus", "label": "connects to"},
+            {"from": "bus", "to": "ram", "label": "reads/writes"},
+            {"from": "bus", "to": "rom", "label": "reads bootstrap"},
+            {"from": "bus", "to": "storage", "label": "loads from"},
+        ],
+        "summary": "Von Neumann Architecture: CPU (ALU + CU + Registers) communicates with RAM, ROM, and Storage across the System Bus.",
+        "keyFact": "RAM is volatile (lost on power-off). ROM is non-volatile. Bus width determines speed and memory addressing.",
+        "analogy": "A computer is like a restaurant kitchen: The Chef is the CPU, the Prep Countertop is RAM (active space), and the Pantry Cabinet is Secondary Storage (permanent).",
+        "brainChallenge": "Can a computer run a program directly from a USB stick without loading it into RAM first? (Why?)",
+    },
+    "data_information": {
+        "title": "Data and Information",
+        "schematicType": "pipeline",
+        "nodes": [
+            {"id": "data", "label": "Raw Data", "type": "core", "description": "Unprocessed facts, figures, and symbols lacking context"},
+            {"id": "process", "label": "Processing", "type": "action", "description": "Calculations, sorting, classifying, and validating data"},
+            {"id": "info", "label": "Information", "type": "output", "description": "Processed, meaningful data used for decision-making"},
+            {"id": "binary", "label": "Binary Bits (0/1)", "type": "sub", "description": "Smallest unit of digital data representation"},
+            {"id": "encoding", "label": "Character Sets", "type": "sub", "description": "ASCII (7-bit, 128 chars), Unicode (UTF-8 worldwide scripts)"},
+            {"id": "units", "label": "Storage Units", "type": "memory", "description": "Bit → Byte (8 bits) → KB (1024B) → MB → GB → TB"},
+        ],
+        "edges": [
+            {"from": "data", "to": "process", "label": "inputs to"},
+            {"from": "process", "to": "info", "label": "transforms into"},
+            {"from": "binary", "to": "data", "label": "encodes"},
+            {"from": "encoding", "to": "binary", "label": "maps to bits"},
+            {"from": "units", "to": "binary", "label": "quantifies"},
+        ],
+        "summary": "Data is converted into Information through processing. At the hardware level, all data exists as binary bits grouped into bytes.",
+        "keyFact": "1 Byte = 8 bits. 1 KB = 1024 Bytes. Information must be accurate, timely, complete, and relevant.",
+        "analogy": "Data is raw ingredients (eggs, flour, sugar). Processing is baking in an oven. Information is the delicious birthday cake ready to serve!",
+        "brainChallenge": "If a file is 2 Megabytes, exactly how many Bytes does it contain? (Hint: 2 × 1024 × 1024)",
+    },
+    "operating_systems": {
+        "title": "Operating Systems",
+        "schematicType": "hierarchy",
+        "nodes": [
+            {"id": "os", "label": "OS Kernel", "type": "core", "description": "Core system software managing all hardware and applications"},
+            {"id": "pm", "label": "Process Management", "type": "function", "description": "CPU scheduling algorithms (FIFO, Round Robin, Priority)"},
+            {"id": "mm", "label": "Memory Management", "type": "function", "description": "RAM allocation, paging, and virtual memory swap"},
+            {"id": "fm", "label": "File Management", "type": "function", "description": "Hierarchical directory structure, FAT32/NTFS file systems"},
+            {"id": "dm", "label": "Device Management", "type": "function", "description": "Hardware drivers, buffering, spooling (e.g. print queue)"},
+            {"id": "ui", "label": "User Interface", "type": "interface", "description": "GUI (windows, icons) vs CLI (command line shell)"},
+        ],
+        "edges": [
+            {"from": "os", "to": "pm", "label": "schedules"},
+            {"from": "os", "to": "mm", "label": "allocates"},
+            {"from": "os", "to": "fm", "label": "organises"},
+            {"from": "os", "to": "dm", "label": "coordinates"},
+            {"from": "ui", "to": "os", "label": "commands"},
+        ],
+        "summary": "The OS acts as the bridge between user applications and hardware through Process, Memory, File, and Device management.",
+        "keyFact": "5 Core OS Functions: Process, Memory, Device, File, and Security/User management.",
+        "analogy": "The OS is like a School Principal: allocating classrooms (RAM), creating class timetables (Process Scheduling), and managing library books (Files).",
+        "brainChallenge": "When your RAM is 100% full, why does your computer slow down instead of crashing immediately? (Hint: Virtual Memory / Paging file on HDD).",
+    },
+    "word_processing": {
+        "title": "Word Processing",
+        "schematicType": "hierarchy",
+        "nodes": [
+            {"id": "doc", "label": "Main Document", "type": "core", "description": "Standard letter, report, or certificate template"},
+            {"id": "format", "label": "Formatting", "type": "action", "description": "Font family, size, line spacing, margins, orientation"},
+            {"id": "mail", "label": "Mail Merge", "type": "feature", "description": "Merges template with recipient data source for mass personalized letters"},
+            {"id": "source", "label": "Data Source", "type": "sub", "description": "Spreadsheet or table containing name, address, marks"},
+            {"id": "table", "label": "Tables & Columns", "type": "layout", "description": "Organised grids of rows and columns with cell borders"},
+            {"id": "header", "label": "Header & Footer", "type": "layout", "description": "Repeating page numbers, dates, titles at margins"},
+        ],
+        "edges": [
+            {"from": "doc", "to": "format", "label": "styled with"},
+            {"from": "doc", "to": "mail", "label": "combined via"},
+            {"from": "source", "to": "mail", "label": "provides recipient data"},
+            {"from": "doc", "to": "table", "label": "embeds"},
+            {"from": "doc", "to": "header", "label": "includes"},
+        ],
+        "summary": "Word processing tools enable structured document formatting, table generation, and automated mass mail merges.",
+        "keyFact": "Mail Merge Formula: Main Document (Template) + Data Source (Recipients) = Merged Documents.",
+        "analogy": "Mail Merge is like filling blank examination certificates with student names from a master mark sheet automatically.",
+        "brainChallenge": "If you need to send 200 customized admission letters, which word processing feature avoids typing each letter by hand?",
+    },
+    "spreadsheets": {
+        "title": "Spreadsheets",
+        "schematicType": "grid_eval",
+        "nodes": [
+            {"id": "cell", "label": "Cell Reference", "type": "core", "description": "Intersection of column (letter) and row (number) e.g., B4"},
+            {"id": "formula", "label": "Formula (=)", "type": "action", "description": "Custom math expression starting with = e.g., =A1+B1"},
+            {"id": "func", "label": "Built-in Functions", "type": "action", "description": "SUM, AVERAGE, MAX, MIN, COUNT, IF, VLOOKUP"},
+            {"id": "rel", "label": "Relative Ref (A1)", "type": "reference", "description": "Shifts coordinates dynamically when copied or filled"},
+            {"id": "abs", "label": "Absolute Ref ($A$1)", "type": "reference", "description": "Locks row, column, or both using $ symbol"},
+            {"id": "chart", "label": "Charts & Graphs", "type": "output", "description": "Visual data representation (Bar, Column, Pie, Line)"},
+        ],
+        "edges": [
+            {"from": "cell", "to": "formula", "label": "stored in"},
+            {"from": "formula", "to": "func", "label": "utilises"},
+            {"from": "cell", "to": "rel", "label": "references as"},
+            {"from": "cell", "to": "abs", "label": "locked with"},
+            {"from": "func", "to": "chart", "label": "feeds visual data"},
+        ],
+        "summary": "Spreadsheets compute cell data using formulas and functions. Cell referencing determines how values adapt across copies.",
+        "keyFact": "$A$1 locks row and column. A$1 locks row only. $A1 locks column only. All formulas must start with '='.",
+        "analogy": "A spreadsheet is like an automated shop ledger: enter prices and quantities, and the total and tax recalculate in a split second.",
+        "brainChallenge": "If cell C1 has formula '=A1*2' and you copy it down to cell C2, what does the formula in C2 become?",
+    },
+    "internet_email": {
+        "title": "Internet and Email",
+        "schematicType": "client_server",
+        "nodes": [
+            {"id": "internet", "label": "Internet", "type": "core", "description": "Global network of interconnected networks running on TCP/IP"},
+            {"id": "url", "label": "URL Structure", "type": "address", "description": "Protocol (https://) + Domain (moe.gov.lk) + Path (/ict/notes)"},
+            {"id": "smtp", "label": "SMTP", "type": "protocol", "description": "Simple Mail Transfer Protocol — transmits outgoing email"},
+            {"id": "imap", "label": "IMAP / POP3", "type": "protocol", "description": "Incoming mail protocols: IMAP syncs with server, POP3 downloads locally"},
+            {"id": "fields", "label": "Email Headers", "type": "service", "description": "To (direct), CC (Carbon Copy), BCC (Blind Carbon Copy — private)"},
+            {"id": "http", "label": "HTTP / HTTPS", "type": "protocol", "description": "Hypertext Transfer Protocol — HTTPS adds TLS/SSL encryption"},
+        ],
+        "edges": [
+            {"from": "internet", "to": "url", "label": "locates resources via"},
+            {"from": "smtp", "to": "internet", "label": "sends mail across"},
+            {"from": "imap", "to": "internet", "label": "retrieves mail from"},
+            {"from": "fields", "to": "smtp", "label": "packaged for"},
+            {"from": "http", "to": "url", "label": "specifies protocol in"},
+        ],
+        "summary": "The Internet connects distributed clients and servers. Email uses SMTP to send and IMAP/POP3 to retrieve messages.",
+        "keyFact": "BCC hides recipient addresses from everyone else. SMTP sends mail. IMAP keeps mail synced on the server.",
+        "analogy": "Sending an email is like postal mail: SMTP is the postal truck delivering letters, while IMAP is your private post office box.",
+        "brainChallenge": "If a teacher sends an exam paper via email to 40 students and doesn't want students to see each other's email addresses, which field must be used?",
+    },
+    "networking": {
+        "title": "Networking",
+        "schematicType": "star_network",
+        "nodes": [
+            {"id": "lan", "label": "LAN", "type": "core", "description": "Local Area Network — within a single room, school lab, or building"},
+            {"id": "wan", "label": "WAN", "type": "core", "description": "Wide Area Network — spans cities or continents (Internet is the largest WAN)"},
+            {"id": "switch", "label": "Switch", "type": "device", "description": "Intelligent device connecting nodes in a LAN using MAC addresses"},
+            {"id": "router", "label": "Router", "type": "device", "description": "Directs packets between different networks using IP routing tables"},
+            {"id": "topology", "label": "Topologies", "type": "structure", "description": "Star (central switch), Bus (backbone cable), Ring, Mesh"},
+            {"id": "ip", "label": "IP & Protocols", "type": "protocol", "description": "IPv4 (32-bit), IPv6 (128-bit), and TCP reliable packet delivery"},
+        ],
+        "edges": [
+            {"from": "lan", "to": "switch", "label": "connected by"},
+            {"from": "switch", "to": "router", "label": "uplinks to"},
+            {"from": "router", "to": "wan", "label": "routes traffic to"},
+            {"from": "topology", "to": "lan", "label": "organises physical layout of"},
+            {"from": "ip", "to": "router", "label": "guides packet paths"},
+        ],
+        "summary": "Networks link devices into LANs and WANs. Switches handle local node connections, while routers navigate global network packets.",
+        "keyFact": "In a Star topology, single workstation cable failure does NOT bring down the network. Bus topology uses a single shared backbone.",
+        "analogy": "A LAN switch is like a classroom corridor connecting rooms. A router is like the airport terminal connecting you to international destinations.",
+        "brainChallenge": "In a bus topology, what happens to the entire network if the main backbone cable gets cut in the middle?",
+    },
+    "cyber_security": {
+        "title": "Cyber Security",
+        "schematicType": "cia_triad",
+        "nodes": [
+            {"id": "cia", "label": "CIA Triad", "type": "core", "description": "Core security foundation: Confidentiality, Integrity, Availability"},
+            {"id": "conf", "label": "Confidentiality", "type": "pillar", "description": "Information is accessible only to authorised individuals"},
+            {"id": "integ", "label": "Integrity", "type": "pillar", "description": "Data remains accurate, unaltered, and trustworthy"},
+            {"id": "avail", "label": "Availability", "type": "pillar", "description": "Systems and data are accessible to users whenever needed"},
+            {"id": "malware", "label": "Malware Threats", "type": "danger", "description": "Virus (needs host), Worm (self-propagating), Trojan (disguised), Ransomware"},
+            {"id": "firewall", "label": "Security Controls", "type": "defence", "description": "Firewalls (packet filter), Strong Passwords, Encryption, 2FA"},
+        ],
+        "edges": [
+            {"from": "cia", "to": "conf", "label": "pillar"},
+            {"from": "cia", "to": "integ", "label": "pillar"},
+            {"from": "cia", "to": "avail", "label": "pillar"},
+            {"from": "malware", "to": "cia", "label": "attacks"},
+            {"from": "firewall", "to": "malware", "label": "blocks & defends against"},
+        ],
+        "summary": "Security defends the CIA Triad (Confidentiality, Integrity, Availability) against malware, phishing, and unauthorized intrusions.",
+        "keyFact": "A Virus needs a host file to execute. A Worm self-replicates across networks without user action. Phishing steals credentials via deceptive emails.",
+        "analogy": "Cyber security is like protecting a bank: Confidentiality = Vault with combination lock, Integrity = Tamper-evident seals on cash bags, Availability = Bank doors open during business hours.",
+        "brainChallenge": "If a hacker alters your exam marks on the database server from 45 to 95 without permission, which element of the CIA Triad was violated?",
+    },
+    "programming_basics": {
+        "title": "Programming Basics",
+        "schematicType": "control_flow",
+        "nodes": [
+            {"id": "prog", "label": "Algorithm & Logic", "type": "core", "description": "Step-by-step procedure to solve a computational problem"},
+            {"id": "var", "label": "Variables & Types", "type": "sub", "description": "Named memory storage: Integer, Float, String, Boolean"},
+            {"id": "seq", "label": "Sequence", "type": "control", "description": "Instructions executed sequentially in top-to-bottom order"},
+            {"id": "sel", "label": "Selection (IF-ELSE)", "type": "control", "description": "Conditional branching based on true/false evaluation"},
+            {"id": "iter", "label": "Iteration (Loops)", "type": "control", "description": "Repetition structures: Count-controlled (FOR) and Condition-controlled (WHILE)"},
+            {"id": "pseudo", "label": "Pseudocode", "type": "tool", "description": "Structured English representation of algorithm logic"},
+        ],
+        "edges": [
+            {"from": "prog", "to": "var", "label": "declares & updates"},
+            {"from": "prog", "to": "seq", "label": "executes in"},
+            {"from": "seq", "to": "sel", "label": "branches via"},
+            {"from": "seq", "to": "iter", "label": "repeats via"},
+            {"from": "pseudo", "to": "prog", "label": "models"},
+        ],
+        "summary": "Every program combines three fundamental control structures: Sequence, Selection (IF), and Iteration (Loops), manipulating typed variables.",
+        "keyFact": "3 Control Structures: Sequence, Selection (Decision), Iteration (Repetition). Variables change value; constants remain fixed.",
+        "analogy": "Programming is like following a cooking recipe: Step 1, 2, 3 in order (Sequence); if milk is hot, turn off heat (Selection); stir 10 times (Iteration).",
+        "brainChallenge": "If a WHILE loop condition is initially False before entering the loop, how many times will the loop body execute? (Hint: 0 times!).",
+    },
+    "databases": {
+        "title": "Databases",
+        "schematicType": "table_rel",
+        "nodes": [
+            {"id": "db", "label": "Relational DB", "type": "core", "description": "Organised collection of related tables linked by key constraints"},
+            {"id": "table", "label": "Table (Relation)", "type": "sub", "description": "Rows represent Records (Tuples), Columns represent Fields (Attributes)"},
+            {"id": "pk", "label": "Primary Key", "type": "key", "description": "Unique identifier for every record in a table — never NULL"},
+            {"id": "fk", "label": "Foreign Key", "type": "key", "description": "Field that references the Primary Key of another table, forming relationships"},
+            {"id": "rel", "label": "Relationships", "type": "connector", "description": "One-to-One (1:1), One-to-Many (1:M), Many-to-Many (M:N)"},
+            {"id": "sql", "label": "SQL Queries", "type": "action", "description": "SELECT fields FROM table WHERE condition ORDER BY field"},
+        ],
+        "edges": [
+            {"from": "db", "to": "table", "label": "contains"},
+            {"from": "table", "to": "pk", "label": "uniquely indexed by"},
+            {"from": "fk", "to": "pk", "label": "references foreign"},
+            {"from": "rel", "to": "fk", "label": "established using"},
+            {"from": "sql", "to": "table", "label": "retrieves data from"},
+        ],
+        "summary": "Relational databases store records in tables. Primary Keys uniquely identify records, Foreign Keys link related tables, and SQL queries extract insights.",
+        "keyFact": "A Primary Key cannot be NULL or duplicate. A Foreign Key in a child table points to the Primary Key in the parent table.",
+        "analogy": "A relational database is like a school index: Student ID is the Primary Key. When recording library loans, recording Student ID links to their full profile.",
+        "brainChallenge": "Can a table have two different Primary Keys? (Hint: A table has exactly ONE Primary Key, but it may consist of multiple combined columns called a Composite Key).",
+    },
+    "dbms": {
+        "title": "DBMS",
+        "schematicType": "hierarchy",
+        "nodes": [
+            {"id": "dbms", "label": "DBMS Engine", "type": "core", "description": "Software managing database storage, queries, access security, and backup"},
+            {"id": "ddl", "label": "DDL (Structure)", "type": "sql", "description": "Data Definition Language: CREATE, ALTER, DROP database structures"},
+            {"id": "dml", "label": "DML (Data)", "type": "sql", "description": "Data Manipulation Language: SELECT, INSERT, UPDATE, DELETE records"},
+            {"id": "indep", "label": "Data Independence", "type": "property", "description": "Physical & logical separation between stored data and application code"},
+            {"id": "integrity", "label": "Data Integrity", "type": "benefit", "description": "Ensures accuracy and consistency through validation rules and constraints"},
+            {"id": "redundancy", "label": "No Redundancy", "type": "benefit", "description": "Centralized storage removes duplicate data and sync inconsistencies"},
+        ],
+        "edges": [
+            {"from": "dbms", "to": "ddl", "label": "defines schema with"},
+            {"from": "dbms", "to": "dml", "label": "processes records with"},
+            {"from": "dbms", "to": "indep", "label": "guarantees"},
+            {"from": "dbms", "to": "integrity", "label": "enforces"},
+            {"from": "dbms", "to": "redundancy", "label": "eliminates data"},
+        ],
+        "summary": "DBMS manages database access through DDL (schema) and DML (records), providing data independence and eliminating redundancy.",
+        "keyFact": "DDL defines schema structure (CREATE/ALTER/DROP). DML queries and edits records (SELECT/INSERT/UPDATE/DELETE).",
+        "analogy": "A DBMS is like a professional bank vault manager: users don't touch the physical cash shelves directly; the manager securely accepts deposits and withdrawals.",
+        "brainChallenge": "Is the command 'INSERT INTO Student VALUES (...)' classified as DDL or DML?",
+    },
+    "normalization": {
+        "title": "Normalization",
+        "schematicType": "pipeline",
+        "nodes": [
+            {"id": "unf", "label": "Unnormalized (UNF)", "type": "start", "description": "Raw table with repeating groups, multiple values per cell, and duplicate data"},
+            {"id": "1nf", "label": "1NF (First Normal Form)", "type": "step", "description": "Every cell contains atomic (indivisible) values. No repeating groups. Primary Key defined"},
+            {"id": "2nf", "label": "2NF (Second Normal Form)", "type": "step", "description": "Must be in 1NF and eliminate partial functional dependencies on composite keys"},
+            {"id": "3nf", "label": "3NF (Third Normal Form)", "type": "step", "description": "Must be in 2NF and eliminate transitive dependencies (non-key attribute depending on non-key)"},
+            {"id": "anomalies", "label": "No Anomalies", "type": "benefit", "description": "Prevents insertion, deletion, and update update inconsistencies in databases"},
+        ],
+        "edges": [
+            {"from": "unf", "to": "1nf", "label": "make atomic & add PK"},
+            {"from": "1nf", "to": "2nf", "label": "remove partial dependencies"},
+            {"from": "2nf", "to": "3nf", "label": "remove transitive dependencies"},
+            {"from": "3nf", "to": "anomalies", "label": "prevents database"},
+        ],
+        "summary": "Normalization systematically decomposes complex tables to remove redundancy and prevent update, insert, and delete anomalies.",
+        "keyFact": "1NF = Atomic values only. 2NF = No partial key dependency. 3NF = No transitive (non-key to non-key) dependency.",
+        "analogy": "Normalization is like organizing your wardrobe: instead of dumping shoes, shirts, and books in one giant messy bin, you assign them to clean individual drawers.",
+        "brainChallenge": "If a table has a single-column Primary Key (not composite) and is already in 1NF, is it automatically in 2NF? (Hint: YES, because partial key dependencies cannot exist on a single-column key!).",
+    },
+    "flowcharts": {
+        "title": "Flowcharts",
+        "schematicType": "flowchart_tree",
+        "nodes": [
+            {"id": "oval", "label": "Oval (Terminator)", "type": "symbol", "description": "Start and Stop/End markers of the algorithm execution"},
+            {"id": "rect", "label": "Rectangle (Process)", "type": "symbol", "description": "Data processing, math operations, and variable assignment (e.g., Total = A + B)"},
+            {"id": "para", "label": "Parallelogram (I/O)", "type": "symbol", "description": "Input / Output operations (e.g., Read Mark, Print Grade)"},
+            {"id": "diamond", "label": "Diamond (Decision)", "type": "symbol", "description": "Condition check resulting in branching paths: Yes/No or True/False"},
+            {"id": "circle", "label": "Connector (Circle)", "type": "symbol", "description": "Connects interrupted flowlines across the page without crossing lines"},
+            {"id": "trace", "label": "Trace Table", "type": "tool", "description": "Tabular dry-run manual test tracking variable values step-by-step"},
+        ],
+        "edges": [
+            {"from": "oval", "to": "para", "label": "Start → Input"},
+            {"from": "para", "to": "rect", "label": "Input → Process"},
+            {"from": "rect", "to": "diamond", "label": "Process → Decision"},
+            {"from": "diamond", "to": "rect", "label": "Yes/No branches to"},
+            {"from": "trace", "to": "diamond", "label": "verifies logic of"},
+        ],
+        "summary": "Flowcharts use standardized geometric symbols to represent algorithmic logic visually before code implementation.",
+        "keyFact": "The Diamond (Decision) symbol is the only symbol that must have more than one outgoing arrow (typically True/False).",
+        "analogy": "A flowchart is like an airport directional sign system: green arrows guide your path, and at passport check (Diamond), you either proceed to gates or detour for inspection.",
+        "brainChallenge": "Which flowchart symbol would you draw for the instruction 'Calculate Average = Total / 5'?",
+    },
+    "system_development": {
+        "title": "System Development Life Cycle (SDLC)",
+        "schematicType": "sdlc_cycle",
+        "nodes": [
+            {"id": "ident", "label": "1. Identification", "type": "step", "description": "Identify problem, define objectives, preliminary scope"},
+            {"id": "feas", "label": "2. Feasibility Study", "type": "step", "description": "Assess Technical, Economic, Operational, and Schedule feasibility"},
+            {"id": "anal", "label": "3. System Analysis", "type": "step", "description": "Gather requirements (interviews, questionnaires, observation), data flow diagrams"},
+            {"id": "des", "label": "4. System Design", "type": "step", "description": "Architecture, database ER diagrams, user interface mockups, algorithm logic"},
+            {"id": "dev", "label": "5. Coding & Dev", "type": "step", "description": "Source code implementation, unit testing in target programming language"},
+            {"id": "test", "label": "6. Testing", "type": "step", "description": "Integration, System, and User Acceptance Testing (UAT)"},
+            {"id": "deploy", "label": "7. Deployment", "type": "step", "description": "Direct, Parallel, Phased, or Pilot conversion to production"},
+            {"id": "maint", "label": "8. Maintenance", "type": "step", "description": "Corrective, adaptive, perfective, and preventive ongoing support"},
+        ],
+        "edges": [
+            {"from": "ident", "to": "feas", "label": "triggers"},
+            {"from": "feas", "to": "anal", "label": "approves"},
+            {"from": "anal", "to": "des", "label": "specifies"},
+            {"from": "des", "to": "dev", "label": "guides"},
+            {"from": "dev", "to": "test", "label": "verifies via"},
+            {"from": "test", "to": "deploy", "label": "releases to"},
+            {"from": "deploy", "to": "maint", "label": "transitions into"},
+        ],
+        "summary": "SDLC provides a disciplined engineering lifecycle from problem identification and analysis through coding, testing, and deployment.",
+        "keyFact": "Parallel deployment runs old and new systems simultaneously for safety. Direct cutover replaces immediately but carries highest risk.",
+        "analogy": "SDLC is like building a family home: identify family needs, feasibility budget, architect blueprints, builder construction, inspection, move-in day, and home repairs.",
+        "brainChallenge": "Which deployment method runs both the old manual paper system and new computerized system side-by-side until the new system is proven bug-free?",
+    },
+    "social_ethics": {
+        "title": "Social and Ethical Issues in ICT",
+        "schematicType": "pillar",
+        "nodes": [
+            {"id": "divide", "label": "Digital Divide", "type": "pillar", "description": "The gap between individuals and regions having access to ICT and those without"},
+            {"id": "ethics", "label": "Intellectual Property", "type": "pillar", "description": "Copyright, software piracy, open source vs proprietary licensing, plagiarism"},
+            {"id": "privacy", "label": "Privacy & Data Protection", "type": "pillar", "description": "Protection of personal information, surveillance, cookies, identity theft"},
+            {"id": "ewaste", "label": "E-Waste Management", "type": "danger", "description": "Toxic electronic waste disposal (lead, mercury) and the 3Rs: Reduce, Reuse, Recycle"},
+            {"id": "law", "label": "Cyber Law", "type": "defence", "description": "Sri Lanka Computer Crimes Act No. 24 of 2007 punishing unauthorized computer access"},
+        ],
+        "edges": [
+            {"from": "ethics", "to": "law", "label": "enforced by"},
+            {"from": "privacy", "to": "law", "label": "protected by"},
+            {"from": "divide", "to": "ethics", "label": "demands fair access"},
+            {"from": "ewaste", "to": "ethics", "label": "environmental responsibility"},
+        ],
+        "summary": "ICT ethics govern intellectual property rights, personal privacy protection, e-waste environmental care, and bridging the digital divide under cyber law.",
+        "keyFact": "Computer Crimes Act No. 24 of 2007 penalizes unauthorized access and computer sabotage in Sri Lanka. 3Rs of E-Waste: Reduce, Reuse, Recycle.",
+        "analogy": "ICT ethics are the traffic rules of cyberspace: just like running a red light endangers drivers, pirating software and invading privacy harms digital society.",
+        "brainChallenge": "What term describes the socioeconomic inequality between rural communities with no internet access and urban communities with high-speed fiber?",
+    },
+    "logic_gates": {
+        "title": "Logic Gates and Boolean Logic",
+        "schematicType": "logic_circuit",
+        "nodes": [
+            {"id": "and", "label": "AND Gate", "type": "symbol", "description": "Output is 1 ONLY if ALL inputs are 1 (A · B)"},
+            {"id": "or", "label": "OR Gate", "type": "symbol", "description": "Output is 1 if AT LEAST ONE input is 1 (A + B)"},
+            {"id": "not", "label": "NOT Gate (Inverter)", "type": "symbol", "description": "Inverts the input signal: 0 becomes 1, 1 becomes 0 (A')"},
+            {"id": "nand", "label": "NAND Gate", "type": "symbol", "description": "Universal gate: AND gate followed by inverter (NOT AND)"},
+            {"id": "nor", "label": "NOR Gate", "type": "symbol", "description": "Universal gate: OR gate followed by inverter (NOT OR)"},
+            {"id": "truth", "label": "Truth Table", "type": "tool", "description": "Table listing all possible input binary combinations and their corresponding outputs"},
+        ],
+        "edges": [
+            {"from": "and", "to": "truth", "label": "evaluated in"},
+            {"from": "or", "to": "truth", "label": "evaluated in"},
+            {"from": "not", "to": "truth", "label": "evaluated in"},
+            {"from": "nand", "to": "and", "label": "inverts"},
+            {"from": "nor", "to": "or", "label": "inverts"},
+        ],
+        "summary": "Logic gates are the basic building blocks of digital integrated circuits executing Boolean algebra operations.",
+        "keyFact": "NAND and NOR are Universal Gates because any Boolean logic circuit can be constructed using only NAND or only NOR gates.",
+        "analogy": "An AND gate is like a safe requiring two keys turned at the exact same moment. An OR gate is like a classroom with two doors — opening either door lets you in.",
+        "brainChallenge": "If Input A = 1 and Input B = 0, what is the output of an AND gate vs a NAND gate?",
+    },
+}
+
+# Fallback diagram for topics not in the above map
+_EARA_FALLBACK_DIAGRAM = {
+    "title": "O/L ICT Concept",
+    "schematicType": "pipeline",
+    "nodes": [
+        {"id": "concept", "label": "Core ICT Concept", "type": "core", "description": "Central principle grounded in G.C.E. O/L ICT syllabus"},
+        {"id": "input", "label": "Input Data", "type": "sub", "description": "Raw inputs, parameters, or signals entered into the system"},
+        {"id": "process", "label": "Processing Logic", "type": "action", "description": "Arithmetic calculations, algorithms, or transformations executed"},
+        {"id": "output", "label": "Resulting Output", "type": "output", "description": "Meaningful information, visual display, or stored output generated"},
+    ],
+    "edges": [
+        {"from": "input", "to": "process", "label": "flows into"},
+        {"from": "process", "to": "output", "label": "produces"},
+        {"from": "concept", "to": "process", "label": "governs"},
+    ],
+    "summary": "All digital ICT systems operate on the Input → Process → Output (IPO) architecture.",
+    "keyFact": "Input + Processing = Output. Storage preserves data across sessions.",
+    "analogy": "Every computer process works like an automatic vending machine: insert money (Input), machine computes change and drops can (Process), drink dispensed (Output).",
+    "brainChallenge": "Can you identify what counts as the Input, Process, and Output for an ATM cash withdrawal?",
+}
+
+# State-specific engagement tips added to the EARA response
+_STATE_TIPS: dict[str, str] = {
+    "bored": "⚡ Visual Aid: You seemed disengaged! Check the Brain Challenge below and see if you can answer it in chat.",
+    "not_understanding": "🧩 Step-by-Step Breakdown: We've simplified this concept! Follow the connected nodes and everyday analogy below.",
+    "distracted": "🎯 Focus Boost: Review the Key Fact and central core node to lock down the must-know exam points.",
+    "understanding": "🌟 Mastery Track: You understand this well! Challenge yourself with an Exam Mode past paper question on this topic.",
+}
+
+# Keyword map to identify the most accurate syllabus topic from questions
+_QUESTION_TOPIC_KEYWORDS: list[tuple[list[str], str]] = [
+    (["system bus", "data bus", "address bus", "control bus", "cpu", "alu", "cu", "processor", "register", "ram", "rom", "hardware", "motherboard", "bios", "cache", "von neumann"], "computer_system"),
+    (["binary", "bit", "byte", "ascii", "unicode", "kilobyte", "megabyte", "gigabyte", "data and information", "raw data", "data representation"], "data_information"),
+    (["operating system", "process management", "scheduling", "paging", "virtual memory", "gui", "cli", "kernel", "device driver"], "operating_systems"),
+    (["word processing", "mail merge", "header", "footer", "page setup", "formatting", "watermark", "macro"], "word_processing"),
+    (["spreadsheet", "excel", "formula", "cell", "vlookup", "sum", "average", "absolute reference", "$a$1", "chart"], "spreadsheets"),
+    (["internet", "email", "smtp", "imap", "pop3", "url", "http", "https", "domain", "bcc", "cc", "www"], "internet_email"),
+    (["bus topology", "star topology", "ring topology", "mesh topology", "network", "lan", "wan", "router", "switch", "topology", "star", "ip address", "tcp/ip", "packet"], "networking"),
+    (["security", "cyber", "cia triad", "virus", "worm", "trojan", "malware", "phishing", "firewall", "encryption", "ransomware", "spyware"], "cyber_security"),
+    (["programming", "variable", "constant", "sequence", "selection", "iteration", "loop", "for loop", "while loop", "pseudocode", "algorithm"], "programming_basics"),
+    (["database", "table", "primary key", "foreign key", "relation", "tuple", "attribute", "sql", "select *", "query", "record", "field"], "databases"),
+    (["dbms", "ddl", "dml", "data independence", "data dictionary", "concurrency", "redundancy"], "dbms"),
+    (["normalization", "normalisation", "1nf", "2nf", "3nf", "atomic", "partial dependency", "transitive dependency"], "normalization"),
+    (["flowchart", "diamond", "parallelogram", "oval", "trace table", "flow line", "terminator", "decision symbol"], "flowcharts"),
+    (["sdlc", "system development", "waterfall", "feasibility", "system analysis", "system design", "deployment", "parallel deployment", "testing", "uat"], "system_development"),
+    (["ethics", "e-waste", "digital divide", "copyright", "piracy", "plagiarism", "computer crime", "privacy", "act no 24"], "social_ethics"),
+    (["logic gate", "truth table", "boolean", "nand", "nor", "and gate", "or gate", "not gate", "inverter"], "logic_gates"),
+]
+
+
+def _match_eara_topic_key(topic_id: str, question: str | None = None) -> str:
+    """Find the best matching topic key in _EARA_DIAGRAMS."""
+    raw_slug = _slugify(topic_id or "")
+
+    # Priority 1: Check question text for specific keywords sorted by longest phrase first
+    if question:
+        q_lower = question.lower()
+        all_kw = []
+        for keywords, target_topic in _QUESTION_TOPIC_KEYWORDS:
+            for kw in keywords:
+                all_kw.append((len(kw), kw, target_topic))
+        all_kw.sort(key=lambda x: x[0], reverse=True)
+        for _, kw, target_topic in all_kw:
+            if re.search(r"\b" + re.escape(kw) + r"\b", q_lower):
+                if target_topic in _EARA_DIAGRAMS:
+                    return target_topic
+
+    # Priority 2: Direct match on topic slug if not generic
+    if raw_slug in _EARA_DIAGRAMS and raw_slug not in ("topic", "general_ict", "general_o_l_ict"):
+        return raw_slug
+
+    # Priority 3: Substring match on topic slug if not generic
+    if raw_slug not in ("topic", "general_ict", "general_o_l_ict"):
+        for k in _EARA_DIAGRAMS:
+            if k in raw_slug or raw_slug in k:
+                return k
+
+    return "computer_system"
+
+
+async def get_eara_diagram(
+    topic_id: str,
+    learning_state: str = "bored",
+    question: str | None = None,
+) -> dict[str, Any]:
+    """
+    EARA — Explainability of Adaptive Response Architecture.
+
+    Returns a structured concept diagram (nodes + edges + visual schematic),
+    enriched with state-specific engagement guidance, real-world analogies,
+    and brain challenges.
+    """
+    matched_key = _match_eara_topic_key(topic_id, question)
+    diagram = _EARA_DIAGRAMS.get(matched_key, _EARA_FALLBACK_DIAGRAM).copy()
+    state_tip = _STATE_TIPS.get(learning_state, _STATE_TIPS["understanding"])
+
+    return {
+        "topicId": matched_key,
+        "topicName": diagram.get("title", topic_id),
+        "learningState": learning_state,
+        "schematicType": diagram.get("schematicType", "pipeline"),
+        "diagram": {
+            "nodes": diagram.get("nodes", []),
+            "edges": diagram.get("edges", []),
+        },
+        "summary": diagram.get("summary", ""),
+        "keyFact": diagram.get("keyFact", ""),
+        "analogy": diagram.get("analogy", ""),
+        "brainChallenge": diagram.get("brainChallenge", ""),
+        "stateTip": state_tip,
     }
 

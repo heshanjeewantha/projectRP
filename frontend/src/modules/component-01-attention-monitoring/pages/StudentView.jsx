@@ -29,6 +29,9 @@ import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
 import WebcamFeed from '../components/WebcamFeed/WebcamFeed';
 import AttentionStatsPanel from '../components/AttentionStatsPanel/AttentionStatsPanel';
 import AttentionHeatmap from '../components/AttentionHeatmap/AttentionHeatmap';
+import DistractionAlertModal from '../components/DistractionAlertModal';
+import GestureActionHUD from '../components/GestureActionHUD';
+import SupportedGesturesCard from '../components/SupportedGesturesCard';
 import KnowledgeQuestionPopup from '../../component-02-knowledge-graph-question-system/components/Popup/KnowledgeQuestionPopup';
 import DashboardPanel from '../../../components/layout/Dashboard/DashboardPanel';
 import Header from '../../../components/layout/Dashboard/Header';
@@ -46,8 +49,14 @@ const formatClock = (seconds = 0) => {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
 
-const findTimelineSegment = (timeline = [], currentTime = 0) =>
-  timeline.find((segment) => currentTime >= segment.startTime && currentTime <= segment.endTime) || null;
+const findTimelineSegment = (timeline = [], currentTime = 0) => {
+  if (!timeline?.length) return null;
+  const exact = timeline.find((segment) => currentTime >= segment.startTime && currentTime <= segment.endTime);
+  if (exact) return exact;
+  const preceding = timeline.filter((segment) => segment.startTime <= currentTime);
+  if (preceding.length > 0) return preceding[preceding.length - 1];
+  return timeline[0];
+};
 
 const resolveConceptForTime = (timeline, concepts, currentTime) => {
   const segment = findTimelineSegment(timeline?.timeline || [], currentTime);
@@ -78,10 +87,14 @@ const StudentView = () => {
   const [currentLearningConcept, setCurrentLearningConcept] = useState(null);
   const [currentPlaybackTime, setCurrentPlaybackTime] = useState(0);
   const [isLessonPlaying, setIsLessonPlaying] = useState(false);
+  const [distractionAlert, setDistractionAlert] = useState(null);
+  const [activeGesture, setActiveGesture] = useState(null);
 
   const videoRef = useRef(null);
   const requestedPopupCheckpointsRef = useRef(new Set());
   const pendingPopupCheckpointsRef = useRef(new Set());
+  const distractionTimerRef = useRef({ startTime: null, seconds: 0 });
+  const lastGestureTimeRef = useRef(0);
 
   const {
     currentVideo,
@@ -91,6 +104,8 @@ const StudentView = () => {
     setActivePopup,
     activePopup,
     attentionStatus,
+    attentionDetail,
+    gestureAction,
   } = useStore();
   const popupStudentId = userId || 'student_demo_123';
 
@@ -199,7 +214,7 @@ const StudentView = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const loadLessonTimeline = async () => {
+    const loadLessonTimelineAndGraph = async () => {
       if (!currentVideo?.id) {
         if (isMounted) {
           setLessonTimeline(null);
@@ -208,19 +223,30 @@ const StudentView = () => {
       }
 
       try {
-        const timeline = await getLessonTimeline(currentVideo.id);
+        const [timeline, graphData] = await Promise.allSettled([
+          getLessonTimeline(currentVideo.id),
+          getKnowledgeGraph(currentVideo.id),
+        ]);
+
         if (isMounted) {
-          setLessonTimeline(timeline);
+          if (timeline.status === 'fulfilled') {
+            setLessonTimeline(timeline.value);
+          } else {
+            setLessonTimeline(null);
+          }
+          if (graphData.status === 'fulfilled' && graphData.value?.concepts?.length) {
+            setKnowledgeGraph(graphData.value.concepts);
+          }
         }
       } catch (error) {
-        console.error('Failed to load lesson timeline', error);
+        console.error('Failed to load lesson timeline or video knowledge graph', error);
         if (isMounted) {
           setLessonTimeline(null);
         }
       }
     };
 
-    loadLessonTimeline();
+    loadLessonTimelineAndGraph();
 
     return () => {
       isMounted = false;
@@ -285,12 +311,13 @@ const StudentView = () => {
         const popup = await getPopupQuestion(popupStudentId, currentVideo.id, checkpointSecond);
         if (isCancelled) return;
 
-        requestedPopupCheckpointsRef.current.add(checkpointKey);
-        if (popup.currentConcept) {
+        if (popup?.currentConcept) {
           setCurrentLearningConcept(popup.currentConcept);
         }
-        if (popup.question) {
+        if (popup?.question) {
+          requestedPopupCheckpointsRef.current.add(checkpointKey);
           videoElement.pause();
+          setIsLessonPlaying(false);
           setActiveKnowledgePopup(popup);
         }
       } catch (error) {
@@ -344,24 +371,203 @@ const StudentView = () => {
     }
   };
 
+  // ── Smart Lesson: Webcam Hand Gesture Video Navigation ─────────────────────
+  useEffect(() => {
+    if (!gestureAction || !videoRef.current) return;
+    const now = Date.now();
+    if (now - lastGestureTimeRef.current < 1400) return; // 1.4s cooldown
+
+    const videoEl = videoRef.current;
+    const duration = Number.isFinite(videoEl.duration) && videoEl.duration > 0
+      ? videoEl.duration
+      : (currentVideo?.duration_seconds || 9999);
+
+    if (gestureAction === 'SKIP_FORWARD_10S') {
+      lastGestureTimeRef.current = now;
+      const targetTime = Math.min(Math.max(0, duration - 1), (videoEl.currentTime || 0) + 10);
+      videoEl.currentTime = targetTime;
+      setCurrentPlaybackTime(targetTime);
+      setActiveGesture({ action: 'SKIP_FORWARD_10S', label: '+10s Skipped' });
+    } else if (gestureAction === 'SKIP_BACKWARD_10S') {
+      lastGestureTimeRef.current = now;
+      const targetTime = Math.max(0, (videoEl.currentTime || 0) - 10);
+      videoEl.currentTime = targetTime;
+      setCurrentPlaybackTime(targetTime);
+      setActiveGesture({ action: 'SKIP_BACKWARD_10S', label: '-10s Rewound' });
+    } else if (gestureAction === 'PLAY_VIDEO') {
+      lastGestureTimeRef.current = now;
+      videoEl.play?.().catch(() => {});
+      setIsLessonPlaying(true);
+      setActiveGesture({ action: 'PLAY_VIDEO', label: '▶️ Play Video' });
+    } else if (gestureAction === 'PAUSE_VIDEO') {
+      lastGestureTimeRef.current = now;
+      videoEl.pause?.();
+      setIsLessonPlaying(false);
+      setActiveGesture({ action: 'PAUSE_VIDEO', label: '⏸️ Video Stopped' });
+    } else if (gestureAction === 'TOGGLE_PLAY_PAUSE') {
+      lastGestureTimeRef.current = now;
+      if (videoEl.paused || videoEl.ended) {
+        videoEl.play?.().catch(() => {});
+        setIsLessonPlaying(true);
+        setActiveGesture({ action: 'PLAY_VIDEO', label: '▶️ Play Video' });
+      } else {
+        videoEl.pause?.();
+        setIsLessonPlaying(false);
+        setActiveGesture({ action: 'PAUSE_VIDEO', label: '⏸️ Video Paused' });
+      }
+    }
+
+    const timer = setTimeout(() => {
+      setActiveGesture(null);
+      useStore.setState({ gestureAction: null });
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [gestureAction, currentVideo?.duration_seconds]);
+
+  const attentionStatusRef = useRef(attentionStatus);
+  attentionStatusRef.current = attentionStatus;
+  const attentionDetailRef = useRef(attentionDetail);
+  attentionDetailRef.current = attentionDetail;
+  const activeKnowledgePopupRef = useRef(activeKnowledgePopup);
+  activeKnowledgePopupRef.current = activeKnowledgePopup;
+  const activePopupRef = useRef(activePopup);
+  activePopupRef.current = activePopup;
+  const distractionAlertRef = useRef(distractionAlert);
+  distractionAlertRef.current = distractionAlert;
+  const transcriptRef = useRef(transcript);
+  transcriptRef.current = transcript;
+  const cooldownUntilRef = useRef(0);
+
+  const getMissedText = (time) => {
+    const currentTs = transcriptRef.current || transcript;
+    const segments = currentTs?.segments || [];
+    if (!segments.length) {
+      return 'Computer — An electronic device for processing, storing, and retrieving digital data.';
+    }
+    const seg = segments.find((s) => {
+      const start = s.start_time ?? s.start ?? 0;
+      const end = s.end_time ?? s.end ?? 0;
+      return time >= start && time <= end;
+    });
+    if (seg?.text) return seg.text;
+    const closest = segments.reduce((prev, curr) => {
+      const prevStart = prev.start_time ?? prev.start ?? 0;
+      const currStart = curr.start_time ?? curr.start ?? 0;
+      return Math.abs(currStart - time) < Math.abs(prevStart - time) ? curr : prev;
+    }, segments[0]);
+    return closest?.text || 'Computer — An electronic device for processing, storing, and retrieving digital data.';
+  };
+
+  // ── Smart Lesson: 10-20s Distraction Auto-Stop & Smart Rewind ─────────────
+  const distractionTrackerRef = useRef({
+    inattentiveSeconds: 0,
+    distractionStartVideoTime: null,
+    attentiveGraceCount: 0,
+  });
+
+  useEffect(() => {
+    const checkDistraction = () => {
+      // Cooldown after user closes popup or rewinds
+      if (Date.now() < cooldownUntilRef.current) return;
+
+      const videoEl = videoRef.current;
+      const isPlaying = videoEl && !videoEl.paused && !videoEl.ended;
+
+      if (!isPlaying || activeKnowledgePopupRef.current || activePopupRef.current || distractionAlertRef.current) {
+        distractionTrackerRef.current = {
+          inattentiveSeconds: 0,
+          distractionStartVideoTime: null,
+          attentiveGraceCount: 0,
+        };
+        return;
+      }
+
+      if (attentionStatusRef.current === 'not_attentive') {
+        if (distractionTrackerRef.current.distractionStartVideoTime === null) {
+          distractionTrackerRef.current.distractionStartVideoTime = videoEl.currentTime || 0;
+        }
+        distractionTrackerRef.current.inattentiveSeconds += 0.5;
+        distractionTrackerRef.current.attentiveGraceCount = 0;
+
+        // Auto-pause upon reaching 10 seconds of inattention (10-20s window)
+        if (distractionTrackerRef.current.inattentiveSeconds >= 10) {
+          const startVideoTime = distractionTrackerRef.current.distractionStartVideoTime ?? (videoEl.currentTime || 0);
+          const duration = Math.round(distractionTrackerRef.current.inattentiveSeconds);
+
+          videoEl.pause?.();
+          setIsLessonPlaying(false);
+
+          const missedText = getMissedText(startVideoTime);
+
+          // Trigger the centered distraction popup modal
+          setDistractionAlert({
+            startTime: startVideoTime,
+            duration: duration,
+            reason: attentionDetailRef.current?.reason || 'Looking away from lecture',
+            missedText,
+          });
+
+          distractionTrackerRef.current = {
+            inattentiveSeconds: 0,
+            distractionStartVideoTime: null,
+            attentiveGraceCount: 0,
+          };
+        }
+      } else {
+        // Tolerant grace period: only reset distraction if student stays attentive for 3 continuous cycles (1.5s)
+        distractionTrackerRef.current.attentiveGraceCount += 1;
+        if (distractionTrackerRef.current.attentiveGraceCount >= 3) {
+          distractionTrackerRef.current = {
+            inattentiveSeconds: 0,
+            distractionStartVideoTime: null,
+            attentiveGraceCount: 0,
+          };
+        }
+      }
+    };
+
+    const intervalId = setInterval(checkDistraction, 500);
+    return () => clearInterval(intervalId);
+  }, []); // Run continuous timer unaffected by re-renders
+
+  const handleRewindDistraction = (startTime) => {
+    cooldownUntilRef.current = Date.now() + 4000;
+    distractionTrackerRef.current = {
+      inattentiveSeconds: 0,
+      distractionStartVideoTime: null,
+      attentiveGraceCount: 0,
+    };
+    setDistractionAlert(null);
+
+    const videoEl = videoRef.current;
+    if (videoEl) {
+      const targetTime = Math.max(0, Number(startTime) || 0);
+      videoEl.currentTime = targetTime;
+      const playPromise = videoEl.play?.();
+      if (playPromise?.catch) playPromise.catch(() => {});
+    }
+    setIsLessonPlaying(true);
+  };
+
+  const handleContinueDistraction = () => {
+    cooldownUntilRef.current = Date.now() + 4000;
+    distractionTrackerRef.current = {
+      inattentiveSeconds: 0,
+      distractionStartVideoTime: null,
+      attentiveGraceCount: 0,
+    };
+    setDistractionAlert(null);
+
+    const videoEl = videoRef.current;
+    if (videoEl) {
+      const playPromise = videoEl.play?.();
+      if (playPromise?.catch) playPromise.catch(() => {});
+    }
+    setIsLessonPlaying(true);
+  };
+
   const handleTimeUpdate = (currentTime) => {
     setCurrentPlaybackTime(currentTime);
-    if (!transcript) return;
-
-    if (Math.floor(currentTime) % 10 === 0 && Math.floor(currentTime) > 0) {
-      computeMissedSegments(popupStudentId, currentVideo.id, sessionId)
-        .then((res) => setMissedSegments(res.missed_segments))
-        .catch((e) => console.error(e));
-    }
-
-    const currentMissed = missedSegments.find(
-      (m) => currentTime >= m.start_time && currentTime <= m.start_time + 1 && !m.reviewed
-    );
-
-    if (currentMissed && (!activePopup || activePopup.start_time !== currentMissed.start_time)) {
-      videoRef.current?.pause();
-      setActivePopup(currentMissed);
-    }
   };
 
   useEffect(() => {
@@ -522,6 +728,13 @@ const StudentView = () => {
         onContinue={handleContinueLesson}
       />
 
+      <DistractionAlertModal
+        isOpen={Boolean(distractionAlert)}
+        alertData={distractionAlert}
+        onRewind={handleRewindDistraction}
+        onContinue={handleContinueDistraction}
+      />
+
       <div className="dashboard-layout">
         <div className="dashboard-stack">
           <VideoPanel
@@ -531,7 +744,8 @@ const StudentView = () => {
             chips={videoChips}
             stats={heroStats}
             media={
-              <div className="dashboard-media-frame">
+              <div className="dashboard-media-frame relative">
+                <GestureActionHUD activeGesture={activeGesture} />
                 <VideoPlayer
                   key={currentVideo?.id || 'video-player-top'}
                   video={currentVideo}
@@ -542,6 +756,9 @@ const StudentView = () => {
               </div>
             }
           />
+
+          {/* Smart Lesson Hand Gestures Horizontal Bar */}
+          <SupportedGesturesCard />
 
           <TranscriptPanel
             icon={BookOpen}
@@ -568,7 +785,7 @@ const StudentView = () => {
               label="Analytics"
               icon={BarChart2}
               title="Attention Heatmap"
-              description="Session distraction events mapped to the video timeline. Green = focused, orange = distracted, red = phone, amber = drowsy."
+              description="Session distraction events mapped to the video timeline. Green = focused, orange = distracted, amber = drowsy."
             />
             <div className="mt-4">
               <AttentionHeatmap videoDuration={timelineDuration} />
@@ -600,7 +817,7 @@ const StudentView = () => {
               label="Attention"
               icon={Activity}
               title="Attention Analytics"
-              description="Real-time engagement score, drowsiness (PERCLOS), gaze direction, blink rate, and phone detections."
+              description="Real-time engagement score, drowsiness (PERCLOS), gaze direction, and blink rate."
             />
             <div className="mt-4">
               <AttentionStatsPanel />
@@ -652,25 +869,27 @@ const StudentView = () => {
               )}
             </div>
 
-            {videos.length > 1 && (
+            {videos.length > 0 && (
               <div className="mt-6 rounded-[20px] bg-black/18 p-4">
-                <div className="mb-3 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-text-muted">
-                  <Video size={12} />
-                  Library
+                <div className="mb-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.16em] text-text-muted">
+                  <div className="inline-flex items-center gap-2">
+                    <Video size={12} />
+                    Library ({videos.length})
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  {videos.slice(0, 4).map((video) => (
+                <div className="grid gap-2 max-h-72 overflow-y-auto pr-1">
+                  {videos.map((video) => (
                     <button
                       key={video.id}
                       onClick={() => handleSelectVideo(video)}
                       className={`flex min-w-0 items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition ${
                         currentVideo?.id === video.id
-                          ? 'bg-primary/10 text-white'
+                          ? 'bg-primary/15 text-white border border-primary/30 font-medium'
                           : 'bg-white/[0.03] text-text-muted hover:bg-white/[0.05]'
                       }`}
                     >
                       <span className="truncate">{video.title}</span>
-                      <span className="shrink-0 text-xs">
+                      <span className="shrink-0 text-xs font-mono">
                         {video.duration_seconds ? `${Math.floor(video.duration_seconds)}s` : '--'}
                       </span>
                     </button>

@@ -71,13 +71,13 @@ const History = () => {
 
         {/* Popup Chat History Section */}
         <DashboardPanel>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-white/[0.06] pb-5 mb-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-5 mb-6">
             <div>
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
                   <BrainCircuit size={18} />
                 </div>
-                <h3 className="text-xl font-bold text-white tracking-tight">
+                <h3 className="text-xl font-bold tracking-tight text-text-main">
                   Popup Knowledge Checks
                 </h3>
               </div>
@@ -91,7 +91,7 @@ const History = () => {
           </div>
 
           {popupHistory.length === 0 ? (
-            <div className="rounded-2xl border border-white/5 bg-black/20 p-8 text-center text-sm text-text-muted">
+            <div className="rounded-2xl border border-border bg-black/[0.02] dark:bg-black/20 p-8 text-center text-sm text-text-muted">
               No knowledge check popups recorded yet. Complete a video lesson to see checkpoints here.
             </div>
           ) : (
@@ -102,21 +102,21 @@ const History = () => {
                   variants={cardVariants}
                   initial="hidden"
                   animate="visible"
-                  className="rounded-2xl border border-white/[0.06] bg-[linear-gradient(180deg,rgba(12,18,15,0.9),rgba(8,12,10,0.9))] p-5 shadow-lg transition hover:border-white/15"
+                  className="history-card"
                 >
                   {/* Topic and Status Badge */}
-                  <div className="flex items-center justify-between border-b border-white/[0.04] pb-3 mb-4">
+                  <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
                     <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-primary" />
-                      <span className="text-xs font-extrabold uppercase tracking-wider text-white">
+                      <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                      <span className="text-xs font-black uppercase tracking-wider text-text-main">
                         {entry.conceptName || 'O/L ICT Concept'}
                       </span>
                     </div>
                     <span
                       className={`rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                         entry.isCorrect
-                          ? 'border border-success/30 bg-success/15 text-emerald-300'
-                          : 'border border-danger/30 bg-danger/15 text-rose-300'
+                          ? 'border border-success/30 bg-success/15 text-emerald-600 dark:text-emerald-300'
+                          : 'border border-danger/30 bg-danger/15 text-rose-600 dark:text-rose-300'
                       }`}
                     >
                       {entry.isCorrect ? '✓ Correct Answer' : '⚠ Review Needed'}
@@ -127,14 +127,14 @@ const History = () => {
                   <div className="space-y-3">
                     {/* Tutor Question */}
                     <div className="flex items-start gap-3">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary border border-primary/25 mt-0.5">
-                        <Bot size={14} />
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/25 mt-0.5 shadow-sm">
+                        <Bot size={15} />
                       </div>
-                      <div className="flex-1 rounded-2xl rounded-tl-sm border border-primary/20 bg-primary/10 px-4 py-3">
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1">
+                      <div className="history-tutor-bubble flex-1">
+                        <div className="text-[10px] font-black uppercase tracking-wider text-primary mb-1">
                           Tutor Question
                         </div>
-                        <p className="text-sm font-medium text-white leading-relaxed">
+                        <p className="text-sm font-semibold text-text-main leading-relaxed">
                           {entry.questionText}
                         </p>
                       </div>
@@ -142,41 +142,35 @@ const History = () => {
 
                     {/* Student Answer */}
                     <div className="flex items-start justify-end gap-3">
-                      <div className="flex-1 max-w-[85%] rounded-2xl rounded-tr-sm border border-accent/20 bg-accent/10 px-4 py-3 text-right">
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-accent mb-1">
+                      <div className="history-user-bubble flex-1 max-w-[85%]">
+                        <div className="text-[10px] font-black uppercase tracking-wider text-sky-500 mb-1">
                           Your Selected Answer
                         </div>
-                        <p className="text-sm font-semibold text-white leading-relaxed">
+                        <p className="text-sm font-bold text-text-main leading-relaxed">
                           {entry.selectedAnswer}
                         </p>
                       </div>
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent border border-accent/25 mt-0.5">
-                        <User size={14} />
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-500 border border-sky-500/25 mt-0.5 shadow-sm">
+                        <User size={15} />
                       </div>
                     </div>
 
                     {/* Feedback Explanation */}
                     <div className="flex items-start gap-3">
-                      <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border mt-0.5 ${
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border mt-0.5 shadow-sm ${
                         entry.isCorrect ? 'bg-success/15 text-success border-success/25' : 'bg-danger/15 text-danger border-danger/25'
                       }`}>
-                        <Sparkles size={14} />
+                        <Sparkles size={15} />
                       </div>
-                      <div
-                        className={`flex-1 rounded-2xl border px-4 py-3 ${
-                          entry.isCorrect
-                            ? 'border-success/20 bg-success/10'
-                            : 'border-danger/20 bg-danger/10'
-                        }`}
-                      >
+                      <div className={`history-feedback-bubble flex-1 ${entry.isCorrect ? 'is-correct' : 'is-wrong'}`}>
                         <div
-                          className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${
-                            entry.isCorrect ? 'text-emerald-400' : 'text-rose-400'
+                          className={`text-[10px] font-black uppercase tracking-wider mb-1 ${
+                            entry.isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                           }`}
                         >
                           Feedback &amp; Explanation
                         </div>
-                        <p className="text-sm text-white/95 leading-relaxed">
+                        <p className="text-sm font-medium leading-relaxed">
                           {entry.explanation}
                         </p>
                       </div>
@@ -190,12 +184,12 @@ const History = () => {
 
         {/* Attention Missed Segments Section */}
         <DashboardPanel>
-          <div className="flex items-center gap-2.5 border-b border-white/[0.06] pb-5 mb-6">
+          <div className="flex items-center gap-2.5 border-b border-border pb-5 mb-6">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/10 text-warning border border-warning/20">
               <Clock size={18} />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white tracking-tight">
+              <h3 className="text-xl font-bold tracking-tight text-text-main">
                 Attention Review Segments
               </h3>
               <p className="mt-1 text-sm text-text-muted">
@@ -210,9 +204,9 @@ const History = () => {
               <p className="text-sm font-medium">Fetching learning logs...</p>
             </div>
           ) : history.length === 0 ? (
-            <div className="rounded-2xl border border-white/5 bg-black/20 p-8 text-center text-sm text-text-muted">
+            <div className="rounded-2xl border border-border bg-black/[0.02] dark:bg-black/20 p-8 text-center text-sm text-text-muted">
               <CheckCircle size={32} className="mx-auto mb-2 text-primary opacity-60" />
-              <p className="font-semibold text-white">All caught up!</p>
+              <p className="font-semibold text-text-main">All caught up!</p>
               <p className="mt-1 text-xs text-text-muted">No missed attention segments recorded.</p>
             </div>
           ) : (
@@ -223,15 +217,15 @@ const History = () => {
                     key={session._id}
                     variants={cardVariants}
                     layout
-                    className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[linear-gradient(180deg,rgba(12,18,15,0.95),rgba(8,12,10,0.95))] shadow-lg transition hover:border-white/15"
+                    className="history-card overflow-hidden !p-0"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] bg-white/[0.02] px-6 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-black/[0.02] dark:bg-white/[0.02] px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
                           <Calendar size={16} />
                         </div>
                         <div>
-                          <span className="text-sm font-bold text-white block">
+                          <span className="text-sm font-bold text-text-main block">
                             {new Date(session.created_at).toLocaleDateString(undefined, {
                               weekday: 'short',
                               month: 'short',
@@ -251,13 +245,13 @@ const History = () => {
                         <button
                           type="button"
                           onClick={() => handleMarkReviewed(session._id)}
-                          className="flex items-center gap-2 rounded-xl bg-success px-4 py-2 text-xs font-bold text-[#032418] shadow-md transition hover:bg-emerald-400 active:scale-95"
+                          className="flex items-center gap-2 rounded-xl bg-success px-4 py-2 text-xs font-bold text-white shadow-md transition hover:bg-emerald-600 active:scale-95 cursor-pointer"
                         >
                           <CheckCircle size={14} />
                           Mark Reviewed
                         </button>
                       ) : (
-                        <div className="flex items-center gap-1.5 rounded-xl border border-success/30 bg-success/15 px-3.5 py-1.5 text-xs font-bold text-emerald-300">
+                        <div className="flex items-center gap-1.5 rounded-xl border border-success/30 bg-success/15 px-3.5 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-300">
                           <CheckCircle size={14} />
                           Completed
                         </div>
@@ -269,14 +263,10 @@ const History = () => {
                         {session.segments.map((seg, idx) => (
                           <div
                             key={idx}
-                            className={`relative overflow-hidden rounded-xl border p-4 transition ${
-                              seg.reviewed
-                                ? 'border-white/5 bg-white/[0.01] opacity-40'
-                                : 'border-warning/20 bg-warning/[0.06]'
-                            }`}
+                            className={`history-segment-card ${seg.reviewed ? 'is-reviewed' : ''}`}
                           >
                             <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-2 text-xs font-bold text-warning">
+                              <div className="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-warning">
                                 <Clock size={13} />
                                 <span>
                                   {Math.floor(seg.start_time)}s — {Math.floor(seg.end_time)}s
@@ -292,7 +282,7 @@ const History = () => {
                               className={`text-sm leading-relaxed ${
                                 seg.reviewed
                                   ? 'text-text-muted line-through'
-                                  : 'font-medium text-white/95'
+                                  : 'font-medium text-text-main'
                               }`}
                             >
                               {seg.transcript_text}

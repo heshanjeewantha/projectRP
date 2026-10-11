@@ -15,14 +15,12 @@ import numpy as np
 
 from src.common.utils.websocket_manager import ws_manager
 from src.modules.component_01_attention_monitoring.ml.attention_detector import AttentionDetector
-from src.modules.component_01_attention_monitoring.ml.phone_detector import PhoneDetector
 from src.modules.component_01_attention_monitoring.ml.live_sign_recognizer import LiveSignRecognizer
 
 router = APIRouter(tags=["WebSocket"])
 
 # Singleton detector instances (reused across WebSocket frames for state continuity)
 _attention_detector = AttentionDetector()
-_phone_detector     = PhoneDetector()
 _sign_recognizer    = LiveSignRecognizer()
 
 STATUS_HISTORY_SIZE          = 4
@@ -34,33 +32,7 @@ NO_FACE_GRACE_FRAMES         = 3
 async def websocket_attention_endpoint(websocket: WebSocket, session_id: str):
     """
     Accepts base64-encoded frames from React webcam.
-    Runs all detectors and returns extended result JSON:
-
-    {
-      "status": "attentive" | "not_attentive",
-      "reason": "ok" | "eyes_closed" | "drowsy" | "yawning" | "head_turned" |
-                "phone_detected" | "no_face",
-      "ear": float,
-      "perclos": float,
-      "drowsiness_score": float,
-      "mar": float,
-      "yawning": bool,
-      "blink_rate": float,
-      "gaze_direction": str,
-      "engagement_score": int,
-      "phone_detected": bool,
-      "phone_confidence": float,
-      "hand_detected": bool,
-      "sign_text": str | null,
-      "sign_confidence": float,
-      "sign_explanation": str,
-      "yaw": float,
-      "pitch": float,
-      "roll": float,
-      "eye_open": bool,
-      "head_pose_deviation": float,
-      "timestamp": float
-    }
+    Runs attention and sign detectors and returns extended result JSON:
     """
     await ws_manager.connect(session_id, websocket)
     status_history: deque[str] = deque(maxlen=STATUS_HISTORY_SIZE)
@@ -85,30 +57,20 @@ async def websocket_attention_endpoint(websocket: WebSocket, session_id: str):
                 if frame is None:
                     continue
 
-                # ── Run attention and phone detectors ──────────────────────
+                # ── Run attention and gesture detectors ───────────────────
                 attention_result = _attention_detector.analyze_frame(frame)
-                phone_result     = _phone_detector.analyze_frame(frame)
+                sign_result      = _sign_recognizer.analyze_frame(frame)
 
                 # ── Merge results ─────────────────────────────────────────
                 result = {
                     **attention_result,
-                    **phone_result,
-                    "sign_text": None,
-                    "sign_confidence": 0.0,
-                    "sign_explanation": "",
+                    "phone_detected": False,
+                    "phone_confidence": 0.0,
+                    "phone_in_hand": False,
+                    "phone_posture": "none",
+                    **sign_result,
                 }
                 result["timestamp"] = video_timestamp
-
-                # ── Override reason/status for phone detection ───
-                if phone_result.get("phone_detected"):
-                    if result["reason"] == "ok":
-                        result["reason"] = "phone_detected"
-                        result["status"] = "not_attentive"
-                    result["phone_in_hand"] = phone_result.get("phone_in_hand", False)
-                    result["phone_posture"] = phone_result.get("phone_posture", "none")
-                else:
-                    result["phone_in_hand"] = False
-                    result["phone_posture"] = "none"
 
                 # ── Stability voting ──────────────────────────────────────
                 if result.get("reason") == "no_face":

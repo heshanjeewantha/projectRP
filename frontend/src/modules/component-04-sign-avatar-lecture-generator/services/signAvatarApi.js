@@ -67,3 +67,15 @@ export const deleteSignLecture = async (lectureId) => {
   const response = await axios.delete(`${SIGN_LECTURE_API_BASE}/${lectureId}`);
   return response.data;
 };
+
+// ── Feature: ASL Fingerspelling Engine ──
+export const getFingerspellingAlphabet = async () => {
+  const response = await axios.get(`${SIGN_AVATAR_API_BASE}/fingerspelling/alphabet`);
+  return response.data;
+};
+
+export const decomposeFingerspellingText = async (payload) => {
+  const response = await axios.post(`${SIGN_AVATAR_API_BASE}/fingerspelling/decompose`, payload);
+  return response.data;
+};
+

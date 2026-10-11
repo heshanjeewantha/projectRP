@@ -88,22 +88,26 @@ const buildFingerPoints = ({
   curl,
   lengths,
 }) => {
-  // A human finger does not fold by one uniform amount.  The MCP, PIP and
-  // DIP joints each contribute a different part of the curl, which keeps a
-  // closed hand from looking like five straight sticks rotating together.
-  const bends = [curl * 26, curl * 40, curl * 54];
+  // A human finger flexes from the MCP knuckle joint forward/down over the palm,
+  // then the PIP and DIP joints curl inwards into the palm crease.
+  const mcpFlex = curl * 78;
+  const pipFlex = curl * 88;
+  const dipFlex = curl * 74;
+  const bends = [mcpFlex, pipFlex, dipFlex];
   const points = [basePoint];
   let currentPoint = basePoint;
-  let currentAngle = baseAngle;
+  let currentAngle = baseAngle + mcpFlex;
 
   lengths.forEach((length, index) => {
     if (index > 0) {
-      currentAngle += bends[index - 1];
+      currentAngle += bends[index];
     }
 
+    // Foreshortening compression when curled towards viewer
+    const foreshorten = 1 - curl * 0.22;
     currentPoint = {
-      x: currentPoint.x + Math.cos(toRadians(currentAngle)) * length,
-      y: currentPoint.y + Math.sin(toRadians(currentAngle)) * length,
+      x: currentPoint.x + Math.cos(toRadians(currentAngle)) * (length * foreshorten),
+      y: currentPoint.y + Math.sin(toRadians(currentAngle)) * (length * foreshorten),
       z: 0,
     };
     points.push(currentPoint);
@@ -117,15 +121,21 @@ const buildThumbPoints = ({
   spread,
   curl,
 }) => {
-  const thumbAngles = [228 - spread * 0.35, 248 - curl * 18, 274 - curl * 26];
-  const thumbLengths = [26, 20, 18];
+  // When curl is low (A, L, Y), thumb extends upright/outwards.
+  // When curl is high (B, M, N, S, T), thumb folds across palm.
+  const baseAngle = -135 + spread * 1.4 - curl * 75;
+  const mcpAngle = baseAngle + curl * 40;
+  const ipAngle = mcpAngle + curl * 55;
+  const thumbAngles = [baseAngle, mcpAngle, ipAngle];
+  const thumbLengths = [28, 22, 20];
   const points = [basePoint];
   let currentPoint = basePoint;
 
   thumbLengths.forEach((length, index) => {
+    const foreshorten = 1 - curl * 0.18;
     currentPoint = {
-      x: currentPoint.x + Math.cos(toRadians(thumbAngles[index])) * length,
-      y: currentPoint.y + Math.sin(toRadians(thumbAngles[index])) * length,
+      x: currentPoint.x + Math.cos(toRadians(thumbAngles[index])) * (length * foreshorten),
+      y: currentPoint.y + Math.sin(toRadians(thumbAngles[index])) * (length * foreshorten),
       z: 0,
     };
     points.push(currentPoint);
@@ -133,6 +143,7 @@ const buildThumbPoints = ({
 
   return points;
 };
+
 
 const mergePose = (pose, side) => {
   const base = side === 'left' ? DEFAULT_LEFT_HAND : DEFAULT_RIGHT_HAND;

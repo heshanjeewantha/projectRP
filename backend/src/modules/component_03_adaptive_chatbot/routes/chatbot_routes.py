@@ -10,6 +10,7 @@ from src.modules.component_03_adaptive_chatbot.models.chatbot import (
     ChatbotHistoryClearResponseModel,
     ChatbotMessageModel,
     ChatbotTopicModel,
+    EARADiagramResponse,
     FlashcardDeckResponse,
     FlashcardReviewRequest,
     FlashcardReviewResponse,
@@ -131,9 +132,9 @@ async def review_flashcard_item(payload: FlashcardReviewRequest):
 # ── Feature 5: Mock Exam Simulator Routes ────────────────────────────────────
 
 @router.get("/mock-exam/start", response_model=MockExamStartResponse)
-async def start_mock_exam(studentId: str = "student_demo_123"):
-    """Initialize a 10-minute rapid fire O/L ICT mock exam."""
-    return await chatbot_service.start_mock_exam(studentId)
+async def start_mock_exam(studentId: str = "student_demo_123", topicId: str | None = None):
+    """Initialize a 10-minute rapid fire O/L ICT mock exam for a specific topic or full syllabus."""
+    return await chatbot_service.start_mock_exam(studentId, topic_id=topicId)
 
 
 @router.post("/mock-exam/submit", response_model=MockExamResultResponse)
@@ -144,5 +145,26 @@ async def submit_mock_exam(payload: MockExamSubmission):
         student_id=payload.studentId,
         answers=payload.answers,
         time_spent_seconds=payload.timeSpentSeconds,
+    )
+
+
+# ── EARA: Explainability of Adaptive Response Architecture ────────────────
+
+@router.get("/eara/{topic_id}", response_model=EARADiagramResponse)
+async def get_eara_diagram(
+    topic_id: str,
+    learning_state: str = "bored",
+    question: str | None = None,
+):
+    """
+    EARA — Explainability of Adaptive Response Architecture.
+    Returns a concept diagram (nodes + edges) for the topic,
+    enriched with learning-state-specific engagement guidance.
+    Called by the frontend when a student is bored or not_understanding.
+    """
+    return await chatbot_service.get_eara_diagram(
+        topic_id=topic_id,
+        learning_state=learning_state,
+        question=question,
     )
 

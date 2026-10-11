@@ -69,7 +69,7 @@ const SignupPage = () => {
           <label className="auth-field">
             <span>Full Name</span>
             <div className="auth-input-wrap">
-              <UserRound size={17} className="text-primary" />
+              {/* <UserRound size={17} className="text-primary" /> */}
               <input
                 type="text"
                 value={fullName}
@@ -84,7 +84,7 @@ const SignupPage = () => {
           <label className="auth-field">
             <span>Email</span>
             <div className="auth-input-wrap">
-              <Mail size={17} className="text-primary" />
+              {/* <Mail size={17} className="text-primary" /> */}
               <input
                 type="email"
                 value={email}
@@ -99,7 +99,7 @@ const SignupPage = () => {
           <label className="auth-field">
             <span>Password</span>
             <div className="auth-input-wrap">
-              <LockKeyhole size={17} className="text-primary" />
+              {/* <LockKeyhole size={17} className="text-primary" /> */}
               <input
                 type="password"
                 value={password}

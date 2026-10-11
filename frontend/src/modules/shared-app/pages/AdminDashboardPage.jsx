@@ -102,7 +102,7 @@ const AdminDashboardPage = () => {
                 label="Attention Monitoring"
                 icon={ChartColumnBig}
                 title="Attention Reports"
-                description="Generate comprehensive engagement, drowsiness, phone usage, and fatigue reports for students."
+                description="Generate comprehensive engagement, drowsiness, and fatigue reports for students."
               />
             </div>
             <div className="mt-6">

@@ -1,7 +1,12 @@
 """
 API routes for the text-to-sign avatar generator module.
 """
+from __future__ import annotations
+
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
+
 
 from src.modules.component_04_sign_avatar_lecture_generator.models.sign_avatar import (
     LearnedSignPatternCreateModel,
@@ -43,6 +48,19 @@ async def generate_sign_avatar_sequence(payload: SignAvatarSequenceRequestModel)
 async def get_sign_gestures():
     """Return the available placeholder sign gesture dataset."""
     return await sign_avatar_service.get_gestures()
+
+
+@router.get("/fingerspelling/alphabet")
+async def get_fingerspelling_alphabet():
+    """Return the full 26-letter ASL manual alphabet definitions and handshape metrics."""
+    return await sign_avatar_service.get_asl_alphabet_reference()
+
+
+@router.post("/fingerspelling/decompose")
+async def decompose_fingerspelling_text(payload: dict[str, Any]):
+    """Decompose input lesson notes into ICT keywords and 26-letter ASL fingerspelling sequences."""
+    return await sign_avatar_service.decompose_text_to_fingerspelling(payload)
+
 
 
 @router.post("/learned-patterns", response_model=LearnedSignPatternResponseModel)

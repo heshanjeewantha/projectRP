@@ -33,25 +33,90 @@ from src.modules.component_05_smart_wristband_iot.services import wristband_serv
 
 app = FastAPI(title="Attention-Aware Sign Language API", version="1.0.0")
 
-allowed_origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-
 # Setup CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_origin_regex=r".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Serve static uploaded files (videos)
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+import os
+from pathlib import Path
+from fastapi import Request, HTTPException, status
+from fastapi.responses import StreamingResponse
+
+@app.get("/uploads/{filename}")
+async def stream_video_file(filename: str, request: Request):
+    """
+    Streams video with full HTTP 206 Partial Content (Byte Ranges)
+    so HTML5 video players can seek, forward (+10s), and rewind smoothly.
+    """
+    file_path = os.path.join(settings.UPLOAD_DIR, filename)
+    if not os.path.exists(file_path):
+        available = list(Path(settings.UPLOAD_DIR).glob("*.mp4"))
+        if available:
+            file_path = str(available[0])
+        else:
+            raise HTTPException(status_code=404, detail="Video file not found")
+
+    file_size = os.path.getsize(file_path)
+    range_header = request.headers.get("range")
+
+    if not range_header:
+        def iter_full():
+            with open(file_path, "rb") as f:
+                while chunk := f.read(1024 * 1024):
+                    yield chunk
+        headers = {
+            "Accept-Ranges": "bytes",
+            "Content-Length": str(file_size),
+            "Content-Type": "video/mp4",
+        }
+        return StreamingResponse(iter_full(), status_code=200, headers=headers)
+
+    try:
+        range_str = range_header.replace("bytes=", "").strip()
+        parts = range_str.split("-")
+        start = int(parts[0]) if parts[0] else 0
+        end = int(parts[1]) if len(parts) > 1 and parts[1] else file_size - 1
+    except ValueError:
+        raise HTTPException(status_code=416, detail="Invalid Range header")
+
+    if start >= file_size or end >= file_size or start > end:
+        raise HTTPException(
+            status_code=416,
+            detail="Range not satisfiable",
+            headers={"Content-Range": f"bytes */{file_size}"}
+        )
+
+    chunk_size = end - start + 1
+
+    def iter_range():
+        with open(file_path, "rb") as f:
+            f.seek(start)
+            remaining = chunk_size
+            while remaining > 0:
+                read_len = min(remaining, 1024 * 1024)
+                data = f.read(read_len)
+                if not data:
+                    break
+                remaining -= len(data)
+                yield data
+
+    headers = {
+        "Content-Range": f"bytes {start}-{end}/{file_size}",
+        "Accept-Ranges": "bytes",
+        "Content-Length": str(chunk_size),
+        "Content-Type": "video/mp4",
+    }
+    return StreamingResponse(
+        iter_range(), status_code=status.HTTP_206_PARTIAL_CONTENT, headers=headers
+    )
+
+# Fallback mount for non-video static files
+app.mount("/uploads-static", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads-static")
 
 
 import asyncio

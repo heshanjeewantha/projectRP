@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import {
-  Eye, Moon, Smartphone, Activity, Navigation,
-  TrendingUp, AlertTriangle, CheckCircle,
+  Eye, Moon, Activity, Navigation,
+  AlertTriangle, CheckCircle,
 } from 'lucide-react';
 import useStore from '../../../shared-app/utils/useStore';
 
@@ -51,7 +51,6 @@ const StatusBadge = ({ status, reason }) => {
     drowsy:         { label: 'Drowsy',        color: '#f59e0b', bg: '#f59e0b15', icon: Moon },
     yawning:        { label: 'Yawning',       color: '#fb923c', bg: '#fb923c15', icon: Moon },
     head_turned:    { label: 'Looking Away',  color: '#a78bfa', bg: '#a78bfa15', icon: Navigation },
-    phone_detected: { label: 'Using Phone',   color: '#ef4444', bg: '#ef444415', icon: Smartphone },
     no_face:        { label: 'No Face',       color: '#8b8fa8', bg: '#8b8fa815', icon: AlertTriangle },
     unknown:        { label: 'Calibrating',   color: '#8b8fa8', bg: '#8b8fa815', icon: Activity },
   };
@@ -80,8 +79,6 @@ const AttentionStatsPanel = () => {
     attentionDetail,
     drowsinessScore,
     perclos,
-    phoneDetected,
-    phoneDetectedCount,
     yawning,
     gazeDirection,
     blinkRate,
@@ -166,13 +163,6 @@ const AttentionStatsPanel = () => {
           label="Gaze Direction"
           value={gazeLabel}
           color={gazeDirection === 'center' ? '#5fbf97' : '#a78bfa'}
-        />
-        <MetricRow
-          icon={Smartphone}
-          label="Phone Detections"
-          value={phoneDetectedCount > 0 ? `${phoneDetectedCount} times` : 'None'}
-          sub="This session"
-          color={phoneDetectedCount > 0 ? '#ef4444' : '#5fbf97'}
         />
         <MetricRow
           icon={Moon}

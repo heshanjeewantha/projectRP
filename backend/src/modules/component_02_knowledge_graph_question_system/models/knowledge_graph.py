@@ -39,26 +39,26 @@ class DiagramNodeModel(BaseModel):
 
 
 class DiagramEdgeModel(BaseModel):
-    from_: str = Field(alias="from")
-    to: str
-    label: str
+    from_: str = Field(default="", alias="from")
+    to: str = ""
+    label: str = ""
 
     model_config = {"populate_by_name": True}
 
 
 class DiagramLayoutModel(BaseModel):
-    columns: int
-    rows: int
+    columns: int = 3
+    rows: int = 2
 
 
 class ConceptDiagramModel(BaseModel):
-    diagramId: str
-    title: str
-    subtitle: str
-    layout: DiagramLayoutModel
-    nodes: List[DiagramNodeModel]
-    edges: List[DiagramEdgeModel]
-    summaryPoints: List[str]
+    diagramId: Optional[str] = "diag_default"
+    title: str = ""
+    subtitle: str = ""
+    layout: Optional[DiagramLayoutModel] = Field(default_factory=DiagramLayoutModel)
+    nodes: List[DiagramNodeModel] = Field(default_factory=list)
+    edges: List[DiagramEdgeModel] = Field(default_factory=list)
+    summaryPoints: List[str] = Field(default_factory=list)
 
 
 class KnowledgeGraphConceptModel(BaseModel):

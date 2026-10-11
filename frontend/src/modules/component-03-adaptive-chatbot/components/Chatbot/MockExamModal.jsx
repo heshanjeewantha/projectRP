@@ -15,7 +15,13 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { startMockExam, submitMockExam } from '../../services/chatbotApi';
 
-const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
+const MockExamModal = ({
+  isOpen,
+  onClose,
+  studentId = 'student_demo_123',
+  topicId = null,
+  topicName = '',
+}) => {
   const [examData, setExamData] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -28,7 +34,7 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
     if (isOpen) {
       initExam();
     }
-  }, [isOpen]);
+  }, [isOpen, topicId]);
 
   // Countdown timer
   useEffect(() => {
@@ -53,7 +59,7 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
     setCurrentQuestionIndex(0);
     setTimeRemainingSeconds(600);
     try {
-      const data = await startMockExam(studentId);
+      const data = await startMockExam(studentId, topicId);
       setExamData(data);
     } catch (error) {
       console.error('Failed to initialize mock exam', error);
@@ -61,6 +67,7 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
       setIsLoading(false);
     }
   };
+
 
   const handleSelectOption = (questionId, option) => {
     setAnswers((prev) => ({ ...prev, [questionId]: option }));
@@ -119,7 +126,7 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
               </div>
               <div>
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  10-Min O/L Mock Exam Simulator
+                  {examData?.title || (topicName ? `10-Min Mock Exam: ${topicName}` : '10-Min O/L Mock Exam Simulator')}
                   <span className="text-[10px] font-mono uppercase tracking-wider bg-primary/20 text-primary px-2 py-0.5 rounded-full border border-primary/30">
                     Timed
                   </span>
@@ -128,6 +135,7 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
                   Adaptive 10-Question Test with O/L Grade Predictor (A to W)
                 </p>
               </div>
+
             </div>
 
             {/* Countdown Badge */}
@@ -213,11 +221,11 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
                 )}
 
                 {/* Footer Navigation Buttons */}
-                <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-5 border-t border-white/10">
                   <button
                     onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
                     disabled={currentQuestionIndex === 0}
-                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 min-h-[40px] transition-all"
                   >
                     Previous
                   </button>
@@ -225,7 +233,7 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
                   {currentQuestionIndex < totalQuestions - 1 ? (
                     <button
                       onClick={() => setCurrentQuestionIndex((prev) => Math.min(totalQuestions - 1, prev + 1))}
-                      className="rounded-xl bg-white/10 px-5 py-2 text-xs font-bold text-white hover:bg-white/20 transition-all"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 border border-white/10 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-white/20 min-h-[40px] transition-all"
                     >
                       Next Question
                     </button>
@@ -233,10 +241,10 @@ const MockExamModal = ({ isOpen, onClose, studentId = 'student_demo_123' }) => {
                     <button
                       onClick={handleSubmit}
                       disabled={isSubmitting}
-                      className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-xs font-bold text-[#032418] shadow-lg shadow-primary/30 hover:brightness-105"
+                      className="inline-flex items-center justify-center gap-2.5 rounded-xl bg-primary px-6 py-2.5 text-xs sm:text-sm font-bold text-[#032418] shadow-lg shadow-primary/30 hover:brightness-105 min-h-[40px] transition-all"
                     >
-                      <Award size={15} />
-                      Submit &amp; Predict Grade
+                      <Award size={16} />
+                      <span>Submit &amp; Predict Grade</span>
                     </button>
                   )}
                 </div>

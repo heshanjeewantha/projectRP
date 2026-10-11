@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FastForward, Gauge, Play, RotateCcw, Volume2, Sparkles } from 'lucide-react';
+import { BrainCircuit, FastForward, Gauge, Play, RotateCcw, Volume2, Sparkles } from 'lucide-react';
+
 
 import SignAvatar2D from './two-d-sign-avatar/SignAvatar2D';
 import { extractKeywords } from './two-d-sign-avatar/keywordExtraction';
@@ -56,8 +57,14 @@ const AvatarAnimationController = ({
 
   // Active keyword info
   const activeKeyword = sequence[currentIndex]?.keyword?.toLowerCase() ?? null;
+  const activeItem = sequence[currentIndex] || null;
   const activeEntry = activeKeyword ? signDictionaryLookup[activeKeyword] : null;
   const sinhalaMeaning = activeEntry?.sinhalaMeaning || '';
+  const isWlaslItem = Boolean(activeItem?.wlaslModelClass);
+  const wlaslAccLabel = isWlaslItem
+    ? `${activeItem.wlaslArchitecture || 'BiLSTM'} · ${((activeItem.wlaslValAccuracy || 0) * 100).toFixed(0)}% acc`
+    : null;
+
 
   // All extracted keywords from sequence
   const allKeywords = useMemo(
@@ -105,7 +112,14 @@ const AvatarAnimationController = ({
           >
             {landmarkFrames ? '● Real ASL Dataset (WLASL)' : '● Synthetic Pose Rig'}
           </span>
+          {isWlaslItem && (
+            <span className="sign-avatar-controller__badge is-wlasl-model" title={wlaslAccLabel}>
+              <BrainCircuit size={12} />
+              {wlaslAccLabel}
+            </span>
+          )}
         </div>
+
 
         {/* Speed Selector */}
         <div className="sign-avatar-controller__speed-group">
@@ -175,8 +189,15 @@ const AvatarAnimationController = ({
             </div>
             <div className="sign-avatar-controller__meta-item">
               <span className="sign-avatar-controller__meta-lbl">Source</span>
-              <strong>{landmarkFrames ? `${landmarkFrames.length} WLASL Frames` : 'Kinematic'}</strong>
+              <strong>
+                {isWlaslItem && wlaslAccLabel
+                  ? wlaslAccLabel
+                  : landmarkFrames
+                  ? `${landmarkFrames.length} WLASL Frames`
+                  : 'Kinematic'}
+              </strong>
             </div>
+
             <div className="sign-avatar-controller__meta-item">
               <span className="sign-avatar-controller__meta-lbl">Speed</span>
               <strong>{playbackSpeed}x</strong>

@@ -5,86 +5,79 @@ import {
   Sparkles,
   AlertTriangle,
   CheckCircle2,
-  XCircle,
-  RotateCcw,
-  Play,
   Vibrate,
-  ShieldCheck,
   Hand,
-  Zap,
-  Check,
-  Flame,
   RefreshCw,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 
 // Authentic ASL Dual-Hand Specifications (Mirrored User Perspective)
-// - Screen Left Box = User's Physical RIGHT Hand
-// - Screen Right Box = User's Physical LEFT Hand
+// - Screen Left Box = User's Physical LEFT Hand
+// - Screen Right Box = User's Physical RIGHT Hand
 // `count` is the number of extended fingers required (0 = fist, 5 = open palm, etc.)
 const DUAL_HAND_SPECS = {
   computer: {
     name: 'Open 5-Finger Typing',
     icon: '⌨️',
-    rightHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
     leftHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
+    rightHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
     description: 'Raise both hands with 5 fingers open and flutter in typing motion.',
     action: 'Place hands in Left and Right boxes and move fingers.',
   },
   hardware: {
     name: 'Fist Strike on Palm',
     icon: '🔨',
-    rightHandReq: { count: 0, label: 'Closed Fist ✊' },
     leftHandReq: { count: 5, label: 'Flat Palm 🖐️' },
-    description: 'Right hand closed solid fist, Left hand flat receiving palm.',
-    action: 'Right hand (Screen Left) fist, Left hand (Screen Right) flat palm.',
+    rightHandReq: { count: 0, label: 'Closed Fist ✊' },
+    description: 'Left hand flat receiving palm, Right hand closed solid fist.',
+    action: 'Left hand (Screen Left) flat palm, Right hand (Screen Right) fist.',
   },
   software: {
     name: 'V-Glide Across Palm',
     icon: '📜',
-    rightHandReq: { count: 2, label: '2-Finger (V) ✌️' },
     leftHandReq: { count: 5, label: 'Flat Palm 🖐️' },
-    description: 'Right hand 2-finger V-glide across Left flat palm.',
-    action: 'Right hand (Screen Left) V-sign, Left hand (Screen Right) flat palm.',
+    rightHandReq: { count: 2, label: '2-Finger (V) ✌️' },
+    description: 'Left hand flat palm, Right hand 2-finger V-glide across palm.',
+    action: 'Left hand (Screen Left) flat palm, Right hand (Screen Right) V-sign.',
   },
   database: {
     name: 'Tiered C-Shapes',
     icon: '🗄️',
-    rightHandReq: { count: 3, label: 'C-Shape 🗄️' },
     leftHandReq: { count: 3, label: 'C-Shape 🗄️' },
+    rightHandReq: { count: 3, label: 'C-Shape 🗄️' },
     description: 'Both hands curved into C-shapes showing layered tiers.',
     action: 'Show curved C-handshape in both Left and Right boxes.',
   },
   network: {
     name: 'Linked Middle Nodes',
     icon: '🌐',
-    rightHandReq: { count: 3, label: 'Middle Touch 🤞' },
     leftHandReq: { count: 3, label: 'Middle Touch 🤞' },
+    rightHandReq: { count: 3, label: 'Middle Touch 🤞' },
     description: 'Both hands extended with middle fingers prominent.',
     action: 'Extend fingers in Left and Right boxes.',
   },
   internet: {
     name: 'Open 5 Orbital Hands',
     icon: '🌍',
-    rightHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
     leftHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
+    rightHandReq: { count: 5, label: 'Open 5 Fingers 🖐️' },
     description: 'Both hands open with 5 fingers spread in circular orbits.',
     action: 'Show 5 open fingers in both Left and Right boxes.',
   },
   email: {
     name: 'Envelope Slot Pass',
     icon: '✉️',
-    rightHandReq: { count: 2, label: 'Flat Sender ✌️' },
     leftHandReq: { count: 3, label: 'Envelope Slot ✉️' },
-    description: 'Right hand 2 flat fingers entering Left hand envelope slot.',
-    action: 'Right hand (Screen Left) sender, Left hand (Screen Right) slot.',
+    rightHandReq: { count: 2, label: 'Flat Sender ✌️' },
+    description: 'Left hand envelope slot, Right hand flat sender entering slot.',
+    action: 'Left hand (Screen Left) slot, Right hand (Screen Right) sender.',
   },
   security: {
     name: 'Dual Closed S-Fists',
     icon: '🛡️',
-    rightHandReq: { count: 0, label: 'Closed S-Fist ✊' },
     leftHandReq: { count: 0, label: 'Closed S-Fist ✊' },
+    rightHandReq: { count: 0, label: 'Closed S-Fist ✊' },
     description: 'Both hands closed tightly into S-fists across chest.',
     action: 'Show closed fists in both Left and Right boxes.',
   },
@@ -109,7 +102,6 @@ const FINGER_BONES = [
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 // Count extended fingers from 21 landmark points (already in pixel space).
-// Thumb uses distance-from-wrist since its bend axis differs from the other four.
 const countExtendedFingers = (pts) => {
   let count = 0;
   const wrist = pts[0];
@@ -118,57 +110,78 @@ const countExtendedFingers = (pts) => {
   if (dist(thumbTip, wrist) > dist(thumbMcp, wrist) * 1.15) count += 1;
 
   FINGER_DEFS.forEach(({ tip, pip }) => {
-    if (pts[tip].y < pts[pip].y) count += 1; // tip above pip (in pixel coords, up = smaller y) = extended
+    if (pts[tip].y < pts[pip].y) count += 1; // tip above pip = extended
   });
   return count;
 };
 
-// Convert MediaPipe's raw (unmirrored, normalized) landmarks into mirrored pixel
-// coordinates matching our mirrored canvas.
-//
-// Hand identity is assigned from MediaPipe's own handedness classification, NOT
-// from which side of the screen the hand happens to be on. MediaPipe's handedness
-// labels assume the frame fed to it was already selfie-mirrored — we feed it the
-// RAW, unmirrored video (we only mirror on the canvas for display), so its label
-// is backwards relative to the user's actual hand and must be inverted here.
-//
-// "YOUR RIGHT HAND" is the screen-left box and "YOUR LEFT HAND" is the screen-right
-// box (signer-facing-you convention, matching the avatar demo) — so the user's
-// physical right hand should register in the left box, and physical left hand in
-// the right box.
+// Screen-Spatial Hand Classifier:
+// Converts raw landmarks to mirrored pixel coordinates and binds:
+// - Left half of screen (Screen Left box) -> Left Hand (`leftRes`)
+// - Right half of screen (Screen Right box) -> Right Hand (`rightRes`)
 const classifyHands = (result, w, h) => {
   let rightRes = { detected: false, count: -1, landmarks: null };
   let leftRes = { detected: false, count: -1, landmarks: null };
 
   if (!result?.landmarks?.length) return { rightRes, leftRes };
 
-  result.landmarks.forEach((lms, i) => {
+  // Convert all detected hands to mirrored pixel coordinates
+  const detectedHands = result.landmarks.map((lms) => {
     const pts = lms.map((p) => ({ x: w - p.x * w, y: p.y * h }));
     const count = countExtendedFingers(pts);
-
-    const rawLabel = result.handedness?.[i]?.[0]?.categoryName; // 'Left' | 'Right' (mirrored assumption)
-    const actualHand = rawLabel === 'Left' ? 'Right' : rawLabel === 'Right' ? 'Left' : null;
-
-    const entry = { detected: true, count, landmarks: pts };
-
-    if (actualHand === 'Right') {
-      rightRes = entry;
-    } else if (actualHand === 'Left') {
-      leftRes = entry;
-    }
+    const avgX = pts.reduce((sum, p) => sum + p.x, 0) / pts.length;
+    return { detected: true, count, landmarks: pts, avgX };
   });
+
+  if (detectedHands.length === 1) {
+    const hand = detectedHands[0];
+    if (hand.avgX < w * 0.5) {
+      leftRes = { detected: true, count: hand.count, landmarks: hand.landmarks };
+    } else {
+      rightRes = { detected: true, count: hand.count, landmarks: hand.landmarks };
+    }
+  } else if (detectedHands.length >= 2) {
+    // Sort horizontally: leftmost is Screen Left (Left Hand), rightmost is Screen Right (Right Hand)
+    detectedHands.sort((a, b) => a.avgX - b.avgX);
+    leftRes = { detected: true, count: detectedHands[0].count, landmarks: detectedHands[0].landmarks };
+    rightRes = { detected: true, count: detectedHands[detectedHands.length - 1].count, landmarks: detectedHands[detectedHands.length - 1].landmarks };
+  }
 
   return { rightRes, leftRes };
 };
 
 const matchesRequirement = (res, req) => res.detected && res.count === req.count;
 
+const wrapCanvasText = (ctx, text, maxWidth, maxLines = 2) => {
+  const words = String(text).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+
+  words.forEach((word) => {
+    const candidate = line ? `${line} ${word}` : word;
+    if (!line || ctx.measureText(candidate).width <= maxWidth) {
+      line = candidate;
+      return;
+    }
+    lines.push(line);
+    line = word;
+  });
+
+  if (line) lines.push(line);
+  if (lines.length <= maxLines) return lines;
+
+  const trimmed = lines.slice(0, maxLines);
+  while (trimmed[maxLines - 1].length > 1 && ctx.measureText(`${trimmed[maxLines - 1]}...`).width > maxWidth) {
+    trimmed[maxLines - 1] = trimmed[maxLines - 1].slice(0, -1).trim();
+  }
+  trimmed[maxLines - 1] = `${trimmed[maxLines - 1]}...`;
+  return trimmed;
+};
+
 const CameraSignEvaluator = ({
   keyword,
-  keywordMeta,
   onPassKeyword,
   onErrorTrigger,
-  examMode = false,
 }) => {
   const normKey = (keyword || 'computer').toLowerCase();
   const spec = DUAL_HAND_SPECS[normKey] || DUAL_HAND_SPECS.computer;
@@ -192,6 +205,7 @@ const CameraSignEvaluator = ({
   const rightInZoneRef = useRef(false);
   const leftInZoneRef = useRef(false);
 
+  const specActionRef = useRef(spec.action);
   const holdStartRef = useRef(null);
   const lastPassTimeRef = useRef(0);
   const lastStateSyncRef = useRef(0);
@@ -237,7 +251,7 @@ const CameraSignEvaluator = ({
     };
   }, []);
 
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     try {
       setCameraLoading(true);
       setCameraError(null);
@@ -273,16 +287,16 @@ const CameraSignEvaluator = ({
       setIsCameraActive(true);
       setCameraLoading(false);
       setStatusMessage('Camera active. Place hands in both boxes.');
-      setSecondaryTip(spec.action);
+      setSecondaryTip(specActionRef.current);
     } catch (err) {
       console.warn('Webcam start error:', err);
       setCameraError('Webcam unavailable or blocked. You can retry or use Virtual Hand Evaluator.');
       setCameraLoading(false);
       setIsCameraActive(false);
     }
-  };
+  }, []);
 
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -292,7 +306,7 @@ const CameraSignEvaluator = ({
     }
     setIsCameraActive(false);
     setIsSimulated(false);
-  };
+  }, []);
 
   const enableSimulationMode = () => {
     stopCamera();
@@ -311,25 +325,42 @@ const CameraSignEvaluator = ({
   }, [isCameraActive]);
 
   useEffect(() => {
-    startCamera();
-    return () => stopCamera();
-  }, []);
+    const startTimer = window.setTimeout(() => {
+      startCamera();
+    }, 0);
+    return () => {
+      window.clearTimeout(startTimer);
+      stopCamera();
+    };
+  }, [startCamera, stopCamera]);
 
   // Reset state when keyword changes
   useEffect(() => {
+    specActionRef.current = spec.action;
+  }, [spec.action]);
+
+  useEffect(() => {
+    let cancelled = false;
     holdStartRef.current = null;
-    setHoldProgress(0);
-    setCurrentAccuracy(0);
-    setIsMatching(false);
     rightInZoneRef.current = false;
     leftInZoneRef.current = false;
-    setRightInZone(false);
-    setLeftInZone(false);
-    setStatusMessage(`Perform sign: '${keyword?.toUpperCase()}'. Place hands in both boxes.`);
-    setSecondaryTip(spec.action);
+    const resetTimer = window.setTimeout(() => {
+      if (cancelled) return;
+      setHoldProgress(0);
+      setCurrentAccuracy(0);
+      setIsMatching(false);
+      setRightInZone(false);
+      setLeftInZone(false);
+      setStatusMessage(`Perform sign: '${keyword?.toUpperCase()}'. Place hands in both boxes.`);
+      setSecondaryTip(spec.action);
+    }, 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(resetTimer);
+    };
   }, [keyword, spec]);
 
-  const processFrame = useCallback(() => {
+  const processFrame = useCallback(function processFrameTick() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
@@ -373,8 +404,8 @@ const CameraSignEvaluator = ({
       const boxH = Math.floor(h * 0.68);
       const boxY = Math.floor(h * 0.22);
 
-      const screenLeftBox = { x: Math.floor(w * 0.05), y: boxY, w: boxW, h: boxH, title: 'YOUR RIGHT HAND' };
-      const screenRightBox = { x: Math.floor(w * 0.55), y: boxY, w: boxW, h: boxH, title: 'YOUR LEFT HAND' };
+      const screenLeftBox = { x: Math.floor(w * 0.05), y: boxY, w: boxW, h: boxH, title: 'YOUR LEFT HAND' };
+      const screenRightBox = { x: Math.floor(w * 0.55), y: boxY, w: boxW, h: boxH, title: 'YOUR RIGHT HAND' };
 
       let rightRes = { detected: false, count: -1, landmarks: null };
       let leftRes = { detected: false, count: -1, landmarks: null };
@@ -389,7 +420,7 @@ const CameraSignEvaluator = ({
           try {
             const result = handLandmarkerRef.current.detectForVideo(video, performance.now());
             lastDetectResultRef.current = classifyHands(result, w, h);
-          } catch (e) {
+          } catch {
             // model not ready for this frame yet; keep last known result
           }
         }
@@ -441,20 +472,25 @@ const CameraSignEvaluator = ({
         ctx.lineTo(box.x + box.w, box.y + box.h - c);
         ctx.stroke();
 
-        ctx.fillStyle = ok ? 'rgba(16, 185, 129, 0.9)' : hasHand ? 'rgba(180, 83, 9, 0.9)' : 'rgba(15, 23, 42, 0.85)';
-        ctx.fillRect(box.x + 6, box.y + 6, box.w - 12, 22);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 10px sans-serif';
+        const fontSize = box.w < 230 ? 9 : 10;
+        ctx.font = `bold ${fontSize}px sans-serif`;
         const label = !hasHand
           ? `${box.title}: ✋ RAISE HERE (${targetReq.label})`
           : ok
             ? `${box.title}: ✓ MATCHED (${targetReq.label})`
             : `${box.title}: shape ≠ target (${res.count} fingers, need ${targetReq.count})`;
-        ctx.fillText(label, box.x + 10, box.y + 20);
+        const labelLines = wrapCanvasText(ctx, label, box.w - 22, 2);
+        const labelHeight = 12 + labelLines.length * (fontSize + 3);
+        ctx.fillStyle = ok ? 'rgba(16, 185, 129, 0.9)' : hasHand ? 'rgba(180, 83, 9, 0.9)' : 'rgba(15, 23, 42, 0.85)';
+        ctx.fillRect(box.x + 6, box.y + 6, box.w - 12, labelHeight);
+        ctx.fillStyle = '#ffffff';
+        labelLines.forEach((line, lineIndex) => {
+          ctx.fillText(line, box.x + 10, box.y + 19 + lineIndex * (fontSize + 3));
+        });
       };
 
-      drawBox(screenLeftBox, rightRes, spec.rightHandReq);
-      drawBox(screenRightBox, leftRes, spec.leftHandReq);
+      drawBox(screenLeftBox, leftRes, spec.leftHandReq);
+      drawBox(screenRightBox, rightRes, spec.rightHandReq);
 
       // Draw the real 21-point skeleton, confined to wherever the hand actually is.
       const drawSkeleton = (res) => {
@@ -503,10 +539,10 @@ const CameraSignEvaluator = ({
         lastStateSyncRef.current = now;
 
         if (videoValid) {
-          rightInZoneRef.current = rightRes.detected;
           leftInZoneRef.current = leftRes.detected;
-          setRightInZone(rightRes.detected);
+          rightInZoneRef.current = rightRes.detected;
           setLeftInZone(leftRes.detected);
+          setRightInZone(rightRes.detected);
         }
 
         const rightOk = matchesRequirement(rightRes, spec.rightHandReq);
@@ -551,7 +587,7 @@ const CameraSignEvaluator = ({
       }
     }
 
-    animationFrameRef.current = requestAnimationFrame(processFrame);
+    animationFrameRef.current = requestAnimationFrame(processFrameTick);
   }, [isCameraActive, isSimulated, spec, keyword, onPassKeyword]);
 
   useEffect(() => {
@@ -590,18 +626,18 @@ const CameraSignEvaluator = ({
   };
 
   return (
-    <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-950 p-5 sm:p-6 shadow-2xl">
+    <div className="camera-sign-evaluator relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950 p-4 shadow-2xl sm:p-5">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
-        <div className="flex items-center gap-2.5">
+      <div className="camera-evaluator-header border-b border-white/10 pb-3.5">
+        <div className="flex min-w-0 items-center gap-2.5">
           <div
             className={`flex h-10 w-10 items-center justify-center rounded-2xl ${isMatching ? 'bg-emerald-500/20 text-emerald-400' : 'bg-primary/20 text-primary'
               }`}
           >
             <Camera size={20} />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="camera-evaluator-title-row">
               <h4 className="text-sm font-bold text-white">Live Camera Evaluator</h4>
               {isCameraActive && (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
@@ -628,7 +664,7 @@ const CameraSignEvaluator = ({
 
         <button
           onClick={isCameraActive ? stopCamera : startCamera}
-          className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all shadow-sm ${isCameraActive
+          className={`camera-evaluator-action flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all shadow-sm ${isCameraActive
               ? 'border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20'
               : 'border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20'
             }`}
@@ -638,7 +674,7 @@ const CameraSignEvaluator = ({
         </button>
       </div>
 
-      <div className="relative mt-4 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-inner">
+      <div className="camera-video-frame relative mt-4 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-inner">
         <video
           ref={videoRef}
           autoPlay
@@ -670,14 +706,14 @@ const CameraSignEvaluator = ({
                 <button
                   onClick={startCamera}
                   disabled={cameraLoading}
-                  className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
+                  className="camera-evaluator-action flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
                 >
                   {cameraLoading ? <RefreshCw size={15} className="animate-spin" /> : <Camera size={15} />}
                   {cameraLoading ? 'Starting Camera...' : 'Retry Camera Feed'}
                 </button>
                 <button
                   onClick={enableSimulationMode}
-                  className="flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition-all active:scale-95"
+                  className="camera-evaluator-action flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition-all active:scale-95"
                 >
                   <Sparkles size={15} />
                   Virtual Hand Mode
@@ -688,7 +724,7 @@ const CameraSignEvaluator = ({
         )}
 
         {isCameraActive && (
-          <div className="absolute top-3 right-3 flex items-center gap-2.5 rounded-xl border border-white/15 bg-black/85 px-3 py-1.5 backdrop-blur-md shadow-lg z-10">
+          <div className="camera-evaluator-score absolute top-3 right-3 z-10 flex items-center gap-2.5 rounded-xl border border-white/15 bg-black/85 px-3 py-1.5 shadow-lg backdrop-blur-md">
             <div className="text-right">
               <div className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Dual Match</div>
               <div
@@ -710,7 +746,7 @@ const CameraSignEvaluator = ({
         )}
 
         {holdProgress > 0 && (
-          <div className="absolute bottom-4 inset-x-8 z-20">
+          <div className="camera-hold-progress absolute bottom-4 inset-x-8 z-20">
             <div className="flex justify-between text-xs font-black text-white mb-1.5 drop-shadow-md">
               <span className="flex items-center gap-1.5 text-emerald-300">
                 <Sparkles size={14} />
@@ -729,55 +765,55 @@ const CameraSignEvaluator = ({
         )}
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <button
-          onClick={() => {
-            const next = !rightInZone;
-            rightInZoneRef.current = next;
-            setRightInZone(next);
-          }}
-          className={`rounded-2xl border p-3.5 transition-all text-left ${rightInZone
-              ? 'border-emerald-500/50 bg-emerald-950/30'
-              : 'border-white/10 bg-slate-900/80 hover:border-primary/40'
-            }`}
-        >
-          <div className="flex items-center justify-between text-xs font-mono font-bold mb-1">
-            <span className="text-primary">YOUR RIGHT HAND (Screen Left):</span>
-            <span className={rightInZone ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
-              {rightInZone ? '✓ IN ZONE' : 'EMPTY'}
-            </span>
-          </div>
-          <p className="text-xs font-bold text-white">{spec.rightHandReq.label}</p>
-        </button>
-
+      <div className="camera-zone-grid mt-4">
         <button
           onClick={() => {
             const next = !leftInZone;
             leftInZoneRef.current = next;
             setLeftInZone(next);
           }}
-          className={`rounded-2xl border p-3.5 transition-all text-left ${leftInZone
+          className={`camera-zone-card rounded-2xl border p-3.5 transition-all text-left ${leftInZone
               ? 'border-emerald-500/50 bg-emerald-950/30'
               : 'border-white/10 bg-slate-900/80 hover:border-primary/40'
             }`}
         >
-          <div className="flex items-center justify-between text-xs font-mono font-bold mb-1">
-            <span className="text-cyan-400">YOUR LEFT HAND (Screen Right):</span>
+          <div className="camera-zone-card-head flex items-center justify-between text-xs font-mono font-bold mb-1">
+            <span className="text-primary">YOUR LEFT HAND (Screen Left):</span>
             <span className={leftInZone ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
               {leftInZone ? '✓ IN ZONE' : 'EMPTY'}
             </span>
           </div>
           <p className="text-xs font-bold text-white">{spec.leftHandReq.label}</p>
         </button>
+
+        <button
+          onClick={() => {
+            const next = !rightInZone;
+            rightInZoneRef.current = next;
+            setRightInZone(next);
+          }}
+          className={`camera-zone-card rounded-2xl border p-3.5 transition-all text-left ${rightInZone
+              ? 'border-emerald-500/50 bg-emerald-950/30'
+              : 'border-white/10 bg-slate-900/80 hover:border-primary/40'
+            }`}
+        >
+          <div className="camera-zone-card-head flex items-center justify-between text-xs font-mono font-bold mb-1">
+            <span className="text-cyan-400">YOUR RIGHT HAND (Screen Right):</span>
+            <span className={rightInZone ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
+              {rightInZone ? '✓ IN ZONE' : 'EMPTY'}
+            </span>
+          </div>
+          <p className="text-xs font-bold text-white">{spec.rightHandReq.label}</p>
+        </button>
       </div>
 
       <div
-        className={`mt-4 rounded-2xl border p-4 transition-colors ${isMatching
+        className={`camera-feedback-card mt-4 rounded-2xl border p-4 transition-colors ${isMatching
             ? 'border-emerald-500/40 bg-emerald-950/40 shadow-emerald-500/10'
             : 'border-white/10 bg-slate-900/60'
           }`}
       >
-        <div className="flex items-start gap-3">
+        <div className="camera-feedback-content flex items-start gap-3">
           <div
             className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${isMatching ? 'bg-emerald-500 text-slate-950' : 'bg-cyan-500 text-slate-950'
               }`}
@@ -791,10 +827,10 @@ const CameraSignEvaluator = ({
         </div>
       </div>
 
-      <div className="mt-5 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/10 pt-4">
+      <div className="camera-evaluator-footer mt-5 border-t border-white/10 pt-4">
         <button
           onClick={handleInstantPass}
-          className="flex w-full sm:w-auto flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-emerald-500/30 hover:from-emerald-500 hover:to-teal-400 transition-all active:scale-95"
+          className="camera-evaluator-primary flex w-full flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-emerald-500/30 hover:from-emerald-500 hover:to-teal-400 transition-all active:scale-95 sm:w-auto"
         >
           <Sparkles size={18} />
           PASS SIGN & ADVANCE ({keyword?.toUpperCase()})
@@ -802,7 +838,7 @@ const CameraSignEvaluator = ({
 
         <button
           onClick={handleTriggerError}
-          className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-3.5 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all active:scale-95 shadow-sm"
+          className="camera-evaluator-action flex w-full items-center justify-center gap-1.5 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-3.5 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all active:scale-95 shadow-sm sm:w-auto"
         >
           <Vibrate size={16} />
           Test Wrong Sign Vibration

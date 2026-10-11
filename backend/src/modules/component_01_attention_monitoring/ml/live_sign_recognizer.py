@@ -14,8 +14,8 @@ from src.modules.component_01_attention_monitoring.ml.hand_tracker import HandTr
 from src.modules.component_01_attention_monitoring.ml.sign_classifier import SignClassifier, SIGN_EXPLANATIONS
 
 
-MIN_SIGN_CONFIDENCE = 0.60
-SIGN_CONFIRM_FRAMES = 2
+MIN_SIGN_CONFIDENCE = 0.50
+SIGN_CONFIRM_FRAMES = 1
 
 
 class LiveSignRecognizer:
@@ -74,11 +74,13 @@ class LiveSignRecognizer:
             self._stable_confidence = 0.0
 
         sign_text = self._stable_sign if self._stable_sign and self._stable_sign != "UNKNOWN" else None
+        gesture_action = prediction.get("gesture_action") if sign_text else None
 
         return {
             "hand_detected": True,
             "sign_text": sign_text,
             "sign_confidence": round(self._stable_confidence, 2) if sign_text else 0.0,
+            "gesture_action": gesture_action,
             "sign_explanation": SIGN_EXPLANATIONS.get(sign_text, "") if sign_text else "",
         }
 

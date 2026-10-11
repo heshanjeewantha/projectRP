@@ -57,10 +57,13 @@ async def transcribe_video(video_id: str, storage_path: str):
 
         # Automatically generate dynamic Knowledge Graph concepts & MCQs from transcript
         try:
+            v_rec = await db["videos"].find_one({"$or": [{"_id": v_id}, {"_id": ObjectId(video_id) if ObjectId.is_valid(video_id) else None}]})
+            vid_title = v_rec.get("title") if v_rec else None
+
             from src.modules.component_02_knowledge_graph_question_system.services.dynamic_question_generator import (
                 generate_graph_and_mcqs_from_transcript,
             )
-            await generate_graph_and_mcqs_from_transcript(video_id, segments)
+            await generate_graph_and_mcqs_from_transcript(video_id, segments, title=vid_title)
         except Exception as gen_err:
             print(f"[Transcription Warning] Dynamic MCQ generation error: {gen_err}")
 

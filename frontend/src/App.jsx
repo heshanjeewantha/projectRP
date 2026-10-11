@@ -62,7 +62,7 @@ const AnimatedRoutes = () => {
         <Route path="/login" element={<PublicOnlyRoute><PageWrapper><LoginPage /></PageWrapper></PublicOnlyRoute>} />
         <Route path="/signup" element={<PublicOnlyRoute><PageWrapper><SignupPage /></PageWrapper></PublicOnlyRoute>} />
         <Route path="/" element={<ProtectedRoute allowedRoles={['student']}><PageWrapper><HomePage /></PageWrapper></ProtectedRoute>} />
-        <Route path="/lesson" element={<ProtectedRoute allowedRoles={['student']}><PageWrapper><StudentView /></PageWrapper></ProtectedRoute>} />
+        <Route path="/lesson" element={<ProtectedRoute allowedRoles={['student', 'admin']}><PageWrapper><StudentView /></PageWrapper></ProtectedRoute>} />
         <Route path="/chatbot" element={<ProtectedRoute allowedRoles={['student']}><PageWrapper><ChatbotPage /></PageWrapper></ProtectedRoute>} />
         <Route path="/lesson-summary/:topicId" element={<ProtectedRoute allowedRoles={['student']}><PageWrapper><LessonSummaryPage /></PageWrapper></ProtectedRoute>} />
         <Route path="/sign-avatar" element={<ProtectedRoute allowedRoles={['student']}><PageWrapper><SignAvatarPage /></PageWrapper></ProtectedRoute>} />
@@ -100,9 +100,9 @@ const AppShell = () => {
     location.pathname === '/admin/repeated-alerts';
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg-dark selection:bg-primary/30">
+    <div className="flex min-h-screen flex-col bg-bg-dark text-text-main selection:bg-primary/30 transition-colors duration-300">
       {!hideNav && <Navbar />}
-      <main className="flex w-full flex-1 justify-center pb-16">
+      <main className="flex w-full flex-1 justify-center min-w-0">
         <AnimatedRoutes />
       </main>
       {!hideFooter && <Footer />}

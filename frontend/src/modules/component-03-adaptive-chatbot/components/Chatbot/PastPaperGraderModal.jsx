@@ -156,21 +156,21 @@ const PastPaperGraderModal = ({ isOpen, onClose, topicId = 'computer_system', st
                 rows={4}
                 className="w-full rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-sm text-white focus:border-primary/40 focus:outline-none transition-colors custom-scrollbar"
               />
-              <div className="flex justify-end mt-3">
+              <div className="flex justify-end mt-4">
                 <button
                   onClick={handleEvaluate}
                   disabled={isEvaluating || !studentAnswer.trim()}
-                  className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-[#032418] shadow-lg shadow-primary/20 hover:brightness-105 transition-all disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2.5 rounded-xl bg-primary px-5 py-2.5 text-xs sm:text-sm font-bold text-[#032418] shadow-lg shadow-primary/20 hover:brightness-105 transition-all disabled:opacity-50 min-h-[40px] active:scale-95"
                 >
                   {isEvaluating ? (
                     <>
-                      <Sparkles size={14} className="animate-spin" />
-                      Evaluating with Marking Scheme...
+                      <Sparkles size={16} className="animate-spin" />
+                      <span>Evaluating with Marking Scheme...</span>
                     </>
                   ) : (
                     <>
-                      <Award size={15} />
-                      Grade My Answer
+                      <Award size={16} />
+                      <span>Grade My Answer</span>
                     </>
                   )}
                 </button>

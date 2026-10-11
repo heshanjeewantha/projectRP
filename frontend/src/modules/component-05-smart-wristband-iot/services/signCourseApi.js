@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:8000/api/wristband';
+const API_HOST = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
+const API_BASE = `http://${API_HOST}:8000/api/wristband`;
 
 export const getSignCourseModules = async () => {
   const response = await axios.get(`${API_BASE}/course/modules`);

@@ -9,15 +9,18 @@ import {
   BrainCircuit,
   CheckCircle2,
   CircleAlert,
+  ClipboardCheck,
   Eraser,
   FileText,
   Flame,
   GraduationCap,
   Hand,
+  Layers,
   Lightbulb,
   MessageSquare,
   Send,
   Sparkles,
+  Timer,
   TrendingUp,
   XCircle,
   Zap,
@@ -44,7 +47,10 @@ import KnowledgeGrowthGraph from '../components/Chatbot/KnowledgeGrowthGraph';
 import PastPaperGraderModal from '../components/Chatbot/PastPaperGraderModal';
 import FlashcardDeckModal from '../components/Chatbot/FlashcardDeckModal';
 import MockExamModal from '../components/Chatbot/MockExamModal';
+import ChatbotFormattedAnswer from '../components/Chatbot/ChatbotFormattedAnswer';
 import { SignWordBadge, SignWordModal, getDetectedSignWords, SIGN_DICTIONARY } from '../components/Chatbot/SignWordBadge';
+import EARAPanel from '../components/Chatbot/EARAPanel';
+import EARAConceptMap from '../components/Chatbot/EARAConceptMap';
 
 const MODE_OPTIONS = [
   { value: 'learning', label: 'Learning Mode', icon: BookOpen },
@@ -58,21 +64,69 @@ const STATE_OPTIONS = [
   { value: 'distracted', label: 'Distracted' },
 ];
 
-const DEFAULT_TOPIC_OPTIONS = [
-  { id: 'computer_system', name: 'Computer System', prerequisites: [] },
-  { id: 'data_information', name: 'Data and Information', prerequisites: ['Computer System'] },
-  { id: 'operating_systems', name: 'Operating Systems', prerequisites: ['Computer System'] },
-  { id: 'word_processing', name: 'Word Processing', prerequisites: ['Operating Systems'] },
-  { id: 'spreadsheets', name: 'Spreadsheets', prerequisites: ['Data and Information'] },
-  { id: 'databases', name: 'Databases', prerequisites: ['Data and Information', 'Spreadsheets'] },
-  { id: 'dbms', name: 'DBMS', prerequisites: ['Databases'] },
-  { id: 'normalization', name: 'Normalization', prerequisites: ['Databases', 'DBMS'] },
-  { id: 'internet_email', name: 'Internet and Email', prerequisites: ['Computer System'] },
-  { id: 'networking', name: 'Networking', prerequisites: ['Internet and Email'] },
-  { id: 'programming_basics', name: 'Programming Basics', prerequisites: ['Data and Information'] },
-  { id: 'flowcharts', name: 'Flowcharts', prerequisites: ['Programming Basics'] },
-  { id: 'cyber_security', name: 'Cyber Security', prerequisites: ['Internet and Email'] },
+// ── Graded topic curriculum: Grade 10 + Grade 11, split by Term ──────────────
+const GRADE_TOPIC_CURRICULUM = [
+  {
+    grade: 'Grade 10',
+    terms: [
+      {
+        term: 'Term 1',
+        topics: [
+          { id: 'computer_system', name: 'Computer System', prerequisites: [] },
+          { id: 'data_information', name: 'Data and Information', prerequisites: ['Computer System'] },
+          { id: 'operating_systems', name: 'Operating Systems', prerequisites: ['Computer System'] },
+        ],
+      },
+      {
+        term: 'Term 2',
+        topics: [
+          { id: 'word_processing', name: 'Word Processing', prerequisites: ['Operating Systems'] },
+          { id: 'spreadsheets', name: 'Spreadsheets', prerequisites: ['Data and Information'] },
+          { id: 'internet_email', name: 'Internet and Email', prerequisites: ['Computer System'] },
+        ],
+      },
+      {
+        term: 'Term 3',
+        topics: [
+          { id: 'networking', name: 'Networking', prerequisites: ['Internet and Email'] },
+          { id: 'cyber_security', name: 'Cyber Security', prerequisites: ['Internet and Email'] },
+          { id: 'programming_basics', name: 'Programming Basics', prerequisites: ['Data and Information'] },
+        ],
+      },
+    ],
+  },
+  {
+    grade: 'Grade 11',
+    terms: [
+      {
+        term: 'Term 1',
+        topics: [
+          { id: 'databases', name: 'Databases', prerequisites: ['Data and Information', 'Spreadsheets'] },
+          { id: 'dbms', name: 'DBMS', prerequisites: ['Databases'] },
+        ],
+      },
+      {
+        term: 'Term 2',
+        topics: [
+          { id: 'normalization', name: 'Normalization', prerequisites: ['Databases', 'DBMS'] },
+          { id: 'flowcharts', name: 'Flowcharts', prerequisites: ['Programming Basics'] },
+        ],
+      },
+      {
+        term: 'Term 3',
+        topics: [
+          { id: 'system_development', name: 'System Development', prerequisites: ['Databases', 'DBMS'] },
+          { id: 'social_ethics', name: 'Social & Ethical Issues', prerequisites: ['Internet and Email', 'Cyber Security'] },
+        ],
+      },
+    ],
+  },
 ];
+
+// Flat list derived from curriculum (for backwards-compat with existing logic)
+const DEFAULT_TOPIC_OPTIONS = GRADE_TOPIC_CURRICULUM.flatMap((g) =>
+  g.terms.flatMap((t) => t.topics)
+);
 
 const deriveStateFromAttention = (attentionStatus) =>
   attentionStatus === 'not_attentive' ? 'distracted' : 'understanding';
@@ -121,14 +175,29 @@ const shouldSkipMicroChallenge = (text, latestBotMessage) => {
 };
 
 const getSourceLabel = (sourceType) =>
-  sourceType === 'LLM' ? 'LLM Answer' : 'Dataset Fallback Answer';
+  sourceType === 'LLM' ? 'Answer' : ' Answer';
 
 const ChatbotPage = () => {
   const { userId, attentionStatus } = useStore();
+  const effectiveUserId = userId || 'student_demo_123';
   const location = useLocation();
 
-  const [chatHistory, setChatHistory] = useState([]);
-  const [topicOptions, setTopicOptions] = useState(DEFAULT_TOPIC_OPTIONS);
+  const [chatHistory, setChatHistory] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`chat_history_${effectiveUserId}`);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [topicOptions, setTopicOptions] = useState(() => {
+    try {
+      const cached = localStorage.getItem('chat_topics');
+      return cached ? JSON.parse(cached) : DEFAULT_TOPIC_OPTIONS;
+    } catch {
+      return DEFAULT_TOPIC_OPTIONS;
+    }
+  });
   const [question, setQuestion] = useState('');
   const [selectedMode, setSelectedMode] = useState('learning');
   const [manualLearningState, setManualLearningState] = useState('');
@@ -143,9 +212,23 @@ const ChatbotPage = () => {
   const [summaryPreview, setSummaryPreview] = useState(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
-  // New states: Attention recommendations, Short notes & Knowledge growth
-  const [recommendations, setRecommendations] = useState([]);
-  const [growthData, setGrowthData] = useState(null);
+  // New states: Attention recommendations, Short notes & Knowledge growth with instant cache
+  const [recommendations, setRecommendations] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`chat_recs_${effectiveUserId}`);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [growthData, setGrowthData] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`chat_growth_${effectiveUserId}`);
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
   const [activeShortNote, setActiveShortNote] = useState(null);
   const [isShortNoteLoading, setIsShortNoteLoading] = useState(false);
   const [activeViewTab, setActiveViewTab] = useState('chat'); // 'chat' | 'growth' | 'notes'
@@ -157,6 +240,13 @@ const ChatbotPage = () => {
   const [isMockExamModalOpen, setIsMockExamModalOpen] = useState(false);
   const [activeSignModalInfo, setActiveSignModalInfo] = useState(null);
 
+  // EARA explainability panel state
+  const [earaMessage, setEaraMessage] = useState(null);
+
+  // Grouped topic UI state
+  const [topicGrade, setTopicGrade] = useState('Grade 10');
+  const [topicTerm, setTopicTerm] = useState('Term 1');
+
   const chatScrollRef = useRef(null);
   const learningState = manualLearningState || deriveStateFromAttention(attentionStatus);
 
@@ -166,21 +256,30 @@ const ChatbotPage = () => {
     const loadHistoryAndAnalytics = async () => {
       try {
         const [historyResponse, recsResponse, growthResponse] = await Promise.allSettled([
-          getChatbotHistory(userId),
-          getAttentionRecommendations(userId),
-          getKnowledgeGrowth(userId),
+          getChatbotHistory(effectiveUserId),
+          getAttentionRecommendations(effectiveUserId),
+          getKnowledgeGrowth(effectiveUserId),
         ]);
 
         if (!isMounted) return;
 
-        if (historyResponse.status === 'fulfilled') {
+        if (historyResponse.status === 'fulfilled' && historyResponse.value) {
           setChatHistory(historyResponse.value || []);
+          try {
+            localStorage.setItem(`chat_history_${effectiveUserId}`, JSON.stringify(historyResponse.value));
+          } catch {}
         }
         if (recsResponse.status === 'fulfilled' && recsResponse.value?.recommendations) {
           setRecommendations(recsResponse.value.recommendations);
+          try {
+            localStorage.setItem(`chat_recs_${effectiveUserId}`, JSON.stringify(recsResponse.value.recommendations));
+          } catch {}
         }
-        if (growthResponse.status === 'fulfilled') {
+        if (growthResponse.status === 'fulfilled' && growthResponse.value) {
           setGrowthData(growthResponse.value);
+          try {
+            localStorage.setItem(`chat_growth_${effectiveUserId}`, JSON.stringify(growthResponse.value));
+          } catch {}
         }
       } catch (error) {
         console.error('Failed to load chatbot analytics & history', error);
@@ -191,7 +290,7 @@ const ChatbotPage = () => {
     return () => {
       isMounted = false;
     };
-  }, [userId]);
+  }, [effectiveUserId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -206,6 +305,9 @@ const ChatbotPage = () => {
           prerequisites: topic.prerequisites || [],
         }));
         setTopicOptions(normalizedTopics);
+        try {
+          localStorage.setItem('chat_topics', JSON.stringify(normalizedTopics));
+        } catch {}
         setSelectedTopicId((current) =>
           normalizedTopics.some((topic) => topic.id === current)
             ? current
@@ -334,7 +436,7 @@ const ChatbotPage = () => {
     }
 
     const payload = {
-      studentId: userId,
+      studentId: effectiveUserId,
       question: finalQuestion,
       selectedMode,
       currentLearningState: learningState,
@@ -372,7 +474,7 @@ const ChatbotPage = () => {
     if (!challengeOffer?.challenge || !challengeSelection || !pendingPayload) return;
     try {
       const response = await checkMicroChallenge({
-        studentId: userId,
+        studentId: effectiveUserId,
         challengeId: challengeOffer.challenge.challengeId,
         selectedAnswer: challengeSelection,
         topicId: challengeOffer.challenge.topicId,
@@ -387,8 +489,11 @@ const ChatbotPage = () => {
     if (isClearing) return;
     setIsClearing(true);
     try {
-      await clearChatbotHistory(userId);
+      await clearChatbotHistory(effectiveUserId);
       setChatHistory([]);
+      try {
+        localStorage.removeItem(`chat_history_${effectiveUserId}`);
+      } catch {}
       resetChallengeFlow();
     } catch (error) {
       console.error('Failed to clear chatbot history', error);
@@ -426,81 +531,70 @@ const ChatbotPage = () => {
               </div>
 
               {/* View Switcher Tabs & Tools */}
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex rounded-xl bg-black/40 p-1 border border-white/10">
+              <div className="chatbot-tool-row">
+                <div className="chatbot-tab-group">
                   <button
                     type="button"
                     onClick={() => setActiveViewTab('chat')}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                      activeViewTab === 'chat'
-                        ? 'bg-primary text-[#032418] shadow-sm'
-                        : 'text-text-muted hover:text-white'
-                    }`}
+                    className={`chatbot-tab-button ${activeViewTab === 'chat' ? 'is-active' : ''}`}
                   >
                     <MessageSquare size={13} />
-                    Chat
+                    <span>Chat</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveViewTab('growth')}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                      activeViewTab === 'growth'
-                        ? 'bg-primary text-[#032418] shadow-sm'
-                        : 'text-text-muted hover:text-white'
-                    }`}
+                    className={`chatbot-tab-button ${activeViewTab === 'growth' ? 'is-active' : ''}`}
                   >
                     <TrendingUp size={13} />
-                    Growth Matrix ({growthData?.overallMastery || 74}%)
+                    <span>Growth Matrix</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      if (!activeShortNote) {
-                        handleOpenShortNote(selectedTopicId || 'computer_system');
-                      } else {
-                        setActiveViewTab('notes');
-                      }
+                      handleOpenShortNote(selectedTopicId || 'computer_system');
                     }}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                      activeViewTab === 'notes'
-                        ? 'bg-primary text-[#032418] shadow-sm'
-                        : 'text-text-muted hover:text-white'
-                    }`}
+                    className={`chatbot-tab-button ${activeViewTab === 'notes' ? 'is-active' : ''}`}
                   >
                     <FileText size={13} />
-                    Short Notes
+                    <span>Short Notes</span>
                   </button>
+
                 </div>
 
                 {/* Scope Tools Launcher Pills */}
-                <div className="flex items-center gap-1.5">
+                <div className="chatbot-scope-tools">
                   <button
                     type="button"
                     onClick={() => setIsPastPaperModalOpen(true)}
-                    className="flex items-center gap-1 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-all shadow-sm"
+                    className="chatbot-tool-button is-amber"
                   >
-                    <span>📝 Past Paper Grader</span>
+                    <ClipboardCheck size={13} />
+                    <span>Past Paper Grader</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsFlashcardModalOpen(true)}
-                    className="flex items-center gap-1 rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-xs font-bold text-purple-300 hover:bg-purple-500/20 transition-all shadow-sm"
+                    className="chatbot-tool-button is-purple"
                   >
-                    <span>🗂️ Flashcards (SM-2)</span>
+                    <Layers size={13} />
+                    <span>Flashcards (SM-2)</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsMockExamModalOpen(true)}
-                    className="flex items-center gap-1 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition-all shadow-sm"
+                    className="chatbot-tool-button is-cyan"
                   >
-                    <span>⏱️ 10-Min Mock Exam</span>
+                    <Timer size={13} />
+                    <span>10-Min Mock Exam</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveSignModalInfo(SIGN_DICTIONARY.cpu)}
-                    className="flex items-center gap-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition-all shadow-sm"
+                    className="chatbot-tool-button is-emerald"
                   >
-                    <span>🤟 Sign Demo</span>
+                    <Hand size={13} />
+                    <span>Sign Demo</span>
                   </button>
                 </div>
               </div>
@@ -565,7 +659,7 @@ const ChatbotPage = () => {
                       </div>
 
                       <div className="chatbot-bot-row">
-                        <div className="chatbot-bot-bubble">
+                        <div className={`chatbot-bot-bubble ${(item.learningState === 'bored' || item.learningState === 'not_understanding') ? 'has-diagram' : ''}`}>
                           <div className="chatbot-bot-meta">
                             <Bot size={12} />
                             Chatbot
@@ -573,8 +667,20 @@ const ChatbotPage = () => {
                             <span className="chatbot-meta-tag">{item.learningStateBadge || item.learningState?.replaceAll('_', ' ')}</span>
                             <span className="chatbot-meta-tag">{getSourceLabel(item.sourceType)}</span>
                             {item.compressedAnswer ? (
-                              <span className="chatbot-meta-tag is-exam">Compressed answer</span>
+                              <span className="chatbot-meta-tag is-exam">Exam Mode</span>
                             ) : null}
+                          </div>
+
+                          {/* ── EARA explainability button ── */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <button
+                              type="button"
+                              onClick={() => setEaraMessage(item)}
+                              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border border-primary/25 bg-primary/10 text-primary hover:bg-primary/20 transition-all"
+                            >
+                              <BrainCircuit size={11} />
+                              EARA
+                            </button>
                           </div>
 
                           {item.conceptReEntry && item.conceptRefreshPoints?.length > 0 ? (
@@ -591,9 +697,16 @@ const ChatbotPage = () => {
                             </div>
                           ) : null}
 
-                          <p className="dashboard-text-wrap whitespace-pre-line text-sm text-white/95">
-                            {item.answer}
-                          </p>
+                          <ChatbotFormattedAnswer content={item.answer} />
+
+                          {/* ── Inline EARA concept diagram for bored / not_understanding ── */}
+                          {(item.learningState === 'bored' || item.learningState === 'not_understanding') && (
+                            <EARAConceptMap
+                              topicId={item.topicId || item.currentTopic || item.topic || selectedTopicId}
+                              learningState={item.learningState}
+                              question={item.question}
+                            />
+                          )}
                           {item.sourceType === 'LOCAL_DATASET' ? (
                             <p className="chatbot-source-note">
                               Answered using local lesson dataset.
@@ -787,10 +900,10 @@ const ChatbotPage = () => {
                     <button
                       type="button"
                       onClick={() => handleOpenShortNote(selectedTopicId)}
-                      className="ml-2 flex items-center gap-1 rounded bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-primary hover:bg-white/10"
+                    className="chatbot-note-mini-button"
                     >
                       <FileText size={11} />
-                      View Note
+                      <span>View Note</span>
                     </button>
                   </div>
                   <button
@@ -851,57 +964,74 @@ const ChatbotPage = () => {
                 <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
                   Current Topic
                 </div>
+
+                {/* Grouped select with Grade 10 / Grade 11 optgroups + Terms */}
                 <select
                   value={selectedTopicId}
-                  onChange={(event) => {
-                    const newTopic = event.target.value;
-                    setSelectedTopicId(newTopic);
-                    if (activeViewTab === 'notes') {
-                      handleOpenShortNote(newTopic);
+                  onChange={(e) => {
+                    const newId = e.target.value;
+                    setSelectedTopicId(newId);
+                    // sync grade+term highlight to the chosen topic
+                    for (const g of GRADE_TOPIC_CURRICULUM) {
+                      for (const t of g.terms) {
+                        if (t.topics.some((tp) => tp.id === newId)) {
+                          setTopicGrade(g.grade);
+                          setTopicTerm(t.term);
+                        }
+                      }
                     }
+                    if (activeViewTab === 'notes') handleOpenShortNote(newId);
                   }}
-                  className="chatbot-topic-select"
+                  className="chatbot-topic-select w-full"
                 >
-                  {topicOptions.map((topic) => (
-                    <option key={topic.id} value={topic.id}>
-                      {topic.name}
-                    </option>
-                  ))}
+                  {GRADE_TOPIC_CURRICULUM.map((g) =>
+                    g.terms.map((t) => (
+                      <optgroup key={`${g.grade}-${t.term}`} label={`${g.grade} · ${t.term}`}>
+                        {t.topics.map((topic) => (
+                          <option key={topic.id} value={topic.id}>
+                            {topic.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))
+                  )}
                 </select>
 
                 <div className="mt-3 flex flex-col gap-2">
                   <button
                     type="button"
                     onClick={() => handleOpenShortNote(selectedTopicId)}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+                    className="chatbot-tool-button is-primary is-full"
                   >
                     <FileText size={13} />
-                    Open Topic Short Note
+                    <span>Open Topic Short Note</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setIsPastPaperModalOpen(true)}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition-colors"
+                    className="chatbot-tool-button is-amber is-full"
                   >
-                    <span>📝 Past Papers ({selectedTopic?.name})</span>
+                    <ClipboardCheck size={13} />
+                    <span>Past Papers ({selectedTopic?.name})</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setIsFlashcardModalOpen(true)}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-purple-500/30 bg-purple-500/10 py-2 text-xs font-semibold text-purple-300 hover:bg-purple-500/20 transition-colors"
+                    className="chatbot-tool-button is-purple is-full"
                   >
-                    <span>🗂️ Flashcards ({selectedTopic?.name})</span>
+                    <Layers size={13} />
+                    <span>Flashcards ({selectedTopic?.name})</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setActiveViewTab('growth')}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 py-2 text-xs font-semibold text-white/90 hover:bg-white/10 transition-colors"
+                    className="chatbot-tool-button is-neutral is-full"
                   >
                     <TrendingUp size={13} />
-                    View Growth Matrix ({growthData?.overallMastery || 74}%)
+                    <span>View Growth Matrix</span>
                   </button>
                 </div>
               </div>
@@ -1051,12 +1181,24 @@ const ChatbotPage = () => {
         isOpen={isMockExamModalOpen}
         onClose={() => setIsMockExamModalOpen(false)}
         studentId={userId}
+        topicId={selectedTopicId || 'computer_system'}
+        topicName={selectedTopic?.name || 'Computer System'}
       />
+
 
       <SignWordModal
         isOpen={Boolean(activeSignModalInfo)}
         signInfo={activeSignModalInfo}
         onClose={() => setActiveSignModalInfo(null)}
+      />
+
+      {/* EARA Explainability Panel */}
+      <EARAPanel
+        isOpen={Boolean(earaMessage)}
+        onClose={() => setEaraMessage(null)}
+        messageData={earaMessage}
+        attentionStatus={attentionStatus}
+        growthData={growthData}
       />
     </div>
   );

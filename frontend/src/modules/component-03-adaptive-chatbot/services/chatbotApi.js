@@ -140,14 +140,27 @@ export const reviewFlashcard = async (payload) => {
 };
 
 // ── Feature 5: Mock Exam Simulator ──
-export const startMockExam = async (studentId = 'student_demo_123') => {
-  const response = await axios.get(`${API_BASE}/mock-exam/start?studentId=${studentId}`);
+export const startMockExam = async (studentId = 'student_demo_123', topicId = null) => {
+  const url = topicId
+    ? `${API_BASE}/mock-exam/start?studentId=${encodeURIComponent(studentId)}&topicId=${encodeURIComponent(topicId)}`
+    : `${API_BASE}/mock-exam/start?studentId=${encodeURIComponent(studentId)}`;
+  const response = await axios.get(url);
   return response.data;
 };
+
 
 export const submitMockExam = async (payload) => {
   const response = await axios.post(`${API_BASE}/mock-exam/submit`, payload);
   return response.data;
 };
 
+// ── EARA: Explainability concept diagram ──
+export const getEaraDiagram = async (topicId, learningState = 'bored', question = '') => {
+  const params = new URLSearchParams({ learning_state: learningState });
+  if (question) params.append('question', question);
+  const response = await axios.get(
+    `${API_BASE}/eara/${encodeURIComponent(topicId || 'computer_system')}?${params.toString()}`
+  );
+  return response.data;
+};
 

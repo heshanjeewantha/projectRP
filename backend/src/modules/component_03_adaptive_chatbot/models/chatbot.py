@@ -96,6 +96,7 @@ class ChatbotMessageModel(BaseModel):
     intent: str | None = None
     learningState: str
     topic: str
+    topicId: str | None = None
     prerequisiteTopics: list[str] = Field(default_factory=list)
     prerequisites: list[str] = Field(default_factory=list)
     prompt: str
@@ -345,6 +346,7 @@ class MockExamQuestion(BaseModel):
 class MockExamStartResponse(BaseModel):
     examId: str
     title: str
+    topicId: str | None = None
     durationMinutes: int
     totalQuestions: int
     questions: list[MockExamQuestion] = Field(default_factory=list)
@@ -376,3 +378,37 @@ class MockExamResultResponse(BaseModel):
     studyPrescription: list[str] = Field(default_factory=list)
 
 
+# ── EARA: Explainability of Adaptive Response Architecture ───────────────────
+
+class EARADiagramNode(BaseModel):
+    id: str
+    label: str
+    type: str                    # 'core' | 'sub' | 'action' | 'memory' | 'key' | 'symbol' | etc.
+    description: str
+
+
+class EARADiagramEdge(BaseModel):
+    from_: str = Field(..., alias='from')
+    to: str
+    label: str
+
+    class Config:
+        populate_by_name = True
+
+
+class EARADiagram(BaseModel):
+    nodes: list[EARADiagramNode] = Field(default_factory=list)
+    edges: list[dict] = Field(default_factory=list)   # raw dicts to preserve 'from' key
+
+
+class EARADiagramResponse(BaseModel):
+    topicId: str
+    topicName: str
+    learningState: str
+    diagram: EARADiagram
+    summary: str
+    keyFact: str
+    stateTip: str
+    schematicType: str = "pipeline"
+    analogy: str = ""
+    brainChallenge: str = ""

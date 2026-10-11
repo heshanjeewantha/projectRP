@@ -7,10 +7,13 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+BACKEND_DIR = Path(__file__).resolve().parents[3]
+
+
 class Settings(BaseSettings):
     MONGODB_URI: str = "mongodb://localhost:27017"
     DATABASE_NAME: str = "sign_language_system"
-    UPLOAD_DIR: str = "uploads"
+    UPLOAD_DIR: str = str(BACKEND_DIR / "uploads")
     MAX_UPLOAD_SIZE_MB: int = 500
     LLM_PROVIDER: str | None = None
     LLM_API_KEY: str | None = None

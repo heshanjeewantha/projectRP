@@ -59,8 +59,8 @@ async def get_attention_log(session_id: str) -> dict | None:
 
 async def get_admin_users_summary() -> list:
     """
-    Get a list of all unique students/users who have attention monitoring logs,
-    along with session counts and performance metrics.
+    Get a list of all unique students/users who have attention monitoring logs or registered accounts,
+    along with session counts, performance metrics, and student full names.
     """
     db = get_db()
     pipeline = [
@@ -107,11 +107,40 @@ async def get_admin_users_summary() -> list:
 
     results = await db["attention_logs"].aggregate(pipeline).to_list(length=100)
 
+    # Fetch registered users from database to resolve student full names and emails
+    users_cursor = db["users"].find({}, {"appUserId": 1, "fullName": 1, "email": 1, "role": 1})
+    registered_users = await users_cursor.to_list(length=500)
+    user_name_map = {}
+    user_email_map = {}
+    for ru in registered_users:
+        name = ru.get("fullName") or ru.get("email") or "Student"
+        email = ru.get("email", "")
+        if ru.get("appUserId"):
+            user_name_map[ru["appUserId"]] = name
+            user_email_map[ru["appUserId"]] = email
+        if email:
+            user_name_map[email] = name
+            user_email_map[email] = email
+        if "_id" in ru:
+            user_name_map[str(ru["_id"])] = name
+            user_email_map[str(ru["_id"])] = email
+
+    for r in results:
+        uid = r.get("user_id", "")
+        if uid == "student_demo_123":
+            r["full_name"] = user_name_map.get(uid, "Student Demo")
+            r["email"] = user_email_map.get(uid, "student@signlearn.ai")
+        else:
+            r["full_name"] = user_name_map.get(uid, uid)
+            r["email"] = user_email_map.get(uid, "")
+
     # Always ensure default student_demo_123 is present for instant demo
     user_ids = [r["user_id"] for r in results]
     if "student_demo_123" not in user_ids:
         results.append({
             "user_id": "student_demo_123",
+            "full_name": user_name_map.get("student_demo_123", "Student Demo"),
+            "email": user_email_map.get("student_demo_123", "student@signlearn.ai"),
             "session_count": 3,
             "total_events": 120,
             "avg_engagement": 84.5,
@@ -121,6 +150,24 @@ async def get_admin_users_summary() -> list:
             "yawning_count": 2,
         })
 
+    # Also include registered students who haven't logged attention sessions yet
+    existing_uids = {r["user_id"] for r in results}
+    for ru in registered_users:
+        ru_id = ru.get("appUserId")
+        if ru_id and ru_id not in existing_uids and ru.get("role", "student") == "student":
+            results.append({
+                "user_id": ru_id,
+                "full_name": ru.get("fullName", ru_id),
+                "email": ru.get("email", ""),
+                "session_count": 0,
+                "total_events": 0,
+                "avg_engagement": None,
+                "attentive_pct": None,
+                "drowsy_count": 0,
+                "phone_count": 0,
+                "yawning_count": 0,
+            })
+
     return results
 
 
@@ -129,6 +176,27 @@ async def get_user_full_attention_report(user_id: str) -> dict:
     Generate a comprehensive attention report for a specific user.
     """
     db = get_db()
+
+    # Lookup student full name and email
+    user_doc = await db["users"].find_one({"appUserId": user_id})
+    if not user_doc:
+        user_doc = await db["users"].find_one({"email": user_id})
+    if not user_doc:
+        try:
+            user_doc = await db["users"].find_one({"_id": ObjectId(user_id)})
+        except Exception:
+            user_doc = None
+
+    if user_doc and user_doc.get("fullName"):
+        full_name = user_doc["fullName"]
+        email = user_doc.get("email", "")
+    elif user_id == "student_demo_123":
+        full_name = "Student Demo"
+        email = "student@signlearn.ai"
+    else:
+        full_name = user_id
+        email = ""
+
     logs = await db["attention_logs"].find({"user_id": user_id}).to_list(length=500)
 
     all_events = []
@@ -151,6 +219,8 @@ async def get_user_full_attention_report(user_id: str) -> dict:
     if not all_events:
         return {
             "user_id": user_id,
+            "full_name": full_name,
+            "email": email,
             "total_sessions": 3,
             "total_events": 120,
             "average_engagement": 84.5,
@@ -160,12 +230,10 @@ async def get_user_full_attention_report(user_id: str) -> dict:
                 "head_turned": 10,
                 "drowsy": 6,
                 "yawning": 4,
-                "phone_detected": 2,
-                "eyes_closed": 0,
-                "no_face": 0,
+                "eyes_closed": 1,
+                "no_face": 1,
             },
             "drowsy_alerts": 6,
-            "phone_detections": 2,
             "yawning_alerts": 4,
             "sessions": [
                 {"session_id": "sess_demo_1", "video_id": "video_ol_ict_001", "event_count": 45, "avg_engagement": 88.0, "created_at": datetime.utcnow().isoformat()},
@@ -186,13 +254,14 @@ async def get_user_full_attention_report(user_id: str) -> dict:
 
     return {
         "user_id": user_id,
+        "full_name": full_name,
+        "email": email,
         "total_sessions": len(logs),
         "total_events": total_evts,
         "average_engagement": avg_eng,
         "attentive_percentage": round((attentive_count / max(total_evts, 1)) * 100, 1),
         "reasons_breakdown": reasons,
         "drowsy_alerts": reasons.get("drowsy", 0),
-        "phone_detections": reasons.get("phone_detected", 0),
         "yawning_alerts": reasons.get("yawning", 0),
         "sessions": session_list,
         "generated_at": datetime.utcnow().isoformat(),
