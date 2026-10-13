@@ -49,7 +49,14 @@ const ConceptDiagramPanel = ({ diagram, compact = false }) => {
               Concept Diagram
             </div>
             <h4 className="popup-diagram-title">{diagram.title}</h4>
-            <p className="popup-diagram-subtitle">{diagram.subtitle}</p>
+            <p className="popup-diagram-subtitle">
+              {diagram.description ||
+                (diagram.subtitle &&
+                !diagram.subtitle.includes('Interactive Curriculum Concept Map') &&
+                !diagram.subtitle.includes('Interactive Knowledge Graph')
+                  ? diagram.subtitle
+                  : `Core curriculum concepts and topic dependencies covered in ${diagram.title || 'this lesson'}.`)}
+            </p>
           </div>
           <div className="popup-diagram-badge">
             <Sparkles size={14} />

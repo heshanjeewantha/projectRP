@@ -148,12 +148,22 @@ const useStore = create((set) => ({
   setLiveSign:         (text, confidence, explanation, gestureAction = null) =>
     set({ liveSignText: text, liveSignConfidence: confidence, liveSignExplanation: explanation, gestureAction }),
 
+  // ── Facial Emotion & Syllabus State ─────────────────────────────────────
+  emotion:                 'focused',    // 'focused' | 'confused' | 'frustrated' | 'bored' | 'drowsy' | 'confident'
+  emotionConfidence:       0,
+  activeSyllabus:          null,         // { grade, unit_number, unit_title, topic, subtopic_title, summary_hint, key_terms }
+  recommendedIntervention: null,         // { type, title, message, action }
+  setEmotion:              (emotion, confidence = 0) => set({ emotion, emotionConfidence: confidence }),
+  setActiveSyllabus:       (activeSyllabus) => set({ activeSyllabus }),
+  setRecommendedIntervention: (recommendedIntervention) => set({ recommendedIntervention }),
+
   // Session attention event log (for heatmap)
   attentionEvents: [],               // [{ timestamp, status, reason, engagementScore }]
   addAttentionEvent: (evt) =>
     set((state) => ({
       attentionEvents: [...state.attentionEvents.slice(-500), evt],  // keep last 500
     })),
+
 
   // Popup state
   activePopup:    null,

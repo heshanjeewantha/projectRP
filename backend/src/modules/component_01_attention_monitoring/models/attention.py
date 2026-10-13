@@ -54,11 +54,24 @@ class AttentionEvent(BaseModel):
     # Engagement
     engagement_score:   int   = 100    # 0-100
 
+    # Facial Emotion Classification
+    emotion:            str   = "focused"  # focused|confused|frustrated|bored|drowsy|confident
+    emotion_confidence: float = 0.0
+    action_units:       Optional[dict] = None
+
+    # Syllabus Alignment
+    grade:              Optional[str] = None
+    unit_number:        Optional[int] = None
+    active_topic:       Optional[str] = None
+    active_subtopic:    Optional[str] = None
+    active_subtopic_id: Optional[str] = None
+
     logged_at: Optional[datetime] = None
 
     def model_post_init(self, __context):
         if self.logged_at is None:
             self.logged_at = datetime.utcnow()
+
 
 
 class AttentionLogCreate(BaseModel):

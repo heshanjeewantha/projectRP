@@ -66,7 +66,7 @@ const WebcamFeed = ({ videoRef, compact = false }) => {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const base64Frame     = canvas.toDataURL('image/jpeg', 0.5);
         const videoTimestamp  = videoRefRef.current?.current?.currentTime || 0;
-        sendFrameRef.current?.(base64Frame, videoTimestamp);
+        sendFrameRef.current?.(base64Frame, videoTimestamp, currentVideo?.id);
 
         const latestEvent = latestDetectionRef.current;
         if (latestEvent) {
@@ -74,6 +74,7 @@ const WebcamFeed = ({ videoRef, compact = false }) => {
             timestamp:           videoTimestamp,
             status:              latestEvent.status,
             reason:              latestEvent.reason ?? 'unknown',
+            emotion:             latestEvent.emotion ?? 'focused',
             eye_open:            latestEvent.eye_open ?? true,
             head_pose_deviation: latestEvent.head_pose_deviation ?? 0,
             perclos:             latestEvent.perclos ?? 0,

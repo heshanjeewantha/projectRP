@@ -74,14 +74,18 @@ class LiveSignRecognizer:
             self._stable_confidence = 0.0
 
         sign_text = self._stable_sign if self._stable_sign and self._stable_sign != "UNKNOWN" else None
-        gesture_action = prediction.get("gesture_action") if sign_text else None
+
+        # Gesture actions for video control should propagate immediately
+        # from the raw prediction — not gated behind stable sign text.
+        raw_gesture = prediction.get("gesture_action")
+        gesture_action = raw_gesture if raw_gesture else None
 
         return {
             "hand_detected": True,
             "sign_text": sign_text,
-            "sign_confidence": round(self._stable_confidence, 2) if sign_text else 0.0,
+            "sign_confidence": round(self._stable_confidence, 2) if sign_text else round(confidence, 2),
             "gesture_action": gesture_action,
-            "sign_explanation": SIGN_EXPLANATIONS.get(sign_text, "") if sign_text else "",
+            "sign_explanation": SIGN_EXPLANATIONS.get(prediction["label"], "") if raw_gesture else (SIGN_EXPLANATIONS.get(sign_text, "") if sign_text else ""),
         }
 
     def __del__(self):

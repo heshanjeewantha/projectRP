@@ -211,6 +211,12 @@ def _label_to_text(label: str) -> str:
         "BINARY":             "Binary System — A base-2 numeral system using only two symbols: 0 and 1, fundamental to all digital computing.",
         "LOGIC_GATES":        "Logic Gates — Fundamental building blocks of digital integrated circuits (AND, OR, NOT gates).",
         "ALGORITHM":          "Algorithm — A finite sequence of well-defined computer-implementable instructions to solve a class of problems.",
+        # Control / interaction signs mapped to meaningful educational concepts
+        "PALM":               "Information Presentation — Methods for communicating and presenting digital information clearly.",
+        "PEACE":              "Binary Logic & Dual States — Two-state digital representations (0 and 1) in digital systems.",
+        "FIST":               "Data Encapsulation — Bundling data and instructions into secure computational units.",
+        "THUMBS_UP":          "System Verification — Validating system status, data integrity, and output correctness.",
+        "THUMBS UP":          "System Verification — Validating system status, data integrity, and output correctness.",
     }
     clean_key = label.strip().upper().replace(" ", "_")
     return mapping.get(clean_key, f"{label} — Key concept in the O/L ICT curriculum.")

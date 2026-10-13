@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, Pause, Volume2, Maximize, MonitorPlay } from 'lucide-react';
+import { Play, Pause, Volume2, Maximize, MonitorPlay, BookOpen } from 'lucide-react';
 
 const VideoPlayer = ({ video, transcript, onTimeUpdate, videoRef }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -41,8 +41,9 @@ const VideoPlayer = ({ video, transcript, onTimeUpdate, videoRef }) => {
     const bar = e.currentTarget;
     const rect = bar.getBoundingClientRect();
     const pos = (e.clientX - rect.left) / rect.width;
-    videoRef.current.currentTime = pos * duration;
-    setCurrentTime(pos * duration);
+    const target = pos * duration;
+    videoRef.current.currentTime = target;
+    setCurrentTime(target);
   };
 
   if (!video) {
@@ -58,8 +59,29 @@ const VideoPlayer = ({ video, transcript, onTimeUpdate, videoRef }) => {
   const cleanFilename = video.filename || (video.storage_path ? video.storage_path.replace(/\\/g, '/').split('/').pop() : '');
   const videoUrl = `http://${apiHost}:8000/uploads/${cleanFilename}`;
 
+  const timelineSegments = video?.timeline_segments || [];
+  const activeSegment = timelineSegments.find(
+    (s) => currentTime >= s.start_time && currentTime <= s.end_time
+  ) || timelineSegments[0];
+
   return (
     <div className="group relative w-full overflow-hidden rounded-[24px] bg-[linear-gradient(180deg,rgba(12,16,13,0.92),rgba(5,8,6,0.96))]">
+      {/* Floating Syllabus Topic Banner */}
+      {video?.grade && (
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-2 rounded-full bg-black/65 backdrop-blur-md border border-white/15 px-3 py-1.5 text-xs text-white shadow-xl pointer-events-none transition-opacity duration-200">
+          <BookOpen size={13} className="text-emerald-400" />
+          <span className="font-extrabold text-emerald-400">{video.grade}</span>
+          <span className="text-white/40">•</span>
+          <span className="text-slate-200 font-medium">Unit {video.unit_number}: {video.unit_title}</span>
+          {activeSegment?.subtopic_title && (
+            <>
+              <span className="text-white/40">›</span>
+              <span className="text-amber-300 font-semibold truncate max-w-[200px]">{activeSegment.subtopic_title}</span>
+            </>
+          )}
+        </div>
+      )}
+
       <video
         ref={videoRef}
         src={videoUrl}
@@ -76,32 +98,51 @@ const VideoPlayer = ({ video, transcript, onTimeUpdate, videoRef }) => {
       {/* Controls Overlay */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         
-        {/* Progress Bar */}
+        {/* Progress Bar with Syllabus Topic Markers */}
         <div 
-          className="w-full h-1.5 bg-white/20 rounded-full mb-4 cursor-pointer relative"
+          className="w-full h-2 bg-white/20 rounded-full mb-4 cursor-pointer relative overflow-hidden"
           onClick={handleProgressClick}
         >
-          <div 
-            className="h-full bg-primary rounded-full" 
-            style={{ width: `${progress}%` }}
-          />
-          {/* Transcript Markers */}
-          {transcript?.segments?.map((seg, idx) => {
+          {/* Syllabus Subtopic Interval Markers */}
+          {duration > 0 && timelineSegments.map((seg, idx) => {
             const left = (seg.start_time / duration) * 100;
-            const width = ((seg.end_time - seg.start_time) / duration) * 100;
+            const width = Math.max(1, ((seg.end_time - seg.start_time) / duration) * 100);
+            const isCurrent = currentTime >= seg.start_time && currentTime <= seg.end_time;
             return (
               <div 
                 key={idx}
-                className="absolute top-0 h-full bg-accent/40 rounded-full pointer-events-none"
+                title={`${seg.subtopic_title} (${formatTime(seg.start_time)} - ${formatTime(seg.end_time)})`}
+                className={`absolute top-0 h-full border-r border-black/40 ${
+                  isCurrent ? 'bg-emerald-400/40' : 'bg-emerald-600/20'
+                }`}
                 style={{ left: `${left}%`, width: `${width}%` }}
               />
-            )
+            );
+          })}
+
+          {/* Current Playback Progress */}
+          <div 
+            className="h-full bg-gradient-to-r from-emerald-500 to-primary rounded-full relative z-10" 
+            style={{ width: `${progress}%` }}
+          />
+
+          {/* Transcript Markers */}
+          {duration > 0 && transcript?.segments?.map((seg, idx) => {
+            const left = (seg.start_time / duration) * 100;
+            const width = Math.max(0.5, ((seg.end_time - seg.start_time) / duration) * 100);
+            return (
+              <div 
+                key={idx}
+                className="absolute top-0 h-full bg-accent/30 rounded-full pointer-events-none z-1"
+                style={{ left: `${left}%`, width: `${width}%` }}
+              />
+            );
           })}
         </div>
 
         <div className="flex justify-between items-center text-white">
           <div className="flex items-center gap-4">
-            <button onClick={togglePlay} className="hover:text-primary transition-colors">
+            <button onClick={togglePlay} className="hover:text-primary transition-colors cursor-pointer">
               {isPlaying ? <Pause size={24} /> : <Play size={24} />}
             </button>
             <div className="flex items-center gap-2">
@@ -115,7 +156,7 @@ const VideoPlayer = ({ video, transcript, onTimeUpdate, videoRef }) => {
             </span>
           </div>
           
-          <button className="hover:text-primary transition-colors">
+          <button className="hover:text-primary transition-colors cursor-pointer">
             <Maximize size={20} />
           </button>
         </div>

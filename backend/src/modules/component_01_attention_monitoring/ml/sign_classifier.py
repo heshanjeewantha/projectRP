@@ -66,7 +66,8 @@ def _is_thumb_open(landmarks: np.ndarray) -> bool:
     tip_to_wrist = np.linalg.norm(thumb_tip - wrist)
     mcp_to_wrist = np.linalg.norm(thumb_mcp - wrist)
 
-    return (tip_spread > ip_spread * 1.08) or (tip_to_wrist > mcp_to_wrist * 1.15)
+    # Both conditions required — prevents false positives on curled fist thumb
+    return (tip_spread > ip_spread * 1.15) and (tip_to_wrist > mcp_to_wrist * 1.15)
 
 
 class SignClassifier:
@@ -92,7 +93,8 @@ class SignClassifier:
         pinky_ext  = _is_finger_open(lms, 20, 18, 17)
         thumb_ext  = _is_thumb_open(lms)
 
-        n_ext = sum([index_ext, middle_ext, ring_ext, pinky_ext, thumb_ext])
+        n_fingers_ext = sum([index_ext, middle_ext, ring_ext, pinky_ext])  # exclude thumb
+        n_ext = n_fingers_ext + (1 if thumb_ext else 0)
 
         # ── Smart Lesson Video Control Gestures ─────────────────────────
         # 1. 🖐️ Open Palm -> Skip Forward +10s (4 or 5 extended fingers)
@@ -103,13 +105,14 @@ class SignClassifier:
         if index_ext and middle_ext and not ring_ext and not pinky_ext:
             return self._result("PEACE", 0.92, gesture_action="SKIP_BACKWARD_10S")
 
-        # 3. 👍 Thumbs Up -> Play / Resume Video
+        # 3. ✊ Closed Fist -> Stop / Pause Video (all 4 fingers closed, thumb may be tucked or wrapped)
+        #    MUST be checked BEFORE Thumbs Up to avoid misclassifying a fist as play.
+        if not index_ext and not middle_ext and not ring_ext and not pinky_ext and not thumb_ext:
+            return self._result("FIST", 0.94, gesture_action="PAUSE_VIDEO")
+
+        # 4. 👍 Thumbs Up -> Play / Resume Video (only thumb extended, all other fingers closed)
         if thumb_ext and not index_ext and not middle_ext and not ring_ext and not pinky_ext:
             return self._result("THUMBS_UP", 0.92, gesture_action="PLAY_VIDEO")
-
-        # 4. ✊ Closed Fist -> Stop / Pause Video
-        if not index_ext and not middle_ext and not ring_ext and not pinky_ext:
-            return self._result("FIST", 0.90, gesture_action="PAUSE_VIDEO")
 
         # ── Curriculum Sign Heuristics ──────────────────────────────────
         if thumb_ext and index_ext and not middle_ext and not ring_ext and pinky_ext:

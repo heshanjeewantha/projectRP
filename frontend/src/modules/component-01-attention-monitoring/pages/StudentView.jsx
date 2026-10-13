@@ -11,10 +11,12 @@ import {
   Video,
   Activity,
   BarChart2,
+  GraduationCap,
+  Filter,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-import { getVideos, getTranscript } from '../services/videoApi';
+import { getVideos, getTranscript, getSyllabusTaxonomy } from '../services/videoApi';
 import { computeMissedSegments } from '../services/missedApi';
 import {
   getKnowledgeGraph,
@@ -90,6 +92,11 @@ const StudentView = () => {
   const [distractionAlert, setDistractionAlert] = useState(null);
   const [activeGesture, setActiveGesture] = useState(null);
 
+  // ── Curriculum & Syllabus Filters ──────────────────────────────────────────
+  const [curriculumGrade, setCurriculumGrade] = useState('ALL'); // 'ALL' | 'Grade 10' | 'Grade 11'
+  const [curriculumUnit, setCurriculumUnit] = useState('ALL'); // 'ALL' | 1 | 2 | 3 ...
+  const [syllabusTaxonomy, setSyllabusTaxonomy] = useState(null);
+
   const videoRef = useRef(null);
   const requestedPopupCheckpointsRef = useRef(new Set());
   const pendingPopupCheckpointsRef = useRef(new Set());
@@ -106,6 +113,10 @@ const StudentView = () => {
     attentionStatus,
     attentionDetail,
     gestureAction,
+    emotion,
+    emotionConfidence,
+    activeSyllabus,
+    recommendedIntervention,
   } = useStore();
   const popupStudentId = userId || 'student_demo_123';
 
@@ -128,25 +139,32 @@ const StudentView = () => {
     pendingPopupCheckpointsRef.current = new Set();
   };
 
+  // Load syllabus taxonomy on mount
+  useEffect(() => {
+    getSyllabusTaxonomy()
+      .then((tax) => setSyllabusTaxonomy(tax))
+      .catch((err) => console.error('Failed to load syllabus taxonomy', err));
+  }, []);
+
+  // Fetch videos filtered by Grade and Unit
   useEffect(() => {
     let isMounted = true;
 
-    const loadVideos = async () => {
+    const loadFilteredVideos = async () => {
       try {
-        const data = await getVideos();
+        const unitParam = curriculumUnit === 'ALL' ? null : Number(curriculumUnit);
+        const data = await getVideos(curriculumGrade, unitParam);
         if (!isMounted) return;
         setVideos(data);
         if (data.length > 0) {
-          setCurrentVideo(data[0]);
-          try {
-            const ts = await getTranscript(data[0].id);
-            if (isMounted) {
-              setTranscript(ts);
-            }
-          } catch (error) {
-            console.log('No transcript yet', error);
-            if (isMounted) {
-              setTranscript(null);
+          // If current video doesn't match new filter, switch to first result
+          if (!currentVideo || !data.some((v) => v.id === currentVideo.id)) {
+            setCurrentVideo(data[0]);
+            try {
+              const ts = await getTranscript(data[0].id);
+              if (isMounted) setTranscript(ts);
+            } catch (err) {
+              if (isMounted) setTranscript(null);
             }
           }
         }
@@ -166,13 +184,14 @@ const StudentView = () => {
       }
     };
 
-    loadVideos();
+    loadFilteredVideos();
     loadKnowledgeGraph();
 
     return () => {
       isMounted = false;
     };
-  }, [setCurrentVideo]);
+  }, [curriculumGrade, curriculumUnit, setCurrentVideo]);
+
 
   useEffect(() => {
     let interval;
@@ -499,12 +518,26 @@ const StudentView = () => {
 
           const missedText = getMissedText(startVideoTime);
 
-          // Trigger the centered distraction popup modal
+          const currentSyllabus = activeSyllabus || {
+            grade: currentVideo?.grade || 'Grade 10',
+            unit_number: currentVideo?.unit_number || 1,
+            unit_title: currentVideo?.unit_title || 'Introduction to ICT',
+            topic: currentVideo?.topic || 'Data & Information',
+            subtopic_title: currentLearningConcept?.conceptName || currentVideo?.topic,
+            summary_hint: currentLearningConcept?.description || currentVideo?.topic,
+            key_terms: currentLearningConcept?.keywords || [],
+          };
+          const currentEmotion = emotion || 'not_attentive';
+
+          // Trigger the centered distraction popup modal with syllabus context
           setDistractionAlert({
             startTime: startVideoTime,
             duration: duration,
             reason: attentionDetailRef.current?.reason || 'Looking away from lecture',
+            emotion: currentEmotion,
             missedText,
+            syllabusContext: currentSyllabus,
+            summaryHint: currentSyllabus.summary_hint,
           });
 
           distractionTrackerRef.current = {
@@ -512,6 +545,7 @@ const StudentView = () => {
             distractionStartVideoTime: null,
             attentiveGraceCount: 0,
           };
+
         }
       } else {
         // Tolerant grace period: only reset distraction if student stays attentive for 3 continuous cycles (1.5s)
@@ -706,10 +740,18 @@ const StudentView = () => {
   };
 
   const videoChips = [
-    { icon: BrainCircuit, label: 'Concept popups', accent: true },
+    {
+      icon: GraduationCap,
+      label: currentVideo?.grade ? `${currentVideo.grade} • Unit ${currentVideo.unit_number || 1}` : 'Grade 10 ICT',
+      accent: true,
+    },
+    {
+      icon: BrainCircuit,
+      label: activeSyllabus?.subtopic_title || currentLearningConcept?.conceptName || 'Concept Checkpoints',
+    },
     {
       icon: Clock,
-      label: timelineDuration ? `${Math.floor(timelineDuration)} seconds ready` : 'Timeline syncing',
+      label: timelineDuration ? `${Math.floor(timelineDuration)}s Duration` : 'Timeline syncing',
     },
   ];
 
@@ -744,7 +786,48 @@ const StudentView = () => {
             chips={videoChips}
             stats={heroStats}
             media={
-              <div className="dashboard-media-frame relative">
+              <div className="dashboard-media-frame relative flex flex-col gap-2">
+                {/* Real-Time Syllabus Topic & Facial Emotion Banner */}
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-black/40 border border-white/10 px-4 py-2 text-xs backdrop-blur-md">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="font-extrabold uppercase tracking-wider text-emerald-400">
+                      {currentVideo?.grade || 'Grade 10'} ICT
+                    </span>
+                    <span className="text-white/30">•</span>
+                    <span className="font-semibold text-slate-200">
+                      Unit {currentVideo?.unit_number || 1}: {currentVideo?.unit_title || 'Curriculum Module'}
+                    </span>
+                    {activeSyllabus?.subtopic_title && (
+                      <>
+                        <span className="text-white/30">›</span>
+                        <span className="text-amber-300 font-medium">
+                          {activeSyllabus.subtopic_title}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* <span className="text-slate-400 text-[11px]">Facial Emotion:</span>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide border ${
+                        emotion === 'confused'
+                          ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40'
+                          : emotion === 'frustrated'
+                            ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                            : emotion === 'drowsy'
+                              ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                              : emotion === 'confident'
+                                ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                                : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                      }`}
+                    >
+                      {emotion}
+                    </span> */}
+                  </div>
+                </div>
+
                 <GestureActionHUD activeGesture={activeGesture} />
                 <VideoPlayer
                   key={currentVideo?.id || 'video-player-top'}
@@ -874,24 +957,83 @@ const StudentView = () => {
                 <div className="mb-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.16em] text-text-muted">
                   <div className="inline-flex items-center gap-2">
                     <Video size={12} />
-                    Library ({videos.length})
+                    Syllabus Video Library ({videos.length})
                   </div>
                 </div>
+
+                {/* Grade 10 / 11 Filter Tabs */}
+                <div className="mb-3 flex items-center gap-1.5 rounded-xl bg-white/[0.04] p-1 border border-white/[0.08]">
+                  {['ALL', 'Grade 10', 'Grade 11'].map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => {
+                        setCurriculumGrade(g);
+                        setCurriculumUnit('ALL');
+                      }}
+                      className={`flex-1 rounded-lg py-1.5 text-center text-xs font-bold transition cursor-pointer ${
+                        curriculumGrade === g
+                          ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {g === 'ALL' ? 'All Grades' : g}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Unit Filter Bar when Grade selected */}
+                {curriculumGrade !== 'ALL' && (
+                  <div className="mb-3 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                    <button
+                      onClick={() => setCurriculumUnit('ALL')}
+                      className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition cursor-pointer ${
+                        curriculumUnit === 'ALL'
+                          ? 'bg-primary/20 text-primary border border-primary/40'
+                          : 'bg-white/[0.04] text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      All Units
+                    </button>
+                    {(curriculumGrade === 'Grade 10' ? [1, 2, 3, 4, 5, 6, 7, 8, 9] : [1, 2, 3, 4, 5]).map((u) => (
+                      <button
+                        key={u}
+                        onClick={() => setCurriculumUnit(u)}
+                        className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition cursor-pointer ${
+                          curriculumUnit === u
+                            ? 'bg-primary/20 text-primary border border-primary/40'
+                            : 'bg-white/[0.04] text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        Unit {u}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <div className="grid gap-2 max-h-72 overflow-y-auto pr-1">
                   {videos.map((video) => (
                     <button
                       key={video.id}
                       onClick={() => handleSelectVideo(video)}
-                      className={`flex min-w-0 items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition ${
+                      className={`flex flex-col gap-1 rounded-2xl px-4 py-3 text-left transition cursor-pointer ${
                         currentVideo?.id === video.id
                           ? 'bg-primary/15 text-white border border-primary/30 font-medium'
                           : 'bg-white/[0.03] text-text-muted hover:bg-white/[0.05]'
                       }`}
                     >
-                      <span className="truncate">{video.title}</span>
-                      <span className="shrink-0 text-xs font-mono">
-                        {video.duration_seconds ? `${Math.floor(video.duration_seconds)}s` : '--'}
-                      </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-sm font-semibold text-white">{video.title}</span>
+                        <span className="shrink-0 text-xs font-mono text-slate-400">
+                          {video.duration_seconds ? `${Math.floor(video.duration_seconds)}s` : '--'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                        <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.2 font-bold text-emerald-300">
+                          {video.grade || 'Grade 10'}
+                        </span>
+                        <span>Unit {video.unit_number || 1}</span>
+                        <span className="truncate text-slate-400">• {video.topic || 'Fundamentals'}</span>
+                      </div>
                     </button>
                   ))}
                 </div>

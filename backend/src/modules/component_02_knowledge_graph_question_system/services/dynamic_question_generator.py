@@ -63,35 +63,74 @@ async def generate_graph_and_mcqs_from_transcript(video_id: str, segments: list,
     diagram_edges = []
     diagram_summaries = []
 
-    # ── 1. Create Root Video-Title Concept Node ───────────────
-    root_node_diag = {
-        "nodeId": "root_node",
-        "label": video_title,
-        "text": f"Central topic of this lecture covering {len(segments)} interactive segments.",
-        "position": {"col": 1, "row": 1},
-        "accent": "primary",
+    # ── 1. Process Child Concept Segments ─────────────────────
+    unique_concept_map = {}  # {concept_name: {text, start_time}}
+    
+    # Gesture labels to strictly translate or filter
+    _GESTURE_TO_CONCEPT = {
+        "PALM": "Information Presentation",
+        "THUMBS_UP": "System Verification",
+        "THUMBS UP": "System Verification",
+        "FIST": "Data Encapsulation",
+        "PEACE": "Binary Logic",
+        "SIGN": "ICT Communication",
+        "HELLO": "System Introduction",
+        "THANK_YOU": "Summary & Review",
     }
-    diagram_nodes.append(root_node_diag)
+    _EXCLUDED_LABELS = {"UNKNOWN", "YES", "NO", "WATER", "PLEASE", "SORRY", "I_LOVE_YOU", "HELP", "STOP"}
 
-    # ── 2. Process Child Concept Segments ─────────────────────
     for idx, seg in enumerate(segments, start=1):
         text = seg.get("text", "")
         start_time = float(seg.get("start_time", 0.0))
         end_time = float(seg.get("end_time", start_time + 15.0))
 
-        # Extract concept label
-        label_raw = seg.get("label") or ""
+        label_raw = (seg.get("label") or "").strip().upper()
         match = re.search(r"\[([A-Z\s_]+)\]", text)
         if match:
-            raw_concept = match.group(1).strip()
+            candidate = match.group(1).strip().upper()
             clean_text = text.replace(match.group(0), "").strip()
-        elif label_raw and label_raw != "SIGN":
-            raw_concept = label_raw.replace("_", " ").title()
-            clean_text = text
         else:
-            words = [w for w in re.findall(r"\b[A-Za-z]{4,}\b", text) if w.lower() not in ("this", "sign", "that", "represents", "with", "from", "main", "used", "today", "will", "discuss")]
-            raw_concept = words[0].title() if words else f"Concept {idx}"
+            candidate = label_raw
             clean_text = text
+
+        # Map candidate or extract
+        if candidate in _GESTURE_TO_CONCEPT:
+            raw_concept = _GESTURE_TO_CONCEPT[candidate]
+        elif candidate and candidate not in _EXCLUDED_LABELS:
+            raw_concept = candidate.replace("_", " ").title()
+        else:
+            raw_concept = None
+
+        # Derive from text if still none
+        if not raw_concept:
+            em_dash_match = re.match(r"^([A-Za-z\s]{3,30})\s*[—\-–]", clean_text)
+            if em_dash_match:
+                extracted = em_dash_match.group(1).strip().upper()
+                if extracted in _GESTURE_TO_CONCEPT:
+                    raw_concept = _GESTURE_TO_CONCEPT[extracted]
+                elif extracted not in _EXCLUDED_LABELS:
+                    raw_concept = extracted.title()
+
+        if not raw_concept:
+            words = [w for w in re.findall(r"\b[A-Za-z]{4,}\b", clean_text)
+                     if w.lower() not in ("this", "sign", "that", "represents", "with",
+                                          "from", "main", "used", "today", "will",
+                                          "discuss", "language", "palm", "fist", "peace",
+                                          "thumb", "thumbs", "unknown", "concept")]
+            raw_concept = words[0].title() if words else f"Topic {idx}"
+
+        # Clean text description
+        if clean_text.startswith(f"{raw_concept} —"):
+            desc_text = clean_text[len(raw_concept) + 2:].strip()
+        else:
+            desc_text = clean_text
+
+        # Record unique concept for clean diagram layout
+        if raw_concept not in unique_concept_map:
+            unique_concept_map[raw_concept] = {
+                "text": desc_text or f"Fundamental principles of {raw_concept} in O/L ICT.",
+                "first_seen_idx": idx,
+            }
 
         concept_id = f"dyn_c_{idx}_{video_id[:8] if isinstance(video_id, str) else 'v'}"
         question_id = f"dyn_q_{idx}_{video_id[:8] if isinstance(video_id, str) else 'v'}"
@@ -104,8 +143,8 @@ async def generate_graph_and_mcqs_from_transcript(video_id: str, segments: list,
             "unit": video_title,
             "videoId": str(video_id),
             "videoTitle": video_title,
-            "description": clean_text or f"Core principles of {raw_concept} within {video_title}.",
-            "keywords": [raw_concept, video_title] + [w for w in clean_text.split() if len(w) > 4][:3],
+            "description": desc_text or f"Core principles of {raw_concept} within {video_title}.",
+            "keywords": [raw_concept, video_title] + [w for w in desc_text.split() if len(w) > 4][:3],
             "prerequisites": [root_concept_id] if idx == 1 else [generated_concepts[-1]["conceptId"]],
             "relatedConcepts": [root_concept_id],
             "difficultyLevel": "medium" if idx % 2 == 0 else "easy",
@@ -113,29 +152,6 @@ async def generate_graph_and_mcqs_from_transcript(video_id: str, segments: list,
             "updatedAt": now,
         }
         generated_concepts.append(child_node)
-
-        # Diagram branch node
-        col = (idx % 3) + 1
-        row = (idx // 3) + 2
-        diag_node_id = f"node_{idx}"
-        diagram_nodes.append({
-            "nodeId": diag_node_id,
-            "label": raw_concept,
-            "text": clean_text[:65] + ("..." if len(clean_text) > 65 else ""),
-            "position": {"col": col, "row": row},
-            "accent": "accent" if idx % 2 == 0 else "warning",
-        })
-
-        # Diagram Edge: connect from root or previous subtopic
-        parent_node_id = "root_node" if idx <= 2 else f"node_{idx - 1}"
-        diagram_edges.append({
-            "from": parent_node_id,
-            "to": diag_node_id,
-            "label": "Explains" if idx % 2 == 0 else "Covers",
-        })
-
-        if len(diagram_summaries) < 3:
-            diagram_summaries.append(f"{raw_concept}: {clean_text[:75]}")
 
         # ── 3. Build Dynamic MCQ ──────────────────────────────
         correct_answer = f"{raw_concept} Function"
@@ -159,7 +175,7 @@ async def generate_graph_and_mcqs_from_transcript(video_id: str, segments: list,
             "questionText": f"Based on '{video_title}' at {int(start_time)}s: What is the primary role of {raw_concept}?",
             "options": options,
             "correctAnswer": correct_answer,
-            "explanation": f"According to '{video_title}': '{clean_text or text}'",
+            "explanation": f"According to '{video_title}': '{desc_text}'",
             "difficultyLevel": "medium" if idx % 2 == 0 else "easy",
             "sortOrder": idx,
             "updatedAt": now,
@@ -176,13 +192,71 @@ async def generate_graph_and_mcqs_from_transcript(video_id: str, segments: list,
             "transcriptText": clean_text or text,
         })
 
-    # Assemble visual diagram for root concept node
-    max_row = max(n["position"]["row"] for n in diagram_nodes) if diagram_nodes else 2
+    # ── 5. Assemble Visual Diagram (Structured, Deduplicated Layout) ───
+    # Root node centered at Top (col: 2, row: 1)
+    root_node_diag = {
+        "nodeId": "root_node",
+        "label": video_title[:28] + ("..." if len(video_title) > 28 else ""),
+        "text": f"Curriculum topic covering {len(unique_concept_map)} distinct core concepts.",
+        "position": {"col": 2, "row": 1},
+        "accent": "primary",
+    }
+    diagram_nodes.append(root_node_diag)
+
+    # Select up to 6 unique core concepts for a balanced visual hierarchy
+    selected_concepts = list(unique_concept_map.items())[:6]
+    total_unique = len(selected_concepts)
+    num_rows = 2 if total_unique <= 3 else 3
+
+    for c_idx, (c_name, c_info) in enumerate(selected_concepts, start=1):
+        if num_rows == 2:
+            # 1 row of children (up to 3 items)
+            col = c_idx
+            row = 2
+        else:
+            # 2 rows of children (row 2: up to 3 items, row 3: remaining items)
+            if c_idx <= 3:
+                col = c_idx
+                row = 2
+            else:
+                col = c_idx - 3
+                row = 3
+
+        node_key = f"concept_node_{c_idx}"
+        accent_color = "accent" if c_idx % 2 == 1 else "warning"
+
+        diagram_nodes.append({
+            "nodeId": node_key,
+            "label": c_name,
+            "text": c_info["text"][:65] + ("..." if len(c_info["text"]) > 65 else ""),
+            "position": {"col": col, "row": row},
+            "accent": accent_color,
+        })
+
+        # Connect edges:
+        # Row 2 nodes connect to root; Row 3 nodes connect to the concept above them or to root
+        if row == 2:
+            diagram_edges.append({
+                "from": "root_node",
+                "to": node_key,
+                "label": "Introduces" if c_idx == 1 else "Covers",
+            })
+        else:
+            parent_key = f"concept_node_{c_idx - 3}"
+            diagram_edges.append({
+                "from": parent_key,
+                "to": node_key,
+                "label": "Extends",
+            })
+
+        if len(diagram_summaries) < 4:
+            diagram_summaries.append(f"{c_name}: {c_info['text'][:70]}")
+
     root_diagram = {
         "diagramId": f"diag_{video_id}",
         "title": video_title,
-        "subtitle": f"Interactive Knowledge Graph for '{video_title}' ({len(segments)} Segments)",
-        "layout": {"columns": 3, "rows": max_row},
+        "description": f"Core curriculum concepts and topic dependencies covered in the lecture '{video_title}'.",
+        "layout": {"columns": 3, "rows": num_rows},
         "nodes": diagram_nodes,
         "edges": diagram_edges,
         "summaryPoints": diagram_summaries or [f"Core syllabus lecture on {video_title}."],

@@ -1,9 +1,30 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadVideo, convertSignVideoToTranscript } from '../../component-01-attention-monitoring/services/videoApi';
 import useStore from '../utils/useStore';
-import { UploadCloud, CheckCircle, Loader2, AlertCircle, FileText, Sparkles, Wand2 } from 'lucide-react';
+import { UploadCloud, CheckCircle, Loader2, AlertCircle, FileText, Sparkles, Wand2, GraduationCap, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const GRADE_UNITS = {
+  'Grade 10': [
+    { number: 1, title: 'Introduction to Information and Communication Technology' },
+    { number: 2, title: 'Architecture of Computer Systems & Hardware' },
+    { number: 3, title: 'Data Representation & Number Systems' },
+    { number: 4, title: 'Logic Gates and Boolean Logic' },
+    { number: 5, title: 'Operating Systems & System Software' },
+    { number: 6, title: 'Word Processing' },
+    { number: 7, title: 'Electronic Spreadsheets' },
+    { number: 8, title: 'Electronic Presentations' },
+    { number: 9, title: 'Database Management Systems (DBMS)' },
+  ],
+  'Grade 11': [
+    { number: 1, title: 'Programming & Algorithms' },
+    { number: 2, title: 'Web Development & Authoring' },
+    { number: 3, title: 'Computer Networks and the Internet' },
+    { number: 4, title: 'Multimedia Technologies' },
+    { number: 5, title: 'ICT in Society, Cyber Security, Ethics and Legal Issues' },
+  ],
+};
 
 const AdminUpload = ({ embedded = false }) => {
   const navigate = useNavigate();
@@ -13,6 +34,18 @@ const AdminUpload = ({ embedded = false }) => {
   const [mode, setMode] = useState('sign_to_transcript'); // 'sign_to_transcript' | 'standard'
   const [status, setStatus] = useState('idle'); // idle | uploading | success | error
   const [convertedTranscript, setConvertedTranscript] = useState(null);
+
+  // Syllabus categorization
+  const [grade, setGrade] = useState('Grade 10');
+  const [unitNumber, setUnitNumber] = useState(1);
+
+  const availableUnits = useMemo(() => GRADE_UNITS[grade] || [], [grade]);
+  const selectedUnit = useMemo(() => availableUnits.find((u) => u.number === unitNumber) || availableUnits[0], [availableUnits, unitNumber]);
+
+  const handleGradeChange = (newGrade) => {
+    setGrade(newGrade);
+    setUnitNumber(GRADE_UNITS[newGrade]?.[0]?.number || 1);
+  };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -24,6 +57,13 @@ const AdminUpload = ({ embedded = false }) => {
     }
   };
 
+  const syllabusMeta = {
+    grade,
+    unit_number: unitNumber,
+    unit_title: selectedUnit?.title || 'Introduction to ICT',
+    topic: selectedUnit?.title || 'Data & Information',
+  };
+
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file || !title) return;
@@ -33,11 +73,11 @@ const AdminUpload = ({ embedded = false }) => {
 
     try {
       if (mode === 'sign_to_transcript') {
-        const result = await convertSignVideoToTranscript(file, title);
+        const result = await convertSignVideoToTranscript(file, title, syllabusMeta);
         setConvertedTranscript(result);
         setStatus('success');
       } else {
-        const newVideo = await uploadVideo(file, title);
+        const newVideo = await uploadVideo(file, title, syllabusMeta);
         setCurrentVideo(newVideo);
         setStatus('success');
         setFile(null);
@@ -100,6 +140,50 @@ const AdminUpload = ({ embedded = false }) => {
             placeholder="e.g. Computer Hardware & Storage Devices"
             required
           />
+        </div>
+
+        {/* Syllabus / Curriculum Categorization */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+          <div>
+            <label className="flex items-center gap-2 text-xs font-bold text-primary mb-2 uppercase tracking-wider">
+              <GraduationCap size={15} />
+              Syllabus Grade
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {['Grade 10', 'Grade 11'].map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => handleGradeChange(g)}
+                  className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition ${
+                    grade === g
+                      ? 'bg-primary text-[#032418] border-primary font-extrabold shadow-sm'
+                      : 'border-white/10 text-text-muted hover:border-white/20 hover:text-white bg-white/5'
+                  }`}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-xs font-bold text-primary mb-2 uppercase tracking-wider">
+              <BookOpen size={15} />
+              O/L ICT Unit
+            </label>
+            <select
+              value={unitNumber}
+              onChange={(e) => setUnitNumber(Number(e.target.value))}
+              className="w-full h-10 rounded-xl border border-white/10 bg-[#0c1813] px-3 text-xs text-white outline-none transition focus:border-primary/60"
+            >
+              {availableUnits.map((u) => (
+                <option key={u.number} value={u.number} className="bg-[#0c1813] text-white">
+                  Unit {u.number}: {u.title}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div>

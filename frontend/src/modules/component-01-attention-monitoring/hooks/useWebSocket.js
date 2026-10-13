@@ -18,6 +18,10 @@ export const useWebSocket = (sessionId) => {
   const setLiveSign         = useStore((s) => s.setLiveSign);
   const addAttentionEvent   = useStore((s) => s.addAttentionEvent);
 
+  const setEmotion          = useStore((s) => s.setEmotion);
+  const setActiveSyllabus   = useStore((s) => s.setActiveSyllabus);
+  const setRecommendedIntervention = useStore((s) => s.setRecommendedIntervention);
+
   useEffect(() => {
     if (!sessionId) return;
 
@@ -47,6 +51,21 @@ export const useWebSocket = (sessionId) => {
           setLatestDetection(data);
           setAttentionStatus(data.status);
           setAttentionDetail(data);
+
+          // Emotion classification
+          if (data.emotion) {
+            setEmotion(data.emotion, data.emotion_confidence ?? 0);
+          }
+
+          // Active syllabus context
+          if (data.active_syllabus) {
+            setActiveSyllabus(data.active_syllabus);
+          }
+
+          // Recommended contextual intervention
+          if (data.recommended_intervention !== undefined) {
+            setRecommendedIntervention(data.recommended_intervention);
+          }
 
           // Drowsiness
           if (data.drowsiness_score !== undefined) {
@@ -94,6 +113,7 @@ export const useWebSocket = (sessionId) => {
               timestamp:       data.timestamp,
               status:          data.status,
               reason:          data.reason ?? 'unknown',
+              emotion:         data.emotion ?? 'focused',
               engagementScore: data.engagement_score ?? 100,
             });
           }
@@ -137,19 +157,22 @@ export const useWebSocket = (sessionId) => {
   }, [
     sessionId,
     setAttentionStatus, setAttentionDetail,
+    setEmotion, setActiveSyllabus, setRecommendedIntervention,
     setDrowsiness, setPhoneDetected, setYawning,
     setGazeDirection, setBlinkRate, setEngagementScore,
     setLiveSign, addAttentionEvent,
   ]);
 
-  const sendFrame = useCallback((base64Frame, videoTimestamp) => {
+  const sendFrame = useCallback((base64Frame, videoTimestamp, videoId = null) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         frame:     base64Frame,
         timestamp: videoTimestamp,
+        video_id:  videoId,
       }));
     }
   }, []);
 
   return { isConnected, latestDetection, sendFrame };
 };
+

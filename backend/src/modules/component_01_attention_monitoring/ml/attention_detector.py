@@ -167,6 +167,8 @@ class AttentionDetector:
         self._yawn_streak: int = 0
         # Drowsiness score (smoothed PERCLOS 0.0-1.0)
         self._drowsiness_score: float = 0.0
+        # Emotion stability buffer
+        self._emotion_history: deque = deque(maxlen=5)
 
     def analyze_frame(self, frame_bgr: np.ndarray) -> dict:
         """
@@ -195,6 +197,9 @@ class AttentionDetector:
                 "roll": 0.0,
                 "eye_open": False,
                 "head_pose_deviation": 0.0,
+                "emotion": "neutral",
+                "emotion_confidence": 0.0,
+                "action_units": {"brow_ratio": 0.0, "brow_eye_height": 0.0, "corner_elevation": 0.0},
             }
 
         landmarks = results.multi_face_landmarks[0].landmark
@@ -271,6 +276,21 @@ class AttentionDetector:
         # Engagement score: 0-100
         engagement = self._compute_engagement(perclos, looking_away, yawning, gaze, blink_rate)
 
+        # Facial Emotion Classification
+        emotion_res = self._classify_emotion(
+            landmarks=landmarks,
+            ear=ear,
+            mar=mar,
+            drowsy=drowsy,
+            yawning=yawning,
+            yaw=yaw,
+            pitch=pitch,
+            roll=roll,
+            gaze=gaze,
+            w=w,
+            h=h,
+        )
+
         return {
             "status": status,
             "reason": reason,
@@ -287,7 +307,88 @@ class AttentionDetector:
             "eye_open": not eyes_closed,
             "head_pose_deviation": round(float(abs(yaw)), 2),
             "engagement_score": engagement,
+            "emotion": emotion_res["emotion"],
+            "emotion_confidence": emotion_res["confidence"],
+            "action_units": emotion_res["action_units"],
         }
+
+    def _classify_emotion(
+        self, landmarks, ear: float, mar: float, drowsy: bool, yawning: bool,
+        yaw: float, pitch: float, roll: float, gaze: str, w: int, h: int
+    ) -> dict:
+        """
+        Classify facial emotion states: focused, confused, frustrated, bored, drowsy, confident.
+        Uses Action Units:
+          - AU4 (Inner Brow Furrow): landmarks 107 & 336 vs outer eyes 33 & 263
+          - AU7 (Squint/Brow-Eye Lowering): landmarks 107->159, 336->386
+          - AU12/AU15 (Lip corner elevation/depression): 61, 291 vs 13, 14
+        """
+        try:
+            p33 = np.array([landmarks[33].x * w, landmarks[33].y * h])
+            p263 = np.array([landmarks[263].x * w, landmarks[263].y * h])
+            inter_eye_dist = np.linalg.norm(p33 - p263) + 1e-6
+
+            p107 = np.array([landmarks[107].x * w, landmarks[107].y * h])
+            p336 = np.array([landmarks[336].x * w, landmarks[336].y * h])
+            brow_dist = np.linalg.norm(p107 - p336)
+            brow_ratio = brow_dist / inter_eye_dist
+
+            p159 = np.array([landmarks[159].x * w, landmarks[159].y * h])
+            p386 = np.array([landmarks[386].x * w, landmarks[386].y * h])
+            brow_eye_height = (abs(p107[1] - p159[1]) + abs(p336[1] - p386[1])) / (2.0 * inter_eye_dist)
+
+            p13 = np.array([landmarks[13].x * w, landmarks[13].y * h])
+            p14 = np.array([landmarks[14].x * w, landmarks[14].y * h])
+            lip_mid_y = (p13[1] + p14[1]) / 2.0
+
+            p61 = np.array([landmarks[61].x * w, landmarks[61].y * h])
+            p291 = np.array([landmarks[291].x * w, landmarks[291].y * h])
+            corners_y = (p61[1] + p291[1]) / 2.0
+
+            corner_elevation = (lip_mid_y - corners_y) / inter_eye_dist
+
+            if drowsy or yawning or mar >= self.MAR_THRESHOLD:
+                raw_emotion = "drowsy"
+                confidence = 0.92
+            elif brow_ratio < 0.295 or (brow_ratio < 0.32 and brow_eye_height < 0.13):
+                if corner_elevation < -0.018:
+                    raw_emotion = "frustrated"
+                    confidence = round(min(0.96, 0.70 + abs(corner_elevation) * 5), 2)
+                else:
+                    raw_emotion = "confused"
+                    confidence = round(min(0.95, 0.68 + (0.32 - brow_ratio) * 4), 2)
+            elif pitch < -14.0 or (gaze in ("down", "left", "right") and ear < 0.25):
+                raw_emotion = "bored"
+                confidence = 0.78
+            elif corner_elevation > 0.035 and ear >= 0.22:
+                raw_emotion = "confident"
+                confidence = round(min(0.95, 0.70 + corner_elevation * 4), 2)
+            else:
+                raw_emotion = "focused"
+                confidence = 0.88
+        except Exception:
+            raw_emotion = "focused"
+            confidence = 0.80
+            brow_ratio = 0.35
+            brow_eye_height = 0.15
+            corner_elevation = 0.0
+
+        self._emotion_history.append(raw_emotion)
+        counts = {}
+        for em in self._emotion_history:
+            counts[em] = counts.get(em, 0) + 1
+        stable_emotion = max(counts, key=counts.get)
+
+        return {
+            "emotion": stable_emotion,
+            "confidence": confidence,
+            "action_units": {
+                "brow_ratio": round(float(brow_ratio), 3),
+                "brow_eye_height": round(float(brow_eye_height), 3),
+                "corner_elevation": round(float(corner_elevation), 3),
+            },
+        }
+
 
     def _compute_perclos(self) -> float:
         """Proportion of recent frames where eyes were closed."""
