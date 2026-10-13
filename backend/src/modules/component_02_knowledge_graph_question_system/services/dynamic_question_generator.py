@@ -228,7 +228,7 @@ async def generate_graph_and_mcqs_from_transcript(video_id: str, segments: list,
         diagram_nodes.append({
             "nodeId": node_key,
             "label": c_name,
-            "text": c_info["text"][:65] + ("..." if len(c_info["text"]) > 65 else ""),
+            "text": c_info["text"][:120] + ("..." if len(c_info["text"]) > 120 else ""),
             "position": {"col": col, "row": row},
             "accent": accent_color,
         })
