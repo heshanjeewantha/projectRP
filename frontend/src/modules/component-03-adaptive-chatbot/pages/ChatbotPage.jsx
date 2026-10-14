@@ -766,13 +766,13 @@ const ChatbotPage = () => {
                                 {item.summaryRecommendation || 'A quick summary is available for this topic.'}
                               </div>
                               <div className="chatbot-summary-actions">
-                                <button
+                                {/* <button
                                   type="button"
                                   onClick={() => openSummaryPreview(item.summaryTopicId)}
                                   className="chatbot-inline-button"
                                 >
                                   Preview Summary
-                                </button>
+                                </button> */}
                                 <Link to={`/lesson-summary/${item.summaryTopicId}`} className="chatbot-inline-button is-primary">
                                   Open Summary
                                   <ArrowRight size={14} />
