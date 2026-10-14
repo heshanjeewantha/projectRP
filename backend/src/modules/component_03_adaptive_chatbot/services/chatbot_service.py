@@ -1231,7 +1231,8 @@ def _build_decimal_to_binary_answer(
     """Calculate decimal-to-binary questions directly so retrieval cannot alter the result."""
     normalized_question = question.lower().replace(",", "")
     patterns = (
-        r"\b(?:binary|base[- ]?2)\s+(?:equivalent|representation|form)?\s*"
+        r"\b(?:binary|base[- ]?2)\s+"
+        r"(?:(?:number|equivalent|representation|form)\s+)?"
         r"(?:of|for)\s+(?:the\s+)?(?:decimal(?:\s+number)?\s+)?(\d+)\b",
         r"\b(?:decimal(?:\s+number)?\s+)?(\d+)\s+"
         r"(?:in|to|into|as)\s+(?:(\d+)[- ]bit\s+)?(?:binary|base[- ]?2)\b",

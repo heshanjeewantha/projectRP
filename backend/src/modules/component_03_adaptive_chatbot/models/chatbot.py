@@ -412,3 +412,10 @@ class EARADiagramResponse(BaseModel):
     schematicType: str = "pipeline"
     analogy: str = ""
     brainChallenge: str = ""
+
+
+class EARADiagramRequest(BaseModel):
+    topicId: str
+    learningState: str = "bored"
+    question: str = ""
+    answer: str = ""

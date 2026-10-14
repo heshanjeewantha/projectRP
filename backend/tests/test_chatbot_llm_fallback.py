@@ -1,11 +1,13 @@
 from pathlib import Path
 import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.common.config.settings import settings
+from src.modules.component_03_adaptive_chatbot.models.chatbot import EARADiagramRequest
+from src.modules.component_03_adaptive_chatbot.routes import chatbot_routes
 from src.modules.component_03_adaptive_chatbot.services import chatbot_service
 
 
@@ -189,6 +191,26 @@ class ChatbotLlmFallbackTests(unittest.IsolatedAsyncioTestCase):
                 self.assertIn("244 in binary is 11110100.", answer)
                 self.assertNotIn("raw facts and figures", answer)
 
+    def test_decimal_to_binary_question_with_number_word_returns_calculated_result(self):
+        for question in (
+            "What is the binary number of 244?",
+            "What is the binary number of decimal 244?",
+            "What is the binary equivalent of the decimal number 244?",
+        ):
+            with self.subTest(question=question):
+                answer = chatbot_service.generateLocalFallbackAnswer(
+                    question=question,
+                    mode="learning",
+                    learning_state="understanding",
+                    topic_doc=TOPIC_DOC,
+                    prerequisites=TOPIC_DOC["prerequisiteLabels"],
+                    difficulty_level=1,
+                    refresh_points=[],
+                )
+
+                self.assertTrue(answer.startswith("244 in binary is 11110100."))
+                self.assertNotIn("raw facts and figures", answer)
+
     async def test_decimal_to_binary_computation_precedes_llm_for_all_modes_and_states(self):
         for mode in ("learning", "exam"):
             for learning_state in ("understanding", "bored", "not_understanding", "distracted"):
@@ -291,6 +313,31 @@ class ChatbotLlmFallbackTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("edge computing", diagram["diagram"]["nodes"][0]["description"].lower())
         self.assertIn("near the device", diagram["diagram"]["nodes"][1]["description"])
         self.assertIn("Follow the question", diagram["stateTip"])
+
+    async def test_eara_post_route_passes_long_answer_in_request_body(self):
+        answer = "A detailed chatbot answer. " * 100
+        expected = {"topicId": "data_information", "answer": answer}
+        with patch.object(
+            chatbot_routes.chatbot_service,
+            "get_eara_diagram",
+            new=AsyncMock(return_value=expected),
+        ) as get_diagram:
+            response = await chatbot_routes.post_eara_diagram(
+                EARADiagramRequest(
+                    topicId="data_information",
+                    learningState="not_understanding",
+                    question="Explain data and information.",
+                    answer=answer,
+                )
+            )
+
+        self.assertEqual(response, expected)
+        get_diagram.assert_awaited_once_with(
+            topic_id="data_information",
+            learning_state="not_understanding",
+            question="Explain data and information.",
+            answer=answer,
+        )
 
     def test_ollama_prompt_includes_learning_state_guidance(self):
         _, _, body = chatbot_service._build_llm_request(

@@ -91,6 +91,8 @@ Computer and technology questions are answered even when they extend beyond the 
 
 Decimal-to-binary questions are calculated directly before lesson retrieval or LLM generation, so unrelated data-definition text cannot replace the numeric answer. The calculation stays the same in every mode and learning state; only its explanation changes.
 
+The question-specific EARA diagram is requested with `POST /api/chatbot/eara` so the chatbot answer is sent in the JSON body rather than appended to the URL.
+
 ---
 
 ## 6. O/L Past Paper Auto-Grader & Marking Scheme Evaluator

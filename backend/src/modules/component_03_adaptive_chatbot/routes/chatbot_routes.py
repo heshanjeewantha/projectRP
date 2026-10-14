@@ -10,6 +10,7 @@ from src.modules.component_03_adaptive_chatbot.models.chatbot import (
     ChatbotHistoryClearResponseModel,
     ChatbotMessageModel,
     ChatbotTopicModel,
+    EARADiagramRequest,
     EARADiagramResponse,
     FlashcardDeckResponse,
     FlashcardReviewRequest,
@@ -168,4 +169,15 @@ async def get_eara_diagram(
         learning_state=learning_state,
         question=question,
         answer=answer,
+    )
+
+
+@router.post("/eara", response_model=EARADiagramResponse)
+async def post_eara_diagram(payload: EARADiagramRequest):
+    """Return an EARA diagram using a request body for potentially long answers."""
+    return await chatbot_service.get_eara_diagram(
+        topic_id=payload.topicId,
+        learning_state=payload.learningState,
+        question=payload.question,
+        answer=payload.answer,
     )
