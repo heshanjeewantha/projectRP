@@ -224,12 +224,114 @@ async def initialize_chatbot_data() -> None:
     await _sync_uploaded_dataset_topics(seeded_at)
 
 
+# ── Off-topic topic keywords (non-ICT subjects that students should not ask) ──
+_OFF_TOPIC_PERSON_PATTERNS = [
+    # Celebrity / entertainment
+    r"\b(priyanka|chopra|bollywood|celebrity|celebrities|actor|actress|singer|musician|footballer|cricketer|sportsman|athlete)\b",
+    # Political figures (generic)
+    r"\b(president|prime minister|politician|minister|parliament|election|vote|party)\b",
+    # Sports
+    r"\b(cricket|football|soccer|tennis|basketball|rugby|olympic|ipl|fifa|icc)\b",
+    # Other non-ICT topics
+    r"\b(recipe|cooking|food|movie|film|song|music|love|relationship|marriage|religion|god|prayers|heaven|hell|ghost|horror)\b",
+    r"\b(weather|climate|geography|history|math|physics|chemistry|biology|economics|accounts|sinhala|tamil|english grammar)\b",
+]
+
+_ICT_CONTEXT_KEYWORDS = {
+    "computer", "cpu", "ram", "rom", "hardware", "software", "network", "internet",
+    "database", "spreadsheet", "word", "email", "operating", "system", "program",
+    "algorithm", "flowchart", "binary", "digital", "data", "information", "security",
+    "cyber", "encryption", "html", "website", "server", "router", "ip", "dns",
+    "keyboard", "monitor", "printer", "storage", "memory", "processor", "ict",
+    "technology", "coding", "programming", "variable", "loop", "function",
+    "user mode", "kernel mode", "kernel", "system call", "computer science",
+    "cloud computing", "artificial intelligence", "machine learning", "api",
+}
+
+
+def _check_off_topic_question(question: str) -> str | None:
+    """
+    Returns a friendly off-topic message if the question is clearly not about O/L ICT,
+    or None if the question appears to be a valid ICT question.
+    """
+    q_lower = question.lower()
+
+    # If it has ICT keywords, let it through
+    if any(kw in q_lower for kw in _ICT_CONTEXT_KEYWORDS):
+        return None
+
+    # Check for off-topic patterns
+    for pattern in _OFF_TOPIC_PERSON_PATTERNS:
+        if re.search(pattern, q_lower):
+            return (
+                "😊 Great question, but I'm SignLearn AI — your G.C.E. O/L ICT study assistant! "
+                "That topic isn't part of the Grade 10 or Grade 11 O/L ICT syllabus, so I'm not able to help with it here.\n\n"
+                "I can help you with:\n"
+                "• Computer Systems & Architecture\n"
+                "• Data & Information (Binary, Logic Gates)\n"
+                "• Operating Systems\n"
+                "• Word Processing, Spreadsheets, Databases\n"
+                "• Networking, Internet & Email\n"
+                "• Cyber Security\n"
+                "• Programming Basics & Flowcharts\n\n"
+                "Try asking something like: \"What is the function of the Control Unit?\" or \"Explain the difference between RAM and ROM.\""
+            )
+
+    return None
+
+
+
 async def _ask_chatbot_internal(payload: dict[str, Any]) -> dict[str, Any]:
     """Generate, persist, and score an adaptive chatbot answer."""
     db = get_db()
     question = payload["question"].strip()
+
+    # ── Off-topic guard: detect non-ICT questions early ──────────────────────
+    off_topic_response = _check_off_topic_question(question)
+    if off_topic_response:
+        created_at = _utc_now()
+        mode = "learning"
+        message_doc = {
+            "studentId": payload["studentId"],
+            "question": question,
+            "answer": off_topic_response,
+            "mode": mode,
+            "detectedIntent": "learning",
+            "intent": "learning",
+            "learningState": "understanding",
+            "topic": "General O/L ICT",
+            "topicId": "general_ict",
+            "inferredTopic": None,
+            "prerequisiteTopics": [],
+            "prerequisites": [],
+            "suggestedNextTopic": None,
+            "prompt": "",
+            "createdAt": created_at,
+            "updatedAt": created_at,
+            "repeatedQueryStatus": "new",
+            "repeatedQueryCount": 0,
+            "difficultyLevel": 1,
+            "compressedAnswer": False,
+            "summaryRecommendation": None,
+            "summaryTopicId": None,
+            "microChallengeAvailable": False,
+            "conceptReEntry": False,
+            "conceptRefreshPoints": [],
+            "modeBadge": "Learning",
+            "learningStateBadge": "Understanding",
+            "nextDifficultyPrompt": None,
+            "sourceType": "OFF_TOPIC",
+            "fallbackReason": "off_topic_question",
+            "confidence": 0.99,
+        }
+        insert_result = await db[CHATBOT_MESSAGES_COLLECTION].insert_one(message_doc)
+        saved_doc = await db[CHATBOT_MESSAGES_COLLECTION].find_one({"_id": insert_result.inserted_id})
+        return _serialize_message(saved_doc)
+    # ─────────────────────────────────────────────────────────────────────────
+
     detected_intent = detectIntent(question)
     mode = _resolve_mode(payload.get("selectedMode"), detected_intent)
+
 
     topic_doc = await detectTopic(question, payload.get("currentTopic"))
     topic_id = topic_doc["topicId"] if topic_doc else "general_ict"
@@ -1048,6 +1150,15 @@ async def _generate_answer_bundle(
     prompt: str,
     repeated_query_count: int = 1,
 ) -> dict[str, Any]:
+    binary_answer = _build_decimal_to_binary_answer(question, mode, learning_state)
+    if binary_answer:
+        return {
+            "answer": binary_answer,
+            "sourceType": "COMPUTED",
+            "fallbackReason": None,
+            "confidence": 1.0,
+        }
+
     fallback_reason = None
 
     try:
@@ -1110,6 +1221,77 @@ async def _generate_answer_bundle(
             fallback_reason=fallback_reason,
         ),
     }
+
+
+def _build_decimal_to_binary_answer(
+    question: str,
+    mode: str,
+    learning_state: str,
+) -> str | None:
+    """Calculate decimal-to-binary questions directly so retrieval cannot alter the result."""
+    normalized_question = question.lower().replace(",", "")
+    patterns = (
+        r"\b(?:binary|base[- ]?2)\s+(?:equivalent|representation|form)?\s*"
+        r"(?:of|for)\s+(?:the\s+)?(?:decimal(?:\s+number)?\s+)?(\d+)\b",
+        r"\b(?:decimal(?:\s+number)?\s+)?(\d+)\s+"
+        r"(?:in|to|into|as)\s+(?:(\d+)[- ]bit\s+)?(?:binary|base[- ]?2)\b",
+        r"\bconvert\s+(?:the\s+)?(?:decimal(?:\s+number)?\s+)?(\d+)\s+"
+        r"(?:to|into)\s+(?:(\d+)[- ]bit\s+)?(?:binary|base[- ]?2)\b",
+    )
+    decimal_value = None
+    bit_width = None
+    for pattern in patterns:
+        match = re.search(pattern, normalized_question)
+        if match:
+            groups = match.groups()
+            decimal_value = int(groups[0])
+            bit_width = next(
+                (int(value) for value in groups[1:] if value is not None),
+                None,
+            )
+            break
+
+    if decimal_value is None:
+        return None
+
+    binary_value = format(decimal_value, "b")
+    if bit_width:
+        binary_value = binary_value.zfill(bit_width)
+    answer = f"{decimal_value} in binary is {binary_value}."
+    if mode == "exam":
+        if learning_state == "not_understanding":
+            return (
+                f"{answer} Key step: divide by 2 repeatedly and read the remainders from bottom to top."
+            )
+        if learning_state == "bored":
+            return f"{answer} Exam check: verify it by converting {binary_value} back to decimal."
+        if learning_state == "distracted":
+            return answer
+        return f"{answer} Working: {decimal_value} = {binary_value} in base 2."
+
+    if learning_state == "not_understanding":
+        bit_positions = list(range(len(binary_value) - 1, -1, -1))
+        place_values = [2 ** position for position in bit_positions]
+        selected_values = [
+            str(value)
+            for value, bit in zip(place_values, binary_value)
+            if bit == "1"
+        ]
+        return (
+            f"{answer} Read the bits from left to right: each place is worth "
+            f"{', '.join(map(str, place_values))}. Add the places with a 1: "
+            f"{' + '.join(selected_values)} = {decimal_value}."
+        )
+    if learning_state == "bored":
+        return (
+            f"{answer} Quick challenge: which powers of 2 add up to {decimal_value}?"
+        )
+    if learning_state == "distracted":
+        return answer
+    return (
+        f"{answer} This is because {decimal_value} = "
+        f"{' + '.join(str(2 ** power) for power, bit in zip(range(len(binary_value) - 1, -1, -1), binary_value) if bit == '1')}."
+    )
 
 
 def detectIntent(question: str) -> str:
@@ -1225,6 +1407,10 @@ def generateLocalFallbackAnswer(
     difficulty_level: int,
     refresh_points: list[str],
 ) -> str:
+    binary_answer = _build_decimal_to_binary_answer(question, mode, learning_state)
+    if binary_answer:
+        return binary_answer
+
     if not topic_doc:
         return _build_unknown_topic_answer()
 
@@ -1262,20 +1448,18 @@ def generateEARAPrompt(
     prerequisites_text = ", ".join(prerequisites) if prerequisites else "none"
     state_instructions = {
         "bored": (
-            "CRITICAL: The student is BORED/disengaged. Hook them immediately with a cool, energetic real-world application "
-            "(e.g., video games, smartphones, TikTok algorithms, or robotics). Keep paragraphs short, lively, and punchy. "
-            "End with a 1-sentence mini '⚡ Brain Check' challenge question to stimulate their mind."
+            "The student is bored. Answer the question first, then use one engaging real-world application specific to the concept "
+            "and end with one short, relevant challenge. Do not use generic examples."
         ),
         "not_understanding": (
-            "CRITICAL: The student is STRUGGLING to understand this concept. Do NOT give heavy technical text. Use a relatable "
-            "everyday Sri Lankan analogy (e.g., school library, kitchen recipe, bus ticket system). Break the core concept into "
-            "3 simple numbered steps (Step 1, Step 2, Step 3). Use warm, patient, encouraging words."
+            "The student is struggling. Answer first in simple, patient language, explain the idea in up to three small steps, "
+            "and use an analogy only if it genuinely fits this concept."
         ),
         "distracted": (
-            "The student is distracted. Keep the answer ultra-concise, direct, and under 3 bullet points to rebuild focus."
+            "The student is distracted. Answer directly and keep the explanation to at most three short points."
         ),
         "understanding": (
-            "The student understands well. Provide a clear, thorough O/L ICT syllabus explanation with examination keywords."
+            "The student understands well. Give a clear explanation, how the concept works, and relevant technical vocabulary."
         ),
     }.get(learningState, "")
 
@@ -1286,7 +1470,8 @@ def generateEARAPrompt(
         f"Topic: {topic}\n"
         f"Prerequisites: {prerequisites_text}\n"
         f"{state_instructions}\n"
-        "Adapt the answer to O/L ICT level. Use emotion-aware explanation style, mention prerequisite knowledge when helpful, compress answers in exam mode, and prefer revision support when the learner is struggling."
+        "Answer computer, software, and other technology questions even when they go beyond the O/L syllabus. "
+        "Use syllabus context only when it directly helps answer the question. Respect the selected learning or exam mode."
     )
 
 
@@ -1328,10 +1513,9 @@ def formatLearningAnswer(
     clean_ans = _clean_formatted_answer(answer)
 
     if is_llm:
-        parts = []
+        parts = [clean_ans]
         if prerequisites and not any(p.lower() in clean_ans.lower() for p in prerequisites[:2]):
-            parts.append(f"Before this, remember {', '.join(prerequisites[:2])}.")
-        parts.append(clean_ans)
+            parts.append(f"Remember: {', '.join(prerequisites[:2])}.")
         return "\n\n".join(parts).strip()
 
     intro = ""
@@ -1343,10 +1527,11 @@ def formatLearningAnswer(
             "understanding": "",
         }.get(learning_state, "")
 
-    parts = []
+    parts = [_ensure_sentence(clean_ans)]
+    if intro:
+        parts.append(intro.strip())
     if prerequisites:
-        parts.append(f"Before this, remember {', '.join(prerequisites[:2])}.")
-    parts.append(f"{intro}{_ensure_sentence(clean_ans)}".strip())
+        parts.append(f"Remember: {', '.join(prerequisites[:2])}.")
 
     if learning_state == "distracted":
         if key_points:
@@ -1370,7 +1555,8 @@ def formatLearningAnswer(
     if learning_state == "bored":
         if example:
             parts.append(f"⚡ Real-World Hook: {_ensure_sentence(example)}")
-        parts.append("⚡ Brain Check: Can you spot where this runs inside your smartphone or favourite app?")
+        concept = topic_name or "this idea"
+        parts.append(f"⚡ Brain Check: Can you give one real-world example of {concept}?")
     elif example:
         parts.append(f"Example: {_ensure_sentence(example)}")
 
@@ -1397,25 +1583,16 @@ def _build_llm_request(
     prerequisites: list[str],
     refresh_points: list[str],
 ) -> tuple[str, dict[str, str], dict[str, Any]]:
-    topic_name = topic_doc["topicName"] if topic_doc else "General O/L ICT"
-    if provider == "ollama":
-        user_prompt = (
-            f"Question: {question}\n"
-            f"Topic: {topic_name}\n"
-            f"Mode: {mode}\n"
-            "Instructions: Answer in 2-3 clear, simple sentences for a Sri Lankan O/L ICT student in plain text."
-        )
-    else:
-        user_prompt = _build_llm_user_prompt(
-            prompt=prompt,
-            question=question,
-            mode=mode,
-            intent=intent,
-            learning_state=learning_state,
-            topic_doc=topic_doc,
-            prerequisites=prerequisites,
-            refresh_points=refresh_points,
-        )
+    user_prompt = _build_llm_user_prompt(
+        prompt=prompt,
+        question=question,
+        mode=mode,
+        intent=intent,
+        learning_state=learning_state,
+        topic_doc=topic_doc,
+        prerequisites=prerequisites,
+        refresh_points=refresh_points,
+    )
 
     if provider == "openai":
         return (
@@ -1427,8 +1604,9 @@ def _build_llm_request(
             {
                 "model": model,
                 "instructions": (
-                    "You are SignLearn AI. Answer for a Sri Lankan O/L ICT student. "
-                    f"Stay on the topic {topic_name}, avoid unsupported facts, and keep the tone kind."
+                    "You are SignLearn AI. Answer the student's exact computer or technology question accurately. "
+                    "Use the lesson context only when relevant; do not redirect to a selected topic that does not answer the question. "
+                    "Technology questions may go beyond the O/L syllabus."
                 ),
                 "input": user_prompt,
                 "temperature": 0.4,
@@ -1450,8 +1628,8 @@ def _build_llm_request(
                     {
                         "role": "system",
                         "content": (
-                            "You are SignLearn AI. Answer for a Sri Lankan O/L ICT student, "
-                            "use clean text only, and stay grounded in the provided lesson context."
+                            "You are SignLearn AI. Answer the exact computer or technology question in clean text. "
+                            "Use lesson context only when relevant, and answer technology questions beyond the O/L syllabus."
                         ),
                     },
                     {"role": "user", "content": user_prompt},
@@ -1470,8 +1648,8 @@ def _build_llm_request(
                     "parts": [
                         {
                             "text": (
-                                "You are SignLearn AI. Answer for a Sri Lankan O/L ICT student. "
-                                "Use only the given context where possible, and keep the tone supportive."
+                                "You are SignLearn AI. Answer the exact computer or technology question accurately. "
+                                "Use the supplied lesson context only when relevant, including for technical questions beyond the O/L syllabus."
                             )
                         }
                     ]
@@ -1495,8 +1673,8 @@ def _build_llm_request(
                 "model": model,
                 "prompt": user_prompt,
                 "system": (
-                    "You are SignLearn AI. Answer for a Sri Lankan O/L ICT student. "
-                    "Use clean plain text only, keep explanations direct and concise, and stay grounded in the O/L ICT curriculum."
+                    "You are SignLearn AI. Answer the exact computer or technology question accurately. "
+                    "Use clean plain text, follow the requested mode and learning state, and use lesson context only when relevant."
                 ),
                 "stream": False,
                 "options": {
@@ -1528,21 +1706,35 @@ def _build_llm_user_prompt(
     reference_sentences = "; ".join(_clean_list_points(topic_doc.get("referenceSentences", [])[:3])) if topic_doc else ""
     prerequisites_text = ", ".join(prerequisites[:3]) if prerequisites else "none"
     refresh_text = "; ".join(_clean_list_points(refresh_points[:3])) if refresh_points else "none"
-    state_guidance = ""
-    if learning_state == "bored":
-        state_guidance = (
-            "- STUDENT IS BORED: Start with an exciting real-world hook (gaming, smartphone cameras, AI, social media). "
-            "Keep paragraphs short and punchy (under 3 paragraphs total). Conclude with a 1-sentence mini '⚡ Brain Check' challenge question.\n"
-        )
-    elif learning_state == "not_understanding":
-        state_guidance = (
-            "- STUDENT IS STRUGGLING TO UNDERSTAND: Avoid heavy jargon. Provide a simple everyday Sri Lankan analogy (library, kitchen recipe, bus ticket). "
-            "Break the concept down into 3 numbered steps ('1. ...', '2. ...', '3. ...'). Keep the tone patient and reassuring.\n"
-        )
-    elif learning_state == "distracted":
-        state_guidance = (
-            "- STUDENT IS DISTRACTED: Keep the explanation short, direct, and under 3 sharp bullet points.\n"
-        )
+    response_guidance = {
+        ("learning", "understanding"): (
+            "Explain the idea clearly, how it works, and one relevant technical detail or example."
+        ),
+        ("learning", "bored"): (
+            "Keep it lively: explain the answer, connect it to one specific real-world use, and finish with a short "
+            "challenge about the same concept."
+        ),
+        ("learning", "not_understanding"): (
+            "Use plain language, patiently break the answer into up to three small steps, and add one accurate analogy "
+            "only if it fits this exact concept."
+        ),
+        ("learning", "distracted"): (
+            "Give the direct answer and at most two short, high-value points; avoid extra context."
+        ),
+        ("exam", "understanding"): (
+            "Write a concise model answer with the most important technical terms and marks-scoring points."
+        ),
+        ("exam", "bored"): (
+            "Write a concise model answer with key terms, then add one short exam-style challenge about this exact concept."
+        ),
+        ("exam", "not_understanding"): (
+            "Write a simple, jargon-light model answer, then explain the key marking point in one short sentence."
+        ),
+        ("exam", "distracted"): (
+            "Give a one-sentence model answer followed by no more than two essential marking keywords."
+        ),
+    }
+    state_guidance = response_guidance.get((mode, learning_state), response_guidance[("learning", "understanding")])
 
     return (
         f"{prompt}\n"
@@ -1559,13 +1751,16 @@ def _build_llm_user_prompt(
         f"Exam questions: {exam_questions or 'none'}\n"
         f"Refresh points: {refresh_text}\n"
         "Instructions for answer format & presentation:\n"
-        f"{state_guidance}"
+        "- Start with a direct answer to the exact question. Do not put a greeting, prerequisite, analogy, or general introduction before it.\n"
+        "- Keep every example, analogy, and challenge about the exact concept asked; do not substitute a generic ICT example.\n"
+        f"- Selected mode: {mode}. Learning state: {learning_state}. {state_guidance}\n"
         "- Format clearly for Sri Lankan G.C.E. O/L ICT students with clean paragraphs and line breaks.\n"
         "- Structure multi-part questions or definitions with clear question tags, e.g. '(a) What is ...? (2 marks)' and '(b) Name the three levels... (3 marks)'.\n"
         "- Present lists and levels cleanly as numbered items (e.g. '1. External Level – View of the database seen by individual users.') or clean bullet points.\n"
         "- Always format practical examples on their own line starting with 'Example: ...' or 'For example: ...'.\n"
         "- Do NOT use markdown header hashes (#, ##, ###). Keep bold terms like **Term** clean and concise without excessive asterisks.\n"
-        "- If the student asks about a topic outside O/L ICT, politely explain that it is outside the ICT syllabus in 1 friendly sentence, then transition to provide the relevant O/L note for the current topic."
+        "- Answer computer, software, and other technology questions even when they are beyond the O/L syllabus. Do not reject them or redirect to an unrelated selected topic.\n"
+        "- Decline clearly non-technical requests (such as celebrity biographies) briefly and politely."
     )
 
 
@@ -2253,6 +2448,19 @@ async def _resolve_topic_context(current_topic: str | None, question: str) -> di
     topics = [doc async for doc in db[ICT_SYLLABUS_TOPICS_COLLECTION].find().sort("sortOrder", 1)]
     if not topics:
         return None
+
+    question_topic_key = _match_eara_topic_key("general_ict", question)
+    if question_topic_key:
+        question_topic = next(
+            (
+                topic for topic in topics
+                if _slugify(str(topic.get("topicId", ""))) == question_topic_key
+            ),
+            None,
+        )
+        if question_topic:
+            return question_topic
+
     current_match = _match_topic_result(topics, current_topic) if current_topic else None
     question_match = _match_topic_result(topics, question)
 
@@ -2493,13 +2701,15 @@ def _find_best_question_bank_match(question: str, topic_doc: dict[str, Any]) -> 
     best_match = None
     best_score = 0.0
     for item in question_bank:
-        score = _question_similarity(question, item["question"])
-        if _normalize_text(item["question"]) in _normalize_text(question):
-            score += 0.2
+        question_terms = _significant_terms(question)
+        candidate_terms = _significant_terms(item["question"])
+        if not question_terms or not candidate_terms:
+            continue
+        score = len(question_terms & candidate_terms) / len(question_terms | candidate_terms)
         if score > best_score:
             best_score = score
             best_match = item
-    return best_match if best_score >= 0.12 else question_bank[0]
+    return best_match if best_score >= 0.2 else None
 
 
 def _find_best_supporting_sentence(
@@ -2523,7 +2733,7 @@ def _find_best_supporting_sentence(
         if score > best_score:
             best_score = score
             best_sentence = candidate
-    return best_sentence if best_score >= 0.08 else (candidates[0] if candidates else None)
+    return best_sentence if best_score >= 0.08 else None
 
 
 def _build_real_world_example(topic_doc: dict[str, Any], supporting_sentence: str | None) -> str | None:
@@ -3146,10 +3356,10 @@ def _build_gentle_step_line(concise_points: list[str]) -> str:
 
 
 def _resolve_mode(selected_mode: str | None, detected_intent: str) -> str:
-    selected = str(selected_mode or "learning").lower()
-    if selected == "exam" or detected_intent == "exam":
-        return "exam"
-    return "learning"
+    selected = str(selected_mode or "").strip().lower()
+    if selected in {"learning", "exam"}:
+        return selected
+    return "exam" if detected_intent == "exam" else "learning"
 
 
 def _normalize_learning_state(state: str | None) -> str | None:
@@ -4462,15 +4672,24 @@ async def evaluate_past_paper_answer(student_id: str, question_id: str, student_
     matched_rubrics = []
     missing_rubrics = []
 
-    # Dynamic keyword matching against question keywords and rubric
+    # Stricter keyword matching against question keywords and rubric
     for rubric_item in question["markingRubric"]:
         # Extract meaningful words (> 3 chars) from rubric item
         rubric_words = [w.lower().strip("(),.:;\"'") for w in rubric_item.split() if len(w) > 3]
-        # Match if at least 2 key words or any specific keyword is in student answer
+        # Count how many rubric keywords the student answer contains
         match_count = sum(1 for rw in rubric_words if rw in answer_clean)
-        specific_match = any(kw in answer_clean for kw in question.get("keywords", []))
+        # Specific O/L syllabus keywords for this question
+        question_keywords = question.get("keywords", [])
+        specific_keyword_matches = sum(1 for kw in question_keywords if kw in answer_clean)
 
-        if match_count >= 1 or (specific_match and len(answer_clean) > 20):
+        # Require BOTH: at least 2 rubric-word matches AND sufficient answer length,
+        # OR at least 2 specific question keywords matched (meaning student knows the concept deeply)
+        is_matched = (
+            (match_count >= 2 and len(answer_clean) > 15)
+            or (specific_keyword_matches >= 2 and len(answer_clean) > 25)
+        )
+
+        if is_matched:
             matched_rubrics.append(rubric_item)
         else:
             missing_rubrics.append(rubric_item)
@@ -6256,27 +6475,6 @@ _EARA_DIAGRAMS: dict[str, dict] = {
     },
 }
 
-# Fallback diagram for topics not in the above map
-_EARA_FALLBACK_DIAGRAM = {
-    "title": "O/L ICT Concept",
-    "schematicType": "pipeline",
-    "nodes": [
-        {"id": "concept", "label": "Core ICT Concept", "type": "core", "description": "Central principle grounded in G.C.E. O/L ICT syllabus"},
-        {"id": "input", "label": "Input Data", "type": "sub", "description": "Raw inputs, parameters, or signals entered into the system"},
-        {"id": "process", "label": "Processing Logic", "type": "action", "description": "Arithmetic calculations, algorithms, or transformations executed"},
-        {"id": "output", "label": "Resulting Output", "type": "output", "description": "Meaningful information, visual display, or stored output generated"},
-    ],
-    "edges": [
-        {"from": "input", "to": "process", "label": "flows into"},
-        {"from": "process", "to": "output", "label": "produces"},
-        {"from": "concept", "to": "process", "label": "governs"},
-    ],
-    "summary": "All digital ICT systems operate on the Input → Process → Output (IPO) architecture.",
-    "keyFact": "Input + Processing = Output. Storage preserves data across sessions.",
-    "analogy": "Every computer process works like an automatic vending machine: insert money (Input), machine computes change and drops can (Process), drink dispensed (Output).",
-    "brainChallenge": "Can you identify what counts as the Input, Process, and Output for an ATM cash withdrawal?",
-}
-
 # State-specific engagement tips added to the EARA response
 _STATE_TIPS: dict[str, str] = {
     "bored": "⚡ Visual Aid: You seemed disengaged! Check the Brain Challenge below and see if you can answer it in chat.",
@@ -6289,7 +6487,7 @@ _STATE_TIPS: dict[str, str] = {
 _QUESTION_TOPIC_KEYWORDS: list[tuple[list[str], str]] = [
     (["system bus", "data bus", "address bus", "control bus", "cpu", "alu", "cu", "processor", "register", "ram", "rom", "hardware", "motherboard", "bios", "cache", "von neumann"], "computer_system"),
     (["binary", "bit", "byte", "ascii", "unicode", "kilobyte", "megabyte", "gigabyte", "data and information", "raw data", "data representation"], "data_information"),
-    (["operating system", "process management", "scheduling", "paging", "virtual memory", "gui", "cli", "kernel", "device driver"], "operating_systems"),
+    (["user mode", "kernel mode", "privilege mode", "supervisor mode", "system call", "operating system", "process management", "scheduling", "paging", "virtual memory", "gui", "cli", "kernel", "device driver"], "operating_systems"),
     (["word processing", "mail merge", "header", "footer", "page setup", "formatting", "watermark", "macro"], "word_processing"),
     (["spreadsheet", "excel", "formula", "cell", "vlookup", "sum", "average", "absolute reference", "$a$1", "chart"], "spreadsheets"),
     (["internet", "email", "smtp", "imap", "pop3", "url", "http", "https", "domain", "bcc", "cc", "www"], "internet_email"),
@@ -6306,40 +6504,119 @@ _QUESTION_TOPIC_KEYWORDS: list[tuple[list[str], str]] = [
 ]
 
 
-def _match_eara_topic_key(topic_id: str, question: str | None = None) -> str:
-    """Find the best matching topic key in _EARA_DIAGRAMS."""
+def _match_eara_topic_key(topic_id: str, question: str | None = None) -> str | None:
+    """Find a matching syllabus diagram without substituting an unrelated default."""
     raw_slug = _slugify(topic_id or "")
 
-    # Priority 1: Check question text for specific keywords sorted by longest phrase first
+    # Prefer explicit concepts in the question to a possibly stale selected topic.
     if question:
         q_lower = question.lower()
-        all_kw = []
+        all_keywords = []
         for keywords, target_topic in _QUESTION_TOPIC_KEYWORDS:
             for kw in keywords:
-                all_kw.append((len(kw), kw, target_topic))
-        all_kw.sort(key=lambda x: x[0], reverse=True)
-        for _, kw, target_topic in all_kw:
+                all_keywords.append((len(kw), kw, target_topic))
+        all_keywords.sort(key=lambda item: item[0], reverse=True)
+        for _, kw, target_topic in all_keywords:
             if re.search(r"\b" + re.escape(kw) + r"\b", q_lower):
                 if target_topic in _EARA_DIAGRAMS:
                     return target_topic
 
-    # Priority 2: Direct match on topic slug if not generic
+    # Then use the selected topic when it names one of the supported diagrams.
     if raw_slug in _EARA_DIAGRAMS and raw_slug not in ("topic", "general_ict", "general_o_l_ict"):
         return raw_slug
 
-    # Priority 3: Substring match on topic slug if not generic
+    topic_aliases = {
+        "computer_systems": "computer_system",
+        "data_and_information": "data_information",
+        "database_management_system": "dbms",
+        "database_management_systems": "dbms",
+        "ict_and_society": "social_ethics",
+        "flow_charts": "flowcharts",
+        "system_development_life_cycle": "system_development",
+    }
+    if topic_aliases.get(raw_slug) in _EARA_DIAGRAMS:
+        return topic_aliases[raw_slug]
+
+    # Match full topic names and aliases, but do not match on a single generic word.
     if raw_slug not in ("topic", "general_ict", "general_o_l_ict"):
         for k in _EARA_DIAGRAMS:
             if k in raw_slug or raw_slug in k:
                 return k
 
-    return "computer_system"
+        ignored_words = {"and", "of", "the"}
+        slug_parts = {
+            word[:-1] if word.endswith("s") and len(word) > 3 else word
+            for word in raw_slug.split("_")
+            if word not in ignored_words
+        }
+        if len(slug_parts) > 1:
+            topic_matches = [
+                k for k in _EARA_DIAGRAMS
+                if set(k.replace("_", " ").split()).issubset(slug_parts)
+            ]
+            if topic_matches:
+                return max(topic_matches, key=lambda key: len(key.split()))
+
+    return None
+
+
+def _build_question_specific_eara_diagram(
+    question: str | None,
+    answer: str | None,
+) -> dict[str, Any]:
+    """Build an honest answer breakdown when no curated topic diagram matches."""
+    question_text = _truncate_text(_normalize_whitespace(question or ""), 240)
+    answer_text = _clean_formatted_answer(answer or "")
+    answer_paragraphs = [part.strip() for part in answer_text.split("\n\n") if part.strip()]
+    direct_answer = _truncate_text(
+        answer_paragraphs[0] if answer_paragraphs else "No chatbot answer was supplied for this question.",
+        280,
+    )
+    supporting_detail = _truncate_text(
+        " ".join(answer_paragraphs[1:]) if len(answer_paragraphs) > 1
+        else "This is the direct answer to the question shown in the first node.",
+        280,
+    )
+    title = _truncate_text(question_text or "Question-specific answer", 64)
+    return {
+        "title": title,
+        "schematicType": "answer_breakdown",
+        "nodes": [
+            {
+                "id": "question",
+                "label": "Your question",
+                "type": "core",
+                "description": question_text or "The question linked to this answer.",
+            },
+            {
+                "id": "answer",
+                "label": "Direct answer",
+                "type": "output",
+                "description": direct_answer,
+            },
+            {
+                "id": "explanation",
+                "label": "Answer explanation",
+                "type": "step",
+                "description": supporting_detail,
+            },
+        ],
+        "edges": [
+            {"from": "question", "to": "answer", "label": "answered by"},
+            {"from": "answer", "to": "explanation", "label": "clarified with"},
+        ],
+        "summary": "This diagram follows the exact question and chatbot answer instead of showing a general ICT topic map.",
+        "keyFact": direct_answer,
+        "analogy": "",
+        "brainChallenge": "",
+    }
 
 
 async def get_eara_diagram(
     topic_id: str,
     learning_state: str = "bored",
     question: str | None = None,
+    answer: str | None = None,
 ) -> dict[str, Any]:
     """
     EARA — Explainability of Adaptive Response Architecture.
@@ -6349,11 +6626,27 @@ async def get_eara_diagram(
     and brain challenges.
     """
     matched_key = _match_eara_topic_key(topic_id, question)
-    diagram = _EARA_DIAGRAMS.get(matched_key, _EARA_FALLBACK_DIAGRAM).copy()
-    state_tip = _STATE_TIPS.get(learning_state, _STATE_TIPS["understanding"])
+    diagram = (
+        _EARA_DIAGRAMS[matched_key].copy()
+        if matched_key
+        else _build_question_specific_eara_diagram(question, answer)
+    )
+    if matched_key:
+        state_tip = _STATE_TIPS.get(learning_state, _STATE_TIPS["understanding"])
+        if learning_state == "bored" and question and answer:
+            diagram["brainChallenge"] = (
+                "Quick check: Explain the key idea in the answer above in your own words."
+            )
+    else:
+        state_tip = {
+            "bored": "⚡ Use the question-to-answer diagram below to revisit the key idea in a new way.",
+            "not_understanding": "🧩 Follow the question, direct answer, and supporting detail below one step at a time.",
+            "distracted": _STATE_TIPS["distracted"],
+            "understanding": _STATE_TIPS["understanding"],
+        }.get(learning_state, _STATE_TIPS["understanding"])
 
     return {
-        "topicId": matched_key,
+        "topicId": matched_key or "question_specific",
         "topicName": diagram.get("title", topic_id),
         "learningState": learning_state,
         "schematicType": diagram.get("schematicType", "pipeline"),
@@ -6367,4 +6660,3 @@ async def get_eara_diagram(
         "brainChallenge": diagram.get("brainChallenge", ""),
         "stateTip": state_tip,
     }
-

@@ -85,6 +85,12 @@ Adjusts tone and support based on student learning state:
 * **`bored`**: Injects engaging real-world scenarios and interactive challenges.
 * **`understanding`**: Elevates difficulty with extension questions and past-paper prompts.
 
+For bored and not-understanding replies, the direct answer appears first, followed by an answer-relevant visual explanation. EARA uses a matching syllabus diagram when available; otherwise, it builds a question-and-answer breakdown from the exact exchange rather than displaying an unrelated default diagram.
+
+Computer and technology questions are answered even when they extend beyond the O/L syllabus. A clearly unrelated request, such as celebrity trivia, is declined by the off-topic guard. The explicitly selected Learning or Exam mode takes precedence over detected question intent, and response guidance adapts to all four learning states in either mode.
+
+Decimal-to-binary questions are calculated directly before lesson retrieval or LLM generation, so unrelated data-definition text cannot replace the numeric answer. The calculation stays the same in every mode and learning state; only its explanation changes.
+
 ---
 
 ## 6. O/L Past Paper Auto-Grader & Marking Scheme Evaluator

@@ -277,6 +277,25 @@ const TopicSVGSchematic = ({ schematicType, topicName }) => {
         </svg>
       );
 
+    case 'answer_breakdown':
+      return (
+        <svg viewBox="0 0 640 160" className="w-full h-auto max-h-[160px]" role="img" aria-label="Question, direct answer, and explanation flow">
+          <rect x="20" y="35" width="175" height="90" rx="12" fill="#0f2942" stroke="#38bdf8" strokeWidth="1.5" />
+          <text x="107" y="72" fill="#bae6fd" fontSize="12" fontWeight="800" textAnchor="middle">YOUR QUESTION</text>
+          <text x="107" y="96" fill="#7dd3fc" fontSize="10" textAnchor="middle">The exact concept asked</text>
+          <line x1="195" y1="80" x2="230" y2="80" stroke="#38bdf8" strokeWidth="2.5" />
+          <polygon points="230,80 220,74 220,86" fill="#38bdf8" />
+          <rect x="230" y="30" width="180" height="100" rx="14" fill="#1e1b4b" stroke="#818cf8" strokeWidth="2" />
+          <text x="320" y="72" fill="#c7d2fe" fontSize="12" fontWeight="800" textAnchor="middle">DIRECT ANSWER</text>
+          <text x="320" y="96" fill="#a5b4fc" fontSize="10" textAnchor="middle">The answer shown above</text>
+          <line x1="410" y1="80" x2="445" y2="80" stroke="#34d399" strokeWidth="2.5" />
+          <polygon points="445,80 435,74 435,86" fill="#34d399" />
+          <rect x="445" y="35" width="175" height="90" rx="12" fill="#064e3b" stroke="#34d399" strokeWidth="1.5" />
+          <text x="532" y="72" fill="#a7f3d0" fontSize="12" fontWeight="800" textAnchor="middle">EXPLANATION</text>
+          <text x="532" y="96" fill="#6ee7b7" fontSize="10" textAnchor="middle">Supporting details below</text>
+        </svg>
+      );
+
     default:
       // Universal IPO Pipeline
       return (
@@ -312,7 +331,7 @@ const TopicSVGSchematic = ({ schematicType, topicName }) => {
  * EARAConceptMap
  * Highly responsive, explainable concept diagram and state-adaptive engagement helper.
  */
-const EARAConceptMap = ({ topicId, learningState = 'understanding', question = '' }) => {
+const EARAConceptMap = ({ topicId, learningState = 'understanding', question = '', answer = '' }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -324,7 +343,7 @@ const EARAConceptMap = ({ topicId, learningState = 'understanding', question = '
     setLoading(true);
     setError(false);
 
-    getEaraDiagram(topicId, learningState, question)
+    getEaraDiagram(topicId, learningState, question, answer)
       .then((res) => {
         if (!cancelled) {
           setData(res);
@@ -343,7 +362,7 @@ const EARAConceptMap = ({ topicId, learningState = 'understanding', question = '
     return () => {
       cancelled = true;
     };
-  }, [topicId, learningState, question]);
+  }, [topicId, learningState, question, answer]);
 
   const stateBadgeInfo = {
     bored: {
@@ -451,6 +470,13 @@ const EARAConceptMap = ({ topicId, learningState = 'understanding', question = '
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="rounded-xl border border-primary/20 bg-primary/[0.06] px-4 py-3">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1">
+                How this diagram relates to your question
+              </div>
+              <p className="text-xs text-white/85 leading-relaxed">{data.summary}</p>
             </div>
 
             {/* ── 2. Concept Nodes Grid (Comfortable 3-column / 2-column Spacing) ── */}

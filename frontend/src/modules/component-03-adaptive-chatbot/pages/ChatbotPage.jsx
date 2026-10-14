@@ -671,17 +671,29 @@ const ChatbotPage = () => {
                             ) : null}
                           </div>
 
-                          {/* ── EARA explainability button ── */}
-                          <div className="flex items-center gap-2 mb-2">
-                            <button
-                              type="button"
-                              onClick={() => setEaraMessage(item)}
-                              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border border-primary/25 bg-primary/10 text-primary hover:bg-primary/20 transition-all"
-                            >
-                              <BrainCircuit size={11} />
-                              EARA
-                            </button>
+                          <div className="mb-2">
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-primary/70 mb-1">
+                              Answer
+                            </div>
+                            <ChatbotFormattedAnswer content={item.answer} />
                           </div>
+
+                          {/* ── Inline EARA concept diagram for bored / not_understanding ── */}
+                          {(item.learningState === 'bored' || item.learningState === 'not_understanding') && (
+                            <div className="mt-4 pt-4 border-t border-white/[0.07]">
+                              <div className="flex items-center gap-2 mb-3">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-primary/70">
+                                  📊 Visual explanation — answer breakdown
+                                </span>
+                              </div>
+                              <EARAConceptMap
+                                topicId={item.topicId || item.currentTopic || item.topic || selectedTopicId}
+                                learningState={item.learningState}
+                                question={item.question}
+                                answer={item.answer}
+                              />
+                            </div>
+                          )}
 
                           {item.conceptReEntry && item.conceptRefreshPoints?.length > 0 ? (
                             <div className="chatbot-refresh-card">
@@ -697,16 +709,17 @@ const ChatbotPage = () => {
                             </div>
                           ) : null}
 
-                          <ChatbotFormattedAnswer content={item.answer} />
+                          <div className="flex items-center gap-2 mt-3">
+                            <button
+                              type="button"
+                              onClick={() => setEaraMessage(item)}
+                              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border border-primary/25 bg-primary/10 text-primary hover:bg-primary/20 transition-all"
+                            >
+                              <BrainCircuit size={11} />
+                              EARA
+                            </button>
+                          </div>
 
-                          {/* ── Inline EARA concept diagram for bored / not_understanding ── */}
-                          {(item.learningState === 'bored' || item.learningState === 'not_understanding') && (
-                            <EARAConceptMap
-                              topicId={item.topicId || item.currentTopic || item.topic || selectedTopicId}
-                              learningState={item.learningState}
-                              question={item.question}
-                            />
-                          )}
                           {item.sourceType === 'LOCAL_DATASET' ? (
                             <p className="chatbot-source-note">
                               Answered using local lesson dataset.

@@ -155,6 +155,7 @@ async def get_eara_diagram(
     topic_id: str,
     learning_state: str = "bored",
     question: str | None = None,
+    answer: str | None = None,
 ):
     """
     EARA — Explainability of Adaptive Response Architecture.
@@ -166,5 +167,5 @@ async def get_eara_diagram(
         topic_id=topic_id,
         learning_state=learning_state,
         question=question,
+        answer=answer,
     )
-
