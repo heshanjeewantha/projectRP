@@ -288,7 +288,7 @@ class PastPaperEvaluationRequest(BaseModel):
 
 class PastPaperEvaluationResponse(BaseModel):
     questionId: str
-    awardedMarks: int
+    awardedMarks: float
     maxMarks: int
     percentage: int
     gradeBadge: str              # 'Full Marks' | 'Good Attempt' | 'Needs Improvement'

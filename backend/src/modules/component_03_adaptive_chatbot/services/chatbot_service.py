@@ -4664,44 +4664,155 @@ async def list_past_paper_questions(topic_id: str | None = None) -> list[dict[st
     ]
 
 
+# Each rubric item's groups are evidence that must appear together in the student's
+# answer. Alternatives within a group allow equivalent wording; `minimum_groups`
+# is used for rubric items that award marks for any N answers from a listed set.
+_PAST_PAPER_RUBRIC_REQUIREMENTS: dict[str, list[dict[str, Any]]] = {
+    "pp_cs_1": [
+        {"groups": [("control unit", "cu"), ("fetch", "fetching"), ("decode", "decoding"), ("execute", "execution", "directs flow")]},
+        {"groups": [("arithmetic logic unit", "alu"), ("arithmetic", "mathematical", "math"), ("logical", "logic"), ("comparison", "decision", "decisions")]},
+        {"groups": [("register", "registers")]},
+        {"groups": [("cache", "cache memory")]},
+    ],
+    "pp_data_1": [
+        {"groups": [("00011001",)]},
+        {
+            "groups": [
+                ("nand",),
+                ("a 0 b 0 1", "00 1"),
+                ("a 0 b 1 1", "01 1"),
+                ("a 1 b 0 1", "10 1"),
+                ("a 1 b 1 0", "11 0"),
+                ("output 0 only when both inputs are 1", "output 0 when both inputs are 1"),
+                ("otherwise output 1", "output 1 otherwise"),
+            ],
+            "minimum_groups": 5,
+        },
+    ],
+    "pp_os_1": [
+        {
+            "groups": [
+                ("process management", "processor management"),
+                ("memory management", "memory allocation", "memory allocation and management"),
+                ("file system management", "file management", "file and directory system management"),
+                ("device management", "device management"),
+                ("security", "access control"),
+            ],
+            "minimum_groups": 3,
+            "marks_per_group": 1,
+        },
+        {"groups": [("device driver", "driver"), ("software", "program"), ("os", "operating system"), ("communicate", "interact", "translate", "translates"), ("peripheral", "peripherals", "hardware device", "hardware peripherals")]},
+    ],
+    "pp_norm_1": [
+        {"groups": [("1nf", "first normal form"), ("atomic", "indivisible"), ("no repeating groups", "eliminate repeating groups", "eliminates repeating groups")]},
+        {"groups": [("2nf", "second normal form"), ("1nf", "first normal form"), ("fully functionally dependent", "depend on the entire", "depend on the complete"), ("primary key", "composite key")]},
+        {"groups": [("partial functional dependency", "partial functional dependencies", "partial dependency"), ("composite primary key", "composite key")]},
+    ],
+    "pp_db_1": [
+        {"groups": [("primary key",), ("uniquely identifies", "unique identifier", "unique id"), ("record", "records", "tuple", "row"), ("cannot be null", "cannot contain null", "non null", "not null")]},
+        {"groups": [("foreign key",), ("references", "refers to", "points to"), ("primary key",), ("another table", "other table", "relationship", "relational link")]},
+        {"groups": [("entity integrity",), ("primary key",), ("unique", "uniquely", "unique identifier"), ("non null", "not null", "cannot be null", "cannot contain null")]},
+        {"groups": [("referential integrity",), ("foreign key",), ("consistent", "consistency", "nonexistent", "non existent", "does not exist", "no orphan", "orphaned")]},
+    ],
+    "pp_dbms_1": [
+        {"groups": [("ddl",), ("define", "defines", "modify", "modifies"), ("schema", "structure"), ("create", "alter", "drop")]},
+        {"groups": [("dml",), ("query", "manipulate", "manipulates", "edit"), ("record", "records", "data"), ("select", "insert", "update", "delete")]},
+        {"groups": [("select",), ("*", "all"), ("from student", "from the student"), ("where marks > 75", "where mark > 75")]},
+    ],
+    "pp_net_1": [
+        {"groups": [("switch",), ("local area network", "lan"), ("mac address", "mac"), ("connects devices", "connect devices", "forwards data", "within")]},
+        {"groups": [("router",), ("different networks", "separate networks"), ("ip address", "ip"), ("connects", "routes", "route")]},
+        {"groups": [("mac address", "mac"), ("permanent", "physical"), ("hardware address", "network interface", "nic")]},
+        {"groups": [("ip address", "ip"), ("logical",), ("network address", "host location"), ("identify", "assigned", "specifies")]},
+    ],
+    "pp_sheet_1": [
+        {"groups": [("relative reference", "relative cell reference", "relative cell references"), ("changes", "adjusts", "adjust"), ("copied", "copy"), ("position", "destination")]},
+        {"groups": [("absolute reference", "absolute cell reference", "absolute cell references"), ("$a$1", "a 1"), ("lock", "freeze", "fixed"), ("row",), ("column",), ("copied", "copy")]},
+        {"groups": [("average",), ("b2:b10", "b2 b10")]},
+    ],
+    "pp_prog_1": [
+        {"groups": [("sequence",), ("selection", "decision"), ("iteration", "repetition", "loop")]},
+        {"groups": [("variable",), ("memory location", "storage location", "holds values"), ("change", "vary", "alter")]},
+        {"groups": [("constant",), ("fixed", "remain", "cannot be altered")]},
+    ],
+    "pp_sec_1": [
+        {"groups": [("phishing",), ("social engineering", "fraudulent", "scam"), ("credentials", "password", "pin"), ("fake email", "fake website", "masquerading", "fraudulent email")]},
+        {
+            "groups": [
+                ("check url", "verify url", "verify website", "check domain", "url domain"),
+                ("two factor", "2fa", "two-factor"),
+                ("never click", "suspicious link", "avoid suspicious links"),
+            ],
+            "minimum_groups": 2,
+        },
+        {"groups": [("confidentiality",), ("integrity",), ("availability",)]},
+    ],
+}
+
+
+def _normalize_rubric_answer(value: str) -> str:
+    normalized = value.lower().replace("–", "-").replace("—", "-").replace("->", " ").replace("=", " ")
+    normalized = re.sub(r"[^a-z0-9$><=*]+", " ", normalized)
+    return re.sub(r"\s+", " ", normalized).strip()
+
+
+def _rubric_mark_value(rubric_item: str) -> float:
+    mark_match = re.search(r"\((\d+(?:\.\d+)?)\s*marks?\)", rubric_item, re.IGNORECASE)
+    return float(mark_match.group(1)) if mark_match else 1.0
+
+
+def _score_rubric_item(
+    answer_normalized: str,
+    rubric_item: str,
+    requirement: dict[str, Any] | None,
+) -> tuple[bool, float]:
+    if not requirement:
+        return False, 0.0
+
+    matched_groups = sum(
+        any(
+            (normalized_option := _normalize_rubric_answer(option))
+            and f" {normalized_option} " in f" {answer_normalized} "
+            for option in group
+        )
+        for group in requirement["groups"]
+    )
+    minimum_groups = requirement.get("minimum_groups", len(requirement["groups"]))
+    if matched_groups >= minimum_groups:
+        return True, _rubric_mark_value(rubric_item)
+
+    marks_per_group = requirement.get("marks_per_group", 0)
+    if marks_per_group:
+        return False, min(_rubric_mark_value(rubric_item), matched_groups * marks_per_group)
+    return False, 0.0
+
+
 async def evaluate_past_paper_answer(student_id: str, question_id: str, student_answer: str) -> dict[str, Any]:
     question = next((q for q in PAST_PAPER_QUESTION_BANK if q["id"] == question_id), None)
     if not question:
         question = PAST_PAPER_QUESTION_BANK[0]
 
-    answer_clean = student_answer.lower().strip()
+    answer_normalized = _normalize_rubric_answer(student_answer)
     matched_rubrics = []
     missing_rubrics = []
+    awarded_marks = 0.0
+    rubric_requirements = _PAST_PAPER_RUBRIC_REQUIREMENTS.get(question["id"], [])
 
-    # Stricter keyword matching against question keywords and rubric
-    for rubric_item in question["markingRubric"]:
-        # Extract meaningful words (> 3 chars) from rubric item
-        rubric_words = [w.lower().strip("(),.:;\"'") for w in rubric_item.split() if len(w) > 3]
-        # Count how many rubric keywords the student answer contains
-        match_count = sum(1 for rw in rubric_words if rw in answer_clean)
-        # Specific O/L syllabus keywords for this question
-        question_keywords = question.get("keywords", [])
-        specific_keyword_matches = sum(1 for kw in question_keywords if kw in answer_clean)
-
-        # Require BOTH: at least 2 rubric-word matches AND sufficient answer length,
-        # OR at least 2 specific question keywords matched (meaning student knows the concept deeply)
-        is_matched = (
-            (match_count >= 2 and len(answer_clean) > 15)
-            or (specific_keyword_matches >= 2 and len(answer_clean) > 25)
-        )
-
+    for index, rubric_item in enumerate(question["markingRubric"]):
+        requirement = rubric_requirements[index] if index < len(rubric_requirements) else None
+        is_matched, earned = _score_rubric_item(answer_normalized, rubric_item, requirement)
         if is_matched:
             matched_rubrics.append(rubric_item)
         else:
             missing_rubrics.append(rubric_item)
+        awarded_marks += earned
 
-    # Award marks proportionally
-    awarded_marks = max(0, min(question["maxMarks"], len(matched_rubrics)))
-    percentage = int((awarded_marks / question["maxMarks"]) * 100)
+    awarded_marks = min(float(question["maxMarks"]), awarded_marks)
+    percentage = round((awarded_marks / question["maxMarks"]) * 100)
 
-    if percentage >= 80:
+    if awarded_marks >= question["maxMarks"] and not missing_rubrics:
         grade_badge = "Full Marks (Distinction)"
-        feedback = "Excellent response! You covered all essential technical keywords and marking scheme criteria."
+        feedback = "Excellent response! You covered every marking criterion."
     elif percentage >= 50:
         grade_badge = "Good Attempt (Partial Marks)"
         feedback = "Solid answer! You captured core concepts, but missed key technical terms required by O/L examiners."

@@ -72,8 +72,10 @@ const GRADE_TOPIC_CURRICULUM = [
       {
         term: 'Term 1',
         topics: [
+          { id: 'computer_fundamentals', name: 'Computer Fundamentals', prerequisites: [] },
           { id: 'computer_system', name: 'Computer System', prerequisites: [] },
           { id: 'data_information', name: 'Data and Information', prerequisites: ['Computer System'] },
+          { id: 'logic_gates', name: 'Logic Gates', prerequisites: ['Data and Information'] },
           { id: 'operating_systems', name: 'Operating Systems', prerequisites: ['Computer System'] },
         ],
       },
@@ -82,6 +84,7 @@ const GRADE_TOPIC_CURRICULUM = [
         topics: [
           { id: 'word_processing', name: 'Word Processing', prerequisites: ['Operating Systems'] },
           { id: 'spreadsheets', name: 'Spreadsheets', prerequisites: ['Data and Information'] },
+          { id: 'multimedia', name: 'Multimedia', prerequisites: ['Computer System'] },
           { id: 'internet_email', name: 'Internet and Email', prerequisites: ['Computer System'] },
         ],
       },
@@ -115,7 +118,8 @@ const GRADE_TOPIC_CURRICULUM = [
       {
         term: 'Term 3',
         topics: [
-          { id: 'system_development', name: 'System Development', prerequisites: ['Databases', 'DBMS'] },
+          { id: 'system_development', name: 'System Development Life Cycle (SDLC)', prerequisites: ['Databases', 'DBMS'] },
+          { id: 'web_design', name: 'Web Design', prerequisites: ['Internet and Email'] },
           { id: 'social_ethics', name: 'Social & Ethical Issues', prerequisites: ['Internet and Email', 'Cyber Security'] },
         ],
       },
@@ -127,6 +131,16 @@ const GRADE_TOPIC_CURRICULUM = [
 const DEFAULT_TOPIC_OPTIONS = GRADE_TOPIC_CURRICULUM.flatMap((g) =>
   g.terms.flatMap((t) => t.topics)
 );
+
+const mergeTopicOptions = (topics = []) => {
+  const merged = new Map(DEFAULT_TOPIC_OPTIONS.map((topic) => [topic.id, topic]));
+  topics.forEach((topic) => {
+    if (topic?.id) {
+      merged.set(topic.id, { ...merged.get(topic.id), ...topic });
+    }
+  });
+  return Array.from(merged.values());
+};
 
 const deriveStateFromAttention = (attentionStatus) =>
   attentionStatus === 'not_attentive' ? 'distracted' : 'understanding';
@@ -193,7 +207,7 @@ const ChatbotPage = () => {
   const [topicOptions, setTopicOptions] = useState(() => {
     try {
       const cached = localStorage.getItem('chat_topics');
-      return cached ? JSON.parse(cached) : DEFAULT_TOPIC_OPTIONS;
+      return mergeTopicOptions(cached ? JSON.parse(cached) : []);
     } catch {
       return DEFAULT_TOPIC_OPTIONS;
     }
@@ -299,11 +313,11 @@ const ChatbotPage = () => {
       try {
         const response = await getChatbotTopics();
         if (!isMounted || !response?.length) return;
-        const normalizedTopics = response.map((topic) => ({
+        const normalizedTopics = mergeTopicOptions(response.map((topic) => ({
           id: topic.topicId,
           name: topic.topicName,
           prerequisites: topic.prerequisites || [],
-        }));
+        })));
         setTopicOptions(normalizedTopics);
         try {
           localStorage.setItem('chat_topics', JSON.stringify(normalizedTopics));

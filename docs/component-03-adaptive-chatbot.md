@@ -97,7 +97,7 @@ The question-specific EARA diagram is requested with `POST /api/chatbot/eara` so
 
 ## 6. O/L Past Paper Auto-Grader & Marking Scheme Evaluator
 * **Functionality**: Evaluates student open-ended answers against official Department of Examinations marking criteria.
-* **Marking Engine**: Awards marks (e.g. `3/4`), highlights matched vs missing keywords, and displays the official model answer.
+* **Marking Engine**: Checks each answer against its own rubric criteria, awards the marks specified for each criterion (including half marks), and displays matched and missing criteria with the model answer. Terms elsewhere in the question cannot satisfy an unrelated criterion; full marks require every criterion to be covered.
 * **Endpoint**: `GET /api/chatbot/past-paper/questions`, `POST /api/chatbot/past-paper/evaluate`
 * **UI**: [PastPaperGraderModal.jsx](file:///g:/projectRP/frontend/src/modules/component-03-adaptive-chatbot/components/Chatbot/PastPaperGraderModal.jsx)
 
