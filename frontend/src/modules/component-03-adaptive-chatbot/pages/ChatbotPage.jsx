@@ -191,19 +191,36 @@ const shouldSkipMicroChallenge = (text, latestBotMessage) => {
 const getSourceLabel = (sourceType) =>
   sourceType === 'LLM' ? 'Answer' : ' Answer';
 
+const readCachedChatHistory = (studentId) => {
+  try {
+    const cached = localStorage.getItem(`chat_history_${studentId}`);
+    const history = cached ? JSON.parse(cached) : [];
+    return Array.isArray(history) ? history : [];
+  } catch {
+    return [];
+  }
+};
+
+const mergeChatHistories = (serverHistory, currentHistory) => {
+  const merged = new Map();
+  const getMessageKey = (message) =>
+    message.id || `${message.createdAt || ''}:${message.question || ''}:${message.answer || ''}`;
+
+  serverHistory.forEach((message) => merged.set(getMessageKey(message), message));
+  currentHistory.forEach((message) => {
+    const key = getMessageKey(message);
+    if (!merged.has(key)) merged.set(key, message);
+  });
+  return Array.from(merged.values());
+};
+
 const ChatbotPage = () => {
   const { userId, attentionStatus } = useStore();
   const effectiveUserId = userId || 'student_demo_123';
   const location = useLocation();
 
-  const [chatHistory, setChatHistory] = useState(() => {
-    try {
-      const cached = localStorage.getItem(`chat_history_${effectiveUserId}`);
-      return cached ? JSON.parse(cached) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [chatHistory, setChatHistory] = useState(() => readCachedChatHistory(effectiveUserId));
+  const [chatHistoryOwnerId, setChatHistoryOwnerId] = useState(effectiveUserId);
   const [topicOptions, setTopicOptions] = useState(() => {
     try {
       const cached = localStorage.getItem('chat_topics');
@@ -262,49 +279,81 @@ const ChatbotPage = () => {
   const [topicTerm, setTopicTerm] = useState('Term 1');
 
   const chatScrollRef = useRef(null);
+  const historyRevisionRef = useRef(0);
+  const historyClearRevisionRef = useRef(0);
   const learningState = manualLearningState || deriveStateFromAttention(attentionStatus);
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadHistoryAndAnalytics = async () => {
-      try {
-        const [historyResponse, recsResponse, growthResponse] = await Promise.allSettled([
-          getChatbotHistory(effectiveUserId),
-          getAttentionRecommendations(effectiveUserId),
-          getKnowledgeGrowth(effectiveUserId),
-        ]);
+    if (chatHistoryOwnerId !== effectiveUserId) {
+      historyRevisionRef.current += 1;
+      setChatHistory(readCachedChatHistory(effectiveUserId));
+      setChatHistoryOwnerId(effectiveUserId);
+      return () => {
+        isMounted = false;
+      };
+    }
+    const historyRevision = historyRevisionRef.current;
+    const historyClearRevision = historyClearRevisionRef.current;
 
-        if (!isMounted) return;
+    getChatbotHistory(effectiveUserId)
+      .then((history) => {
+        if (
+          !isMounted ||
+          historyClearRevision !== historyClearRevisionRef.current
+        ) {
+          return;
+        }
+        const serverHistory = Array.isArray(history) ? history : [];
+        if (historyRevision === historyRevisionRef.current) {
+          setChatHistory(serverHistory);
+        } else {
+          setChatHistory((current) => mergeChatHistories(serverHistory, current));
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load chatbot history', error);
+      });
 
-        if (historyResponse.status === 'fulfilled' && historyResponse.value) {
-          setChatHistory(historyResponse.value || []);
-          try {
-            localStorage.setItem(`chat_history_${effectiveUserId}`, JSON.stringify(historyResponse.value));
-          } catch {}
-        }
-        if (recsResponse.status === 'fulfilled' && recsResponse.value?.recommendations) {
-          setRecommendations(recsResponse.value.recommendations);
-          try {
-            localStorage.setItem(`chat_recs_${effectiveUserId}`, JSON.stringify(recsResponse.value.recommendations));
-          } catch {}
-        }
-        if (growthResponse.status === 'fulfilled' && growthResponse.value) {
-          setGrowthData(growthResponse.value);
-          try {
-            localStorage.setItem(`chat_growth_${effectiveUserId}`, JSON.stringify(growthResponse.value));
-          } catch {}
-        }
-      } catch (error) {
-        console.error('Failed to load chatbot analytics & history', error);
+    const loadAnalytics = async () => {
+      const [recsResponse, growthResponse] = await Promise.allSettled([
+        getAttentionRecommendations(effectiveUserId),
+        getKnowledgeGrowth(effectiveUserId),
+      ]);
+
+      if (!isMounted) return;
+
+      if (recsResponse.status === 'fulfilled' && recsResponse.value?.recommendations) {
+        setRecommendations(recsResponse.value.recommendations);
+        try {
+          localStorage.setItem(`chat_recs_${effectiveUserId}`, JSON.stringify(recsResponse.value.recommendations));
+        } catch {}
+      }
+      if (growthResponse.status === 'fulfilled' && growthResponse.value) {
+        setGrowthData(growthResponse.value);
+        try {
+          localStorage.setItem(`chat_growth_${effectiveUserId}`, JSON.stringify(growthResponse.value));
+        } catch {}
       }
     };
 
-    loadHistoryAndAnalytics();
+    loadAnalytics().catch((error) => {
+      console.error('Failed to load chatbot analytics', error);
+    });
     return () => {
       isMounted = false;
     };
-  }, [effectiveUserId]);
+  }, [chatHistoryOwnerId, effectiveUserId]);
+
+  useEffect(() => {
+    if (chatHistoryOwnerId !== effectiveUserId) return;
+    try {
+      localStorage.setItem(`chat_history_${effectiveUserId}`, JSON.stringify(chatHistory));
+    } catch (error) {
+      console.error('Failed to cache chatbot history', error);
+    }
+  }, [chatHistory, chatHistoryOwnerId, effectiveUserId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -385,6 +434,7 @@ const ChatbotPage = () => {
   };
 
   const sendChatRequest = async (payload) => {
+    historyRevisionRef.current += 1;
     setIsSending(true);
     try {
       const response = await askChatbot(payload);
@@ -501,6 +551,8 @@ const ChatbotPage = () => {
 
   const handleClearHistory = async () => {
     if (isClearing) return;
+    historyRevisionRef.current += 1;
+    historyClearRevisionRef.current += 1;
     setIsClearing(true);
     try {
       await clearChatbotHistory(effectiveUserId);
