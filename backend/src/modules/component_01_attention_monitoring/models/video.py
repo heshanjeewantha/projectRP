@@ -47,7 +47,6 @@ class VideoOut(BaseModel):
     storage_path: str
     duration_seconds: Optional[float] = None
     timeline_segments: List[TopicTimelineSegment] = Field(default_factory=list)
-    status: VideoStatus
-    uploaded_at: datetime
-    uploaded_by: str
-
+    status: VideoStatus = VideoStatus.ready
+    uploaded_at: datetime = Field(default_factory=datetime.utcnow)
+    uploaded_by: str = "admin"

@@ -116,6 +116,14 @@ Create `frontend/.env`:
 ```env
 VITE_API_ROOT=/api
 ```
+This default is for a frontend and backend running on the same computer, using the Vite proxy.
+
+#### Shared use from multiple computers
+For team use, run one backend that every member can reach and configure each frontend's `VITE_API_ROOT` to that backend, for example:
+```env
+VITE_API_ROOT=http://<shared-backend-host>:8000/api
+```
+The shared backend must use the same MongoDB Atlas URI and `DATABASE_NAME` for every upload. Do not run a separate backend with a local MongoDB database for each member; those databases are independent and their videos cannot appear in one another's lists. Restart/rebuild the frontend after changing this setting. Previously uploaded videos stored in separate local databases must be uploaded or migrated to the shared backend/database.
 
 #### C. Start Vite Development Server
 ```powershell

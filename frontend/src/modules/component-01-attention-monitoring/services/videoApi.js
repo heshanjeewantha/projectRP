@@ -1,7 +1,12 @@
 import axios from 'axios';
 
-const API_HOST = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
-const API_BASE = `http://${API_HOST}:8000/api`;
+const API_BASE = (import.meta.env.VITE_API_ROOT || '/api').replace(/\/+$/, '');
+const API_ORIGIN = /^https?:\/\//i.test(API_BASE) ? new URL(API_BASE).origin : '';
+
+export const getVideoUrl = (video) => {
+  const filename = video.filename || (video.storage_path ? video.storage_path.replace(/\\/g, '/').split('/').pop() : '');
+  return `${API_ORIGIN}/uploads/${encodeURIComponent(filename)}`;
+};
 
 export const uploadVideo = async (file, title, syllabusMeta = {}) => {
   const formData = new FormData();

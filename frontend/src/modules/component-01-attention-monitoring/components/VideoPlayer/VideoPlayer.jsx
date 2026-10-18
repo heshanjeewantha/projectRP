@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Play, Pause, Volume2, Maximize, MonitorPlay, BookOpen } from 'lucide-react';
+import { getVideoUrl } from '../../services/videoApi';
 
 const VideoPlayer = ({ video, transcript, onTimeUpdate, videoRef }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -55,9 +56,7 @@ const VideoPlayer = ({ video, transcript, onTimeUpdate, videoRef }) => {
     );
   }
 
-  const apiHost = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
-  const cleanFilename = video.filename || (video.storage_path ? video.storage_path.replace(/\\/g, '/').split('/').pop() : '');
-  const videoUrl = `http://${apiHost}:8000/uploads/${cleanFilename}`;
+  const videoUrl = getVideoUrl(video);
 
   const timelineSegments = video?.timeline_segments || [];
   const activeSegment = timelineSegments.find(

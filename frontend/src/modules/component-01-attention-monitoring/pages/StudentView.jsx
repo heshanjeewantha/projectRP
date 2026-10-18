@@ -192,6 +192,33 @@ const StudentView = () => {
     };
   }, [curriculumGrade, curriculumUnit, setCurrentVideo]);
 
+  useEffect(() => {
+    let isMounted = true;
+    const unitParam = curriculumUnit === 'ALL' ? null : Number(curriculumUnit);
+
+    const refreshVideos = async () => {
+      try {
+        const data = await getVideos(curriculumGrade, unitParam);
+        if (isMounted) setVideos(data);
+      } catch (error) {
+        console.error('Failed to refresh videos', error);
+      }
+    };
+
+    const handleWindowFocus = () => {
+      refreshVideos();
+    };
+
+    const intervalId = window.setInterval(refreshVideos, 15000);
+    window.addEventListener('focus', handleWindowFocus);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, [curriculumGrade, curriculumUnit]);
+
 
   useEffect(() => {
     let interval;
