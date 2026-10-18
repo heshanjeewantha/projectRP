@@ -1070,11 +1070,21 @@ const create3DHand = (side = 'right', viewMode = 'realistic', colorAssisted = tr
     fingers: { thumb, index, middle, ring, pinky },
     setPose: (poseData) => {
       if (!poseData) return;
-      thumb.setTargetPose(poseData.thumb);
-      index.setTargetPose(poseData.index);
-      middle.setTargetPose(poseData.middle);
-      ring.setTargetPose(poseData.ring);
-      pinky.setTargetPose(poseData.pinky);
+      const getSidePose = (fingerPose) => (
+        isLeft
+          ? {
+              ...fingerPose,
+              spread: -(fingerPose.spread ?? 0),
+              oppose: -(fingerPose.oppose ?? 0),
+            }
+          : fingerPose
+      );
+
+      thumb.setTargetPose(getSidePose(poseData.thumb));
+      index.setTargetPose(getSidePose(poseData.index));
+      middle.setTargetPose(getSidePose(poseData.middle));
+      ring.setTargetPose(getSidePose(poseData.ring));
+      pinky.setTargetPose(getSidePose(poseData.pinky));
 
       if (poseData.wrist) {
         targetWrist.x = poseData.wrist.x;
@@ -1348,14 +1358,14 @@ const ThreeHandAvatarViewer = forwardRef((
 
     // ── Dominant Right Hand Rig (100% HERO CENTERED AT 0, 0, 0) ──
     const rightHand = create3DHand('right', viewMode, colorAssisted);
-    rightHand.handRoot.position.set(useBothHands ? 0.52 : 0.0, 0.0, 0.0);
+    rightHand.handRoot.position.set(useBothHands ? 0.78 : 0.0, 0.0, 0.0);
     rightHand.handRoot.scale.set(1.0, 1.0, 1.0);
     scene.add(rightHand.handRoot);
     rightHandRef.current = rightHand;
 
     // ── Left Hand Rig (Support / Dual Mode) ──
     const leftHand = create3DHand('left', viewMode, colorAssisted);
-    leftHand.handRoot.position.set(-0.52, 0.0, 0.0);
+    leftHand.handRoot.position.set(-0.78, 0.0, 0.0);
     leftHand.handRoot.scale.set(1.0, 1.0, 1.0);
     leftHand.handRoot.visible = useBothHands;
     scene.add(leftHand.handRoot);
@@ -1442,7 +1452,7 @@ const ThreeHandAvatarViewer = forwardRef((
   // Handle Dual Hands mode & positioning
   useEffect(() => {
     if (rightHandRef.current) {
-      rightHandRef.current.handRoot.position.set(useBothHands ? 0.52 : 0.0, 0.0, 0.0);
+      rightHandRef.current.handRoot.position.set(useBothHands ? 0.78 : 0.0, 0.0, 0.0);
     }
     if (leftHandRef.current) {
       leftHandRef.current.handRoot.visible = useBothHands;
@@ -1454,13 +1464,9 @@ const ThreeHandAvatarViewer = forwardRef((
     const char = (activeLetter || 'A').toUpperCase();
     const pose = ASL_3D_POSE_MAP[char] || ASL_3D_POSE_MAP['A'];
 
-    if (rightHandRef.current) {
-      rightHandRef.current.setPose(pose);
-    }
-    if (leftHandRef.current && useBothHands) {
-      leftHandRef.current.setPose(pose);
-    }
-  }, [activeLetter, useBothHands]);
+    rightHandRef.current?.setPose(pose);
+    leftHandRef.current?.setPose(pose);
+  }, [activeLetter]);
 
   // Finger flex telemetry data
   const fingerTelemetry = [

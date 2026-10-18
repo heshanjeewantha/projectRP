@@ -262,14 +262,19 @@ const RealisticAvatarViewer = ({
       const leftPose = useBothHands
         ? {
             ...currentGesture.rightHandPose,
-            position: { x: 335, y: 260, z: 0 },
+            position: { x: 270, y: 260, z: 0 },
             wristAngle: -currentGesture.rightHandPose.wristAngle,
           }
         : currentGesture.leftHandPose;
 
       return {
         activeLabel: currentGesture.glossWord || currentWord || 'READY',
-        hands: createAvatarHands(leftPose, currentGesture.rightHandPose),
+        hands: createAvatarHands(
+          leftPose,
+          useBothHands
+            ? { ...currentGesture.rightHandPose, position: { x: 630, y: 260, z: 0 } }
+            : currentGesture.rightHandPose
+        ),
       };
     }
 
@@ -277,14 +282,19 @@ const RealisticAvatarViewer = ({
     const leftPose = useBothHands
       ? {
           ...poseData.rightHandPose,
-          position: { x: 335, y: 260, z: 0 },
+          position: { x: 270, y: 260, z: 0 },
           wristAngle: -poseData.rightHandPose.wristAngle,
         }
       : poseData.leftHandPose;
 
     return {
       activeLabel: poseData.glossWord || currentWord || 'READY',
-      hands: createAvatarHands(leftPose, poseData.rightHandPose),
+      hands: createAvatarHands(
+        leftPose,
+        useBothHands
+          ? { ...poseData.rightHandPose, position: { x: 630, y: 260, z: 0 } }
+          : poseData.rightHandPose
+      ),
     };
   }, [currentGesture, currentWord, useBothHands]);
 

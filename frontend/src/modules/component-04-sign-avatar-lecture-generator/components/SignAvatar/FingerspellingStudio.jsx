@@ -946,10 +946,10 @@ const FingerspellingStudio = () => {
   return (
     <div className="space-y-6">
       {/* ── Studio Banner Header ── */}
-      <div className="fs-card border border-primary/30 p-6 sm:p-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-6 border fs-card border-primary/30 sm:p-8">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/20 text-primary border border-primary/40 shadow-lg shadow-primary/20">
+            <div className="flex items-center justify-center border shadow-lg h-14 w-14 shrink-0 rounded-2xl bg-primary/20 text-primary border-primary/40 shadow-primary/20">
               <Hand size={30} />
             </div>
             <div>
@@ -957,31 +957,31 @@ const FingerspellingStudio = () => {
                 <span className="rounded-full bg-primary/20 px-3 py-0.5 text-[11px] font-black uppercase tracking-wider text-primary border border-primary/30">
                   ASL Fingerspelling Studio
                 </span>
-                <span className="text-xs text-text-muted font-medium">
+                <span className="text-xs font-medium text-text-muted">
                   26 English Manual Alphabet &amp; 1080p HD Video Clips
                 </span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
+              <h2 className="text-2xl font-black tracking-tight sm:text-3xl">
                 Finger Spelling Words &amp; 3D Avatar Footage
               </h2>
             </div>
           </div>
 
           {/* Quick Controls & Stats */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="rounded-xl border border-border bg-black/5 dark:bg-white/5 px-4 py-2 text-center">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="px-4 py-2 text-center border rounded-xl border-border bg-black/5 dark:bg-white/5">
               <div className="text-[10px] uppercase font-bold text-text-muted">Active Sign</div>
               <div className="text-sm font-black text-primary">
                 {selectedManualLetter ? `Letter ${selectedManualLetter}` : selectedWord}
               </div>
             </div>
-            <div className="rounded-xl border border-border bg-black/5 dark:bg-white/5 px-4 py-2 text-center">
+            <div className="px-4 py-2 text-center border rounded-xl border-border bg-black/5 dark:bg-white/5">
               <div className="text-[10px] uppercase font-bold text-text-muted">Letter Index</div>
-              <div className="text-sm font-black font-mono">
+              <div className="font-mono text-sm font-black">
                 {activeLetterChar} ({activeLetterIndex + 1}/{currentLetters.length})
               </div>
             </div>
-            <div className="rounded-xl border border-border bg-black/5 dark:bg-white/5 px-4 py-2 text-center">
+            <div className="px-4 py-2 text-center border rounded-xl border-border bg-black/5 dark:bg-white/5">
               <div className="text-[10px] uppercase font-bold text-text-muted">Video Quality</div>
               <div className="text-sm font-black text-emerald-500">1080p 60FPS</div>
             </div>
@@ -990,15 +990,15 @@ const FingerspellingStudio = () => {
       </div>
 
       {/* ── Main Studio Grid (Left Controls & Right 3D Avatar) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid items-start grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left Column: Notes Input, Keyword Detector & 26-Letter Grid (7 cols) */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="space-y-6 lg:col-span-7">
           {/* Note Input Card */}
-          <div className="fs-card space-y-5">
+          <div className="space-y-5 fs-card">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <FileText size={18} className="text-primary" />
-                <h4 className="text-sm font-bold uppercase tracking-wider">
+                <h4 className="text-sm font-bold tracking-wider uppercase">
                   Lesson Notes &amp; Text Input
                 </h4>
               </div>
@@ -1016,9 +1016,10 @@ const FingerspellingStudio = () => {
             {/* Presets Row */}
             <div className="space-y-2.5">
               <div className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
-                Sample Lesson Presets:
+                Sample Lesson Presets: 
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
+              
+              <div className="flex flex-wrap items-center gap-2">
                 {SAMPLE_ICT_PRESETS.map((preset, idx) => (
                   <button
                     key={idx}
@@ -1034,9 +1035,9 @@ const FingerspellingStudio = () => {
                 ))}
               </div>
             </div>
-
+ <br></br>
             {/* Manual Filter Action Row */}
-            <div className="pt-2 flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between gap-3 pt-2">
               <span className="text-xs text-text-muted">
                 Detects acronyms like RAM, CPU, SQL, BIOS, HTTP...
               </span>
@@ -1050,24 +1051,26 @@ const FingerspellingStudio = () => {
                 <span>{isFiltering ? 'Filtering Notes...' : '🔍 Filter & Detect ICT Keywords'}</span>
               </button>
             </div>
-
+<br></br>
             {/* ── SECTION 1: Grade 10 & 11 O/L ICT Keywords ── */}
-            <div className="pt-4 border-t border-border space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="pt-4 space-y-3 border-t border-border">
+              <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-500 font-bold">
+                  <span className="flex items-center justify-center w-6 h-6 font-bold rounded-lg bg-emerald-500/20 text-emerald-500">
                     <GraduationCap size={15} />
                   </span>
                   <div>
-                    <h5 className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    <h5 className="text-xs font-black tracking-wider uppercase text-emerald-600 dark:text-emerald-400">
                       O/L ICT Syllabus Keywords ({ictKeywords.length})
                     </h5>
                     <p className="text-[11px] text-text-muted">
                       Categorized according to Grade 10 &amp; 11 National ICT Syllabus
+                    
                     </p>
+                    <br></br>
                   </div>
                 </div>
-
+  
                 {/* Syllabus Grade Filter Pills */}
                 <div className="flex items-center gap-1.5 bg-black/5 dark:bg-white/5 p-1 rounded-xl border border-border">
                   <button
@@ -1107,7 +1110,7 @@ const FingerspellingStudio = () => {
               </div>
 
               {filteredIctKeywords.length === 0 ? (
-                <div className="p-4 rounded-xl border border-dashed border-border text-center text-xs text-text-muted">
+                <div className="p-4 text-xs text-center border border-dashed rounded-xl border-border text-text-muted">
                   No keywords found for {syllabusFilter}. Try selecting &quot;All ICT&quot; or filter new notes above.
                 </div>
               ) : (
@@ -1128,9 +1131,9 @@ const FingerspellingStudio = () => {
                           <button
                             type="button"
                             onClick={() => handleSelectKeyword(kw.word)}
-                            className="flex-1 text-left cursor-pointer space-y-1"
+                            className="flex-1 space-y-1 text-left cursor-pointer"
                           >
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex flex-wrap items-center gap-2">
                               <span className={`text-sm font-black tracking-wide ${isSelected ? 'text-emerald-600 dark:text-emerald-400' : ''}`}>
                                 {kw.word}
                               </span>
@@ -1154,7 +1157,7 @@ const FingerspellingStudio = () => {
                             type="button"
                             onClick={() => handleDownloadKeywordVideo(kw.word)}
                             disabled={isRecording}
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-black/5 dark:bg-white/10 border border-border text-text-muted hover:text-primary hover:border-primary transition-all cursor-pointer"
+                            className="flex items-center justify-center w-8 h-8 transition-all border cursor-pointer shrink-0 rounded-xl bg-black/5 dark:bg-white/10 border-border text-text-muted hover:text-primary hover:border-primary"
                             title={`Download "${kw.word}" 1080p 3D sign video clip`}
                           >
                             <Download size={13} />
@@ -1173,10 +1176,11 @@ const FingerspellingStudio = () => {
                 </div>
               )}
             </div>
-
+<br></br>
             {/* ── SECTION 2: Other General Lesson Words ── */}
-            <div className="pt-4 border-t border-border space-y-3">
+            <div className="pt-4 space-y-3 border-t border-border">
               <div className="flex items-center justify-between">
+                
                 <div>
                   <h5 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
                     <FileText size={14} className="text-text-muted" /> Other Lesson Words ({otherWords.length})
@@ -1184,16 +1188,17 @@ const FingerspellingStudio = () => {
                   <p className="text-[11px] text-text-muted">
                     General English vocabulary from notes. Click any word to fingerspell letter-by-letter.
                   </p>
+                  <br></br>
                 </div>
                 <span className="text-[11px] font-mono text-text-muted">{otherWords.length} words</span>
               </div>
 
               {otherWords.length === 0 ? (
-                <div className="p-3 rounded-xl border border-dashed border-border text-center text-xs text-text-muted">
+                <div className="p-3 text-xs text-center border border-dashed rounded-xl border-border text-text-muted">
                   No additional words detected in current text.
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                   {otherWords.map((ow) => {
                     const isSelected = selectedWord === ow.word && !selectedManualLetter;
                     return (
@@ -1210,14 +1215,14 @@ const FingerspellingStudio = () => {
                           onClick={() => handleSelectKeyword(ow.word)}
                           className="flex items-center gap-1.5 text-left cursor-pointer truncate flex-1"
                         >
-                          <span className="truncate font-semibold">{ow.word}</span>
+                          <span className="font-semibold truncate">{ow.word}</span>
                           <span className="text-[9px] font-mono opacity-70">({ow.letterCount})</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDownloadKeywordVideo(ow.word)}
                           disabled={isRecording}
-                          className="text-text-muted hover:text-primary transition-colors p-1"
+                          className="p-1 transition-colors text-text-muted hover:text-primary"
                           title={`Download "${ow.word}" sign video`}
                         >
                           <Download size={11} />
@@ -1231,11 +1236,11 @@ const FingerspellingStudio = () => {
           </div>
 
           {/* 26-Letter ASL Manual Alphabet Grid */}
-          <div className="fs-card space-y-4">
+          <div className="space-y-4 fs-card">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Layers size={18} className="text-emerald-500" />
-                <h4 className="text-sm font-bold uppercase tracking-wider">
+                <h4 className="text-sm font-bold tracking-wider uppercase">
                   26 English Letters Manual Alphabet (A–Z)
                 </h4>
               </div>
@@ -1269,10 +1274,10 @@ const FingerspellingStudio = () => {
             </div>
 
             {/* Active Letter Anatomical Guide Card */}
-            <div className="fs-guide-box space-y-4">
+            <div className="fs-guide-box">
               <div className="flex items-start justify-between gap-4">
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2 fs-guide-title text-xs uppercase flex-wrap">
+                <div className="flex-1 fs-guide-copy">
+                  <div className="flex flex-wrap items-center gap-2 text-xs uppercase fs-guide-title">
                     <Sparkles size={15} className="text-emerald-500" />
                     <span className="font-bold">Anatomical Sign Guide: {activeLetterMeta.name}</span>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">
@@ -1285,11 +1290,11 @@ const FingerspellingStudio = () => {
                     </span>
                   </div>
 
-                  <p className="fs-guide-text text-sm leading-relaxed">
+                  <p className="text-sm leading-relaxed fs-guide-text">
                     {activeLetterMeta.description}
                   </p>
 
-                  <div className="text-xs font-semibold pt-1">
+                  <div className="pt-1 text-xs font-semibold">
                     Handshape Posture:{' '}
                     <span className="font-bold underline decoration-emerald-500/40">
                       {activeLetterMeta.handShape}
@@ -1298,19 +1303,19 @@ const FingerspellingStudio = () => {
                 </div>
 
                 {/* Big Letter Badge */}
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-slate-950 font-black font-mono text-3xl shadow-lg shadow-emerald-500/30">
+                <div className="flex items-center justify-center font-mono text-3xl font-black shadow-lg h-14 w-14 shrink-0 rounded-2xl bg-emerald-500 text-slate-950 shadow-emerald-500/30">
                   {activeLetterChar}
                 </div>
               </div>
 
               {/* Step-by-Step Instructions */}
-              <div className="p-3 rounded-xl bg-black/5 dark:bg-black/30 border border-emerald-500/20 space-y-2">
+              <div className="p-3 border fs-guide-instructions rounded-xl bg-black/5 dark:bg-black/30 border-emerald-500/20">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-500">
                   📋 How to Form Handshape (Step-by-Step):
                 </div>
-                <div className="grid grid-cols-1 gap-1.5 text-xs text-slate-700 dark:text-slate-300">
+                <div className="fs-guide-steps grid grid-cols-1 gap-1.5 text-xs text-slate-700 dark:text-slate-300">
                   {activeLearnerGuide.steps.map((st, i) => (
-                    <div key={i} className="flex items-start gap-2">
+                    <div key={i} className="flex items-start gap-2 fs-guide-step">
                       <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-500 text-[10px] font-bold mt-0.5">
                         {i + 1}
                       </span>
@@ -1321,7 +1326,7 @@ const FingerspellingStudio = () => {
               </div>
 
               {/* Learner Tip & Finger State Badges */}
-              <div className="space-y-2">
+              <div className="fs-guide-tips">
                 <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-300 leading-snug flex items-start gap-2">
                   <span className="text-sm shrink-0">💡</span>
                   <div>
@@ -1358,7 +1363,7 @@ const FingerspellingStudio = () => {
 
               {/* ICT Acronym Examples */}
               {activeLetterMeta.ictExamples && activeLetterMeta.ictExamples.length > 0 && (
-                <div className="fs-guide-examples pt-3 border-t border-emerald-500/20 flex items-center gap-2 flex-wrap text-xs">
+                <div className="flex flex-wrap items-center gap-2 pt-3 text-xs border-t fs-guide-examples border-emerald-500/20">
                   <span className="font-bold text-emerald-600 dark:text-emerald-400">ICT Term Examples:</span>
                   {activeLetterMeta.ictExamples.map((ex, i) => (
                     <span
@@ -1375,13 +1380,13 @@ const FingerspellingStudio = () => {
         </div>
 
         {/* Right Column: 3D Realistic Hand Avatar Stage & Recording Exporter (5 cols) */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="fs-card space-y-4">
+        <div className="space-y-6 lg:col-span-5">
+          <div className="space-y-4 fs-card">
             {/* Top Toolbar */}
-            <div className="flex items-center justify-between gap-2 pb-3 border-b border-border flex-wrap">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping" />
-                <span className="text-xs font-black uppercase tracking-wider text-emerald-500">
+                <span className="text-xs font-black tracking-wider uppercase text-emerald-500">
                   3D ASL Hand Avatar
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -1389,9 +1394,9 @@ const FingerspellingStudio = () => {
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-wrap items-center gap-2">
                 {/* Visual Mode Selector */}
-                <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl border border-border">
+                <div className="flex items-center gap-1 p-1 border bg-black/5 dark:bg-white/5 rounded-xl border-border">
                   <button
                     type="button"
                     onClick={() => setVisualMode('3d-mesh')}
@@ -1482,7 +1487,7 @@ const FingerspellingStudio = () => {
                   <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                     {selectedManualLetter ? 'Manual Alphabet:' : 'Word Spelling:'}
                   </span>
-                  <span className="text-base font-black font-mono tracking-widest text-emerald-700 dark:text-white">
+                  <span className="font-mono text-base font-black tracking-widest text-emerald-700 dark:text-white">
                     {selectedManualLetter ? selectedManualLetter : selectedWord}
                   </span>
                 </div>
@@ -1546,8 +1551,8 @@ const FingerspellingStudio = () => {
                   />
 
                   {/* Active Letter Giant Illuminated HUD Tag for 2D Mode */}
-                  <div className="absolute top-3 left-4 pointer-events-none flex items-center gap-2 z-10">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black/60 backdrop-blur-md border border-emerald-500/40 text-3xl font-black font-mono text-emerald-300 shadow-xl">
+                  <div className="absolute z-10 flex items-center gap-2 pointer-events-none top-3 left-4">
+                    <span className="flex items-center justify-center w-12 h-12 font-mono text-3xl font-black border shadow-xl rounded-2xl bg-black/60 backdrop-blur-md border-emerald-500/40 text-emerald-300">
                       {activeLetterChar}
                     </span>
                     <div className="rounded-xl bg-black/60 backdrop-blur-md px-3 py-1.5 border border-white/10">
@@ -1559,7 +1564,7 @@ const FingerspellingStudio = () => {
                   </div>
 
                   {/* Hand Mode Indicator Pill for 2D Mode */}
-                  <div className="absolute bottom-3 right-4 pointer-events-none z-10">
+                  <div className="absolute z-10 pointer-events-none bottom-3 right-4">
                     <span className="rounded-lg bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-mono text-emerald-400 border border-emerald-500/20">
                       {useBothHands ? '● Dual Hands Mode' : '● Dominant Hand Mode'}
                     </span>
@@ -1569,19 +1574,19 @@ const FingerspellingStudio = () => {
 
               {/* Recording Overlay if exporting video */}
               {isRecording && (
-                <div className="absolute inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-20">
-                  <Film size={36} className="text-emerald-400 animate-pulse mb-3" />
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center bg-black/85 backdrop-blur-sm">
+                  <Film size={36} className="mb-3 text-emerald-400 animate-pulse" />
                   <h4 className="text-base font-bold text-white">
                     Rendering 1080p 60FPS Video ({recordingWord})...
                   </h4>
-                  <p className="text-xs text-text-muted mt-1">Exporting high-resolution smooth ASL footage</p>
+                  <p className="mt-1 text-xs text-text-muted">Exporting high-resolution smooth ASL footage</p>
                   <div className="w-full max-w-[220px] h-2.5 bg-white/10 rounded-full mt-4 overflow-hidden">
                     <div
-                      className="h-full bg-emerald-400 transition-all duration-200"
+                      className="h-full transition-all duration-200 bg-emerald-400"
                       style={{ width: `${recordProgress}%` }}
                     />
                   </div>
-                  <span className="text-xs font-mono text-emerald-400 mt-2">{recordProgress}% completed</span>
+                  <span className="mt-2 font-mono text-xs text-emerald-400">{recordProgress}% completed</span>
                 </div>
               )}
             </div>
@@ -1590,12 +1595,12 @@ const FingerspellingStudio = () => {
             <div className="p-3.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-border space-y-2">
               <div className="text-[10px] uppercase font-bold text-text-muted flex items-center justify-between">
                 <span>Timeline Stepper ({selectedManualLetter ? 'Letter' : selectedWord}):</span>
-                <span className="font-mono text-primary font-bold">
+                <span className="font-mono font-bold text-primary">
                   Letter {activeLetterIndex + 1} of {currentLetters.length} ({activeLetterChar})
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              <div className="flex items-center gap-2 pb-1 overflow-x-auto">
                 {currentLetters.map((char, idx) => {
                   const isCurrent = idx === activeLetterIndex;
                   return (
@@ -1620,8 +1625,8 @@ const FingerspellingStudio = () => {
             </div>
 
             {/* Media Controls Bar & Full Video Downloader */}
-            <div className="pt-2 pb-2 pr-0 sm:pr-24 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 relative z-10">
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative z-10 flex flex-col items-stretch justify-between gap-3 pt-2 pb-2 pr-0 sm:pr-24 md:flex-row md:items-center">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={handleStepPrev}
@@ -1676,7 +1681,7 @@ const FingerspellingStudio = () => {
                 >
                   {isAutoRotate ? (
                     <>
-                      <span className="flex h-2 w-2 rounded-full bg-white animate-ping" />
+                      <span className="flex w-2 h-2 bg-white rounded-full animate-ping" />
                       <span className="font-black">🛑 Stop 360° Spin</span>
                     </>
                   ) : (
@@ -1688,7 +1693,7 @@ const FingerspellingStudio = () => {
                 </button>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-wrap items-center gap-2">
                 {/* Master Export Video Footage Button (WebM) */}
                 <button
                   type="button"

@@ -2077,7 +2077,9 @@ button:active, a:active {
 .sign-avatar-page-shell .dashboard-subtitle {
   max-width: 62ch;
   font-size: 0.95rem;
-  line-height: 1.68;
+  line-height: 1.8 !important;
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.5rem !important;
 }
 
 .sign-avatar-page-shell .dashboard-chip {
@@ -7307,12 +7309,57 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
 }
 
 .fs-guide-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   border-radius: 1.25rem;
   padding: 1.25rem 1.5rem;
   line-height: 1.65;
   background: rgba(16, 185, 129, 0.08);
   border: 1px solid rgba(16, 185, 129, 0.3);
   margin-top: 1.25rem;
+}
+
+.fs-guide-box .fs-guide-text {
+  display: block;
+  margin: 1rem 0 1.25rem !important;
+  line-height: 1.8 !important;
+}
+
+.fs-guide-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fs-guide-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.fs-guide-steps {
+  display: grid;
+  row-gap: 0.85rem !important;
+}
+
+.fs-guide-step {
+  line-height: 1.75 !important;
+}
+
+.fs-guide-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fs-guide-tips > div {
+  line-height: 1.7 !important;
+}
+
+.fs-guide-box .fs-guide-examples {
+  margin-top: 0.25rem;
+  padding-top: 1rem !important;
 }
 
 [data-theme="light"] .fs-guide-box {
@@ -7324,7 +7371,7 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
 [data-theme="light"] .fs-guide-text {
   color: #166534 !important;
   font-weight: 500 !important;
-  line-height: 1.6 !important;
+  line-height: 1.8 !important;
 }
 
 [data-theme="light"] .fs-guide-title {
@@ -7820,7 +7867,4 @@ html[data-theme="light"] .chatbot-send-button:disabled * {
   color: #0f172a !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
-
-
-
 
